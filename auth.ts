@@ -15,4 +15,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   trustHost: true,
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log("✅ [signIn 콜백] user:", user);
+      console.log("✅ [signIn 콜백] account:", account);
+      console.log("✅ [signIn 콜백] profile:", profile);
+      return true;
+    },
+    async session({ session, token }) {
+      console.log("✅ [session 콜백] session:", session);
+      return session;
+    },
+    async jwt({ token, user }) {
+      console.log("✅ [jwt 콜백] token:", token);
+      return token;
+    },
+  },
 });
