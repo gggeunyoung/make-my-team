@@ -1,10 +1,16 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import Naver from "next-auth/providers/naver";
 
 const googleClientId =
   process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret =
   process.env.AUTH_GOOGLE_SECRET ?? process.env.GOOGLE_CLIENT_SECRET;
+
+const naverClientId =
+  process.env.AUTH_NAVER_ID ?? process.env.NAVER_CLIENT_ID;
+const naverClientSecret =
+  process.env.AUTH_NAVER_SECRET ?? process.env.NAVER_CLIENT_SECRET;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV === "development",
@@ -12,6 +18,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: googleClientId ?? "",
       clientSecret: googleClientSecret ?? "",
+    }),
+    Naver({
+      clientId: naverClientId ?? "",
+      clientSecret: naverClientSecret ?? "",
     }),
   ],
   trustHost: true,
