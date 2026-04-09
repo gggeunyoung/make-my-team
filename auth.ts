@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import Kakao from "next-auth/providers/kakao";
 import Naver from "next-auth/providers/naver";
 
 const googleClientId =
@@ -12,6 +13,11 @@ const naverClientId =
 const naverClientSecret =
   process.env.AUTH_NAVER_SECRET ?? process.env.NAVER_CLIENT_SECRET;
 
+const kakaoClientId =
+  process.env.AUTH_KAKAO_ID ?? process.env.KAKAO_CLIENT_ID;
+const kakaoClientSecret =
+  process.env.AUTH_KAKAO_SECRET ?? process.env.KAKAO_CLIENT_SECRET;
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV === "development",
   providers: [
@@ -22,6 +28,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Naver({
       clientId: naverClientId ?? "",
       clientSecret: naverClientSecret ?? "",
+    }),
+    Kakao({
+      clientId: kakaoClientId ?? "",
+      clientSecret: kakaoClientSecret ?? "",
     }),
   ],
   trustHost: true,

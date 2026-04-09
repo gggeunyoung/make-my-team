@@ -36,7 +36,7 @@ export function AuthSection() {
   }
 
   return (
-    <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
+    <div className="flex max-w-md flex-col items-stretch gap-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
       <button
         type="button"
         onClick={() => signIn("google")}
@@ -71,6 +71,19 @@ export function AuthSection() {
           N
         </span>
         네이버로 로그인
+      </button>
+      <button
+        type="button"
+        onClick={() => signIn("kakao")}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#FEE500] px-5 py-2.5 text-sm font-medium text-[#191919] shadow-sm transition hover:bg-[#f0d900]"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
+          <path
+            fill="#191919"
+            d="M12 4C7.03 4 3 7.37 3 11.64c0 3.09 1.79 5.83 4.5 7.32v4.04l4.09-2.24c.33.05.67.08 1.01.08 4.97 0 9-3.37 9-7.64S16.97 4 12 4z"
+          />
+        </svg>
+        카카오로 로그인
       </button>
     </div>
   );
