@@ -1,7 +1,11 @@
+import { inspect } from "node:util";
+
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Kakao from "next-auth/providers/kakao";
 import Naver from "next-auth/providers/naver";
+
+import { prisma } from "@/lib/prisma";
 
 const googleClientId =
   process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID;
@@ -40,6 +44,80 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       console.log("✅ [signIn 콜백] user:", user);
       console.log("✅ [signIn 콜백] account:", account);
       console.log("✅ [signIn 콜백] profile:", profile);
+
+      const email = user.email?.trim() || undefined;
+      const provider = account?.provider ?? null;
+      const providerAccountId = account?.providerAccountId ?? null;
+
+      try {
+        if (email) {
+          console.log("upsert 시도");
+          await prisma.user.upsert({
+            where: { email },
+            create: {
+              email,
+              username: user.name ?? null,
+              provider,
+              providerAccountId,
+            },
+            update: {
+              username: user.name ?? undefined,
+              ...(provider != null ? { provider } : {}),
+              ...(providerAccountId != null ? { providerAccountId } : {}),
+            },
+          });
+          console.log("✅ [signIn] User upsert 성공 (email):", {
+            email,
+            provider,
+          });
+        } else if (provider && providerAccountId) {
+          console.log("upsert 시도");
+          await prisma.user.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider,
+                providerAccountId,
+              },
+            },
+            create: {
+              email: null,
+              username: user.name ?? null,
+              provider,
+              providerAccountId,
+            },
+            update: {
+              username: user.name ?? undefined,
+            },
+          });
+          console.log("✅ [signIn] User upsert 성공 (provider+id):", {
+            provider,
+            providerAccountId,
+          });
+        } else {
+          console.warn(
+            "⚠️ [signIn] 이메일도 없고 provider/providerAccountId도 없어 DB 동기화를 건너뜁니다.",
+          );
+        }
+      } catch (e) {
+        console.error("❌ [signIn] User upsert 실패 (inspect):", inspect(e, { depth: 8, colors: false }));
+        if (e instanceof Error) {
+          console.error("❌ [signIn] error.name:", e.name);
+          console.error("❌ [signIn] error.message:", e.message);
+          console.error("❌ [signIn] error.stack:", e.stack);
+          if (e.cause !== undefined) {
+            console.error("❌ [signIn] error.cause:", inspect(e.cause, { depth: 6, colors: false }));
+          }
+        }
+        const err = e as Record<string, unknown>;
+        if (typeof err.code === "string") {
+          console.error("❌ [signIn] err.code (Prisma 등):", err.code);
+        }
+        if (err.meta !== undefined) {
+          console.error("❌ [signIn] err.meta:", inspect(err.meta, { depth: 6, colors: false }));
+        }
+        return false;
+      }
+
       return true;
     },
     async session({ session, token }) {
