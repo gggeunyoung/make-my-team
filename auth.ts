@@ -22,6 +22,20 @@ const kakaoClientId =
 const kakaoClientSecret =
   process.env.AUTH_KAKAO_SECRET ?? process.env.KAKAO_CLIENT_SECRET;
 
+/** 네이버는 이름이 profile.response.name 에 옴 (user.name 은 비는 경우가 많음) */
+function resolveUsername(
+  provider: string | null,
+  user: { name?: string | null },
+  profile: unknown,
+): string | null {
+  if (provider === "naver") {
+    const p = profile as { response?: { name?: string } } | null | undefined;
+    const fromNaver = p?.response?.name?.trim();
+    if (fromNaver) return fromNaver;
+  }
+  return user.name?.trim() || null;
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV === "development",
   providers: [
@@ -48,6 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const email = user.email?.trim() || undefined;
       const provider = account?.provider ?? null;
       const providerAccountId = account?.providerAccountId ?? null;
+      const username = resolveUsername(provider, user, profile);
 
       try {
         if (email) {
@@ -56,12 +71,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { email },
             create: {
               email,
-              username: user.name ?? null,
+              username,
               provider,
               providerAccountId,
             },
             update: {
-              username: user.name ?? undefined,
+              username: username ?? undefined,
               ...(provider != null ? { provider } : {}),
               ...(providerAccountId != null ? { providerAccountId } : {}),
             },
@@ -81,12 +96,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
             create: {
               email: null,
-              username: user.name ?? null,
+              username,
               provider,
               providerAccountId,
             },
             update: {
-              username: user.name ?? undefined,
+              username: username ?? undefined,
             },
           });
           console.log("✅ [signIn] User upsert 성공 (provider+providerAccountId):", {
