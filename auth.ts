@@ -47,26 +47,55 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const email = user.email?.trim() || undefined;
       const provider = account?.provider ?? null;
+      const providerAccountId = account?.providerAccountId ?? null;
 
       try {
         if (email) {
-          console.log("upsert 시도");
+          console.log("upsert 시도 (email)");
           await prisma.user.upsert({
             where: { email },
             create: {
               email,
               username: user.name ?? null,
               provider,
+              providerAccountId,
             },
             update: {
               username: user.name ?? undefined,
               ...(provider != null ? { provider } : {}),
+              ...(providerAccountId != null ? { providerAccountId } : {}),
             },
           });
-          console.log("✅ [signIn] User upsert 성공:", { email, provider });
+          console.log("✅ [signIn] User upsert 성공 (email):", {
+            email,
+            provider,
+          });
+        } else if (provider && providerAccountId) {
+          console.log("upsert 시도 (provider + providerAccountId)");
+          await prisma.user.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider,
+                providerAccountId,
+              },
+            },
+            create: {
+              email: null,
+              username: user.name ?? null,
+              provider,
+              providerAccountId,
+            },
+            update: {
+              username: user.name ?? undefined,
+            },
+          });
+          console.log("✅ [signIn] User upsert 성공 (provider+providerAccountId):", {
+            provider,
+            providerAccountId,
+          });
         } else {
           console.warn(
-            "⚠️ [signIn] 이메일이 없어 User upsert를 건너뜁니다. (스키마에 email 기준만 사용)",
+            "⚠️ [signIn] 이메일도 없고 provider+providerAccountId도 없어 User upsert를 건너뜁니다.",
           );
         }
       } catch (e) {
