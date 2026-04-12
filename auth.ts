@@ -47,7 +47,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const email = user.email?.trim() || undefined;
       const provider = account?.provider ?? null;
-      const providerAccountId = account?.providerAccountId ?? null;
 
       try {
         if (email) {
@@ -58,44 +57,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               email,
               username: user.name ?? null,
               provider,
-              providerAccountId,
             },
             update: {
               username: user.name ?? undefined,
               ...(provider != null ? { provider } : {}),
-              ...(providerAccountId != null ? { providerAccountId } : {}),
             },
           });
-          console.log("✅ [signIn] User upsert 성공 (email):", {
-            email,
-            provider,
-          });
-        } else if (provider && providerAccountId) {
-          console.log("upsert 시도");
-          await prisma.user.upsert({
-            where: {
-              provider_providerAccountId: {
-                provider,
-                providerAccountId,
-              },
-            },
-            create: {
-              email: null,
-              username: user.name ?? null,
-              provider,
-              providerAccountId,
-            },
-            update: {
-              username: user.name ?? undefined,
-            },
-          });
-          console.log("✅ [signIn] User upsert 성공 (provider+id):", {
-            provider,
-            providerAccountId,
-          });
+          console.log("✅ [signIn] User upsert 성공:", { email, provider });
         } else {
           console.warn(
-            "⚠️ [signIn] 이메일도 없고 provider/providerAccountId도 없어 DB 동기화를 건너뜁니다.",
+            "⚠️ [signIn] 이메일이 없어 User upsert를 건너뜁니다. (스키마에 email 기준만 사용)",
           );
         }
       } catch (e) {

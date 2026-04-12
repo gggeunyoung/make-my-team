@@ -13,16 +13,13 @@ datasource db {
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  email              String?  @unique
-  username           String?
-  provider           String? // google / naver / kakao
-  providerAccountId  String? // OAuth sub (이메일 없을 때 식별용)
-  role               UserRole @default(GENERAL)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  @@unique([provider, providerAccountId])
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  username  String?
+  provider  String? // google / naver / kakao
+  role      UserRole @default(GENERAL)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum UserRole {
