@@ -29,3 +29,22 @@ enum UserRole {
   GENERAL
   SUPER_ADMIN
 }
+
+model Team {
+  id          String    @id @default(cuid())
+  name        String
+  sport_type  SportType
+  logo        String?
+  color       String?   // 팀 대표 색깔 (hex 코드)
+  access_code String    @unique
+  operator    String
+  admins      String[]
+  players     String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum SportType {
+  FUTSAL
+  SOCCER
+}

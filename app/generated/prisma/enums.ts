@@ -15,3 +15,11 @@ export const UserRole = {
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
+
+
+export const SportType = {
+  FUTSAL: 'FUTSAL',
+  SOCCER: 'SOCCER'
+} as const
+
+export type SportType = (typeof SportType)[keyof typeof SportType]

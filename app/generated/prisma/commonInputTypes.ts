@@ -127,6 +127,23 @@ export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
 }
 
+export type EnumSportTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.SportType | Prisma.EnumSportTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSportTypeFilter<$PrismaModel> | $Enums.SportType
+}
+
+export type EnumSportTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SportType | Prisma.EnumSportTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSportTypeWithAggregatesFilter<$PrismaModel> | $Enums.SportType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -251,6 +268,23 @@ export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
+}
+
+export type NestedEnumSportTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.SportType | Prisma.EnumSportTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSportTypeFilter<$PrismaModel> | $Enums.SportType
+}
+
+export type NestedEnumSportTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SportType | Prisma.EnumSportTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SportType[] | Prisma.ListEnumSportTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSportTypeWithAggregatesFilter<$PrismaModel> | $Enums.SportType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
 }
 
 
