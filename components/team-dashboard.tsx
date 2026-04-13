@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { calculateTeamNameUnits } from "@/lib/team";
 
@@ -131,30 +132,32 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
             </div>
           ) : (
             teams.map((team) => (
-              <article key={team.id} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    {team.logo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={team.logo} alt={`${team.name} 로고`} className="h-12 w-12 rounded-full object-cover" />
-                    ) : (
-                      <div
-                        className="h-12 w-12 rounded-full"
-                        style={{ backgroundColor: team.color ?? "#d4d4d8" }}
-                      />
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-zinc-900">{team.name}</h3>
-                      <p className="text-xs text-zinc-500">{getSportTypeLabel(team.sportType)}</p>
+              <Link key={team.id} href={`/team/${team.id}`} className="block">
+                <article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:shadow">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {team.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={team.logo} alt={`${team.name} 로고`} className="h-12 w-12 rounded-full object-cover" />
+                      ) : (
+                        <div
+                          className="h-12 w-12 rounded-full"
+                          style={{ backgroundColor: team.color ?? "#d4d4d8" }}
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-zinc-900">{team.name}</h3>
+                        <p className="text-xs text-zinc-500">{getSportTypeLabel(team.sportType)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-zinc-700">
-                  <p>선수 수: {team.players.length}</p>
-                  <p>생성 연도: {new Date(team.createdAt).getFullYear()}</p>
-                </div>
-                <p className="mt-3 text-xs text-zinc-500">운영자 코드: {team.accessCode}</p>
-              </article>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-zinc-700">
+                    <p>선수 수: {team.players.length}</p>
+                    <p>생성 연도: {new Date(team.createdAt).getFullYear()}</p>
+                  </div>
+                  <p className="mt-3 text-xs text-zinc-500">운영자 코드: {team.accessCode}</p>
+                </article>
+              </Link>
             ))
           )}
         </div>
