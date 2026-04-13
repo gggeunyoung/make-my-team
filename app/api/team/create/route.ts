@@ -1,9 +1,25 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateTeamNameUnits, generateAccessCode, validateSportType } from "@/lib/team";
+import sharp from "sharp";
 
 function isHexColor(color: string) {
   return /^#[0-9a-fA-F]{6}$/.test(color);
+}
+
+async function convertLogoToJpegDataUrl(logo: string) {
+  const match = logo.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/);
+  if (!match) {
+    throw new Error("INVALID_IMAGE_DATA");
+  }
+
+  const imageBuffer = Buffer.from(match[1], "base64");
+  const converted = await sharp(imageBuffer)
+    .resize(1024, 1024, { fit: "cover" })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  return `data:image/jpeg;base64,${converted.toString("base64")}`;
 }
 
 export async function POST(req: Request) {
@@ -22,7 +38,7 @@ export async function POST(req: Request) {
 
   const name = body.name?.trim() ?? "";
   const sportType = body.sportType?.trim() ?? "";
-  const logo = body.logo?.trim() || null;
+  const rawLogo = body.logo?.trim() || null;
   const color = body.color?.trim() ?? "";
   const units = calculateTeamNameUnits(name);
 
@@ -34,6 +50,15 @@ export async function POST(req: Request) {
   }
   if (!isHexColor(color)) {
     return Response.json({ message: "유효한 팀 색상을 선택해주세요." }, { status: 400 });
+  }
+
+  let logo: string | null = null;
+  if (rawLogo) {
+    try {
+      logo = await convertLogoToJpegDataUrl(rawLogo);
+    } catch {
+      return Response.json({ message: "이미지 변환에 실패했습니다." }, { status: 400 });
+    }
   }
 
   for (let i = 0; i < 10; i += 1) {

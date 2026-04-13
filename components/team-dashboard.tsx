@@ -179,6 +179,7 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [logo, setLogo] = useState<string | null>(null);
   const [color, setColor] = useState("#2563eb");
   const [errorMessage, setErrorMessage] = useState("");
+  const [nameLimitMessage, setNameLimitMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const units = useMemo(() => calculateTeamNameUnits(teamName), [teamName]);
@@ -186,21 +187,8 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
   const onFileChange = async (file: File | undefined) => {
     if (!file) return;
-    if (file.type !== "image/jpeg") {
-      setErrorMessage("로고는 jpeg 파일만 업로드할 수 있습니다.");
-      return;
-    }
-    const imageURL = URL.createObjectURL(file);
-    const image = new Image();
-    image.src = imageURL;
-    await new Promise<void>((resolve) => {
-      image.onload = () => resolve();
-      image.onerror = () => resolve();
-    });
-    URL.revokeObjectURL(imageURL);
-
-    if (image.width !== 1024 || image.height !== 1024) {
-      setErrorMessage("로고 이미지는 1024x1024 해상도여야 합니다.");
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("이미지 파일만 업로드할 수 있습니다.");
       return;
     }
 
@@ -212,6 +200,16 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
     });
     setLogo(dataUrl);
     setErrorMessage("");
+  };
+
+  const onTeamNameChange = (nextName: string) => {
+    const nextUnits = calculateTeamNameUnits(nextName);
+    if (nextUnits <= 30) {
+      setTeamName(nextName);
+      setNameLimitMessage("");
+      return;
+    }
+    setNameLimitMessage("팀명이 가득 찼어요! 더 이상 입력할 수 없습니다.");
   };
 
   const onSubmit = async (e: FormEvent) => {
@@ -271,10 +269,18 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700">팀 로고 (jpeg, 1024x1024)</label>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">팀 로고</label>
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="업로드된 팀 로고 미리보기" className="mb-2 h-28 w-28 rounded-xl object-cover" />
+            ) : (
+              <div className="mb-2 flex h-28 w-28 items-center justify-center rounded-xl bg-zinc-200 text-sm text-zinc-600">
+                팀 로고
+              </div>
+            )}
             <input
               type="file"
-              accept="image/jpeg"
+              accept="image/*"
               onChange={(e) => void onFileChange(e.target.files?.[0])}
               className="block w-full text-sm text-zinc-700"
             />
@@ -284,10 +290,11 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <label className="mb-1 block text-sm font-medium text-zinc-700">팀 이름</label>
             <input
               value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
+              onChange={(e) => onTeamNameChange(e.target.value)}
               className="h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm text-zinc-900 outline-none focus:border-zinc-500"
               placeholder="팀 이름을 입력하세요"
             />
+            {nameLimitMessage ? <p className="mt-1 text-xs text-red-600">{nameLimitMessage}</p> : null}
             <div className="mt-2 h-2 w-full rounded bg-zinc-100">
               <div
                 className={`h-2 rounded transition-all ${getProgressColor(units)}`}
