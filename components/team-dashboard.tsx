@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
 import { calculateTeamNameUnits } from "@/lib/team";
 
@@ -174,6 +174,7 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
 }
 
 function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreated: (team: Team) => void }) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [teamName, setTeamName] = useState("");
   const [sportType, setSportType] = useState<"" | "FUTSAL" | "SOCCER">("");
   const [logo, setLogo] = useState<string | null>(null);
@@ -271,14 +272,27 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">팀 로고</label>
             {logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="업로드된 팀 로고 미리보기" className="mb-2 h-28 w-28 rounded-xl object-cover" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mb-2 block h-28 w-28 overflow-hidden rounded-xl"
+                aria-label="팀 로고 업로드"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt="업로드된 팀 로고 미리보기" className="h-28 w-28 rounded-xl object-cover" />
+              </button>
             ) : (
-              <div className="mb-2 flex h-28 w-28 items-center justify-center rounded-xl bg-zinc-200 text-sm text-zinc-600">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mb-2 flex h-28 w-28 items-center justify-center rounded-xl bg-zinc-200 text-sm text-zinc-600"
+                aria-label="팀 로고 업로드"
+              >
                 팀 로고
-              </div>
+              </button>
             )}
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={(e) => void onFileChange(e.target.files?.[0])}

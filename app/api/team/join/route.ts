@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const updatedTeam = await prisma.team.update({
     where: { id: team.id },
     data: {
-      players: {
+      admins: {
         push: email,
       },
     },
