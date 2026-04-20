@@ -20,7 +20,16 @@ export default async function TeamPage({ params }: TeamPageProps) {
   if (!team) {
     notFound();
   }
-  void session;
+  const email = session?.user?.email?.trim();
+  const canManage = Boolean(email && team.admins.includes(email));
 
-  return <TeamPageTabs teamId={team.id} teamName={team.name} teamLogo={team.logo} teamColor={team.color} />;
+  return (
+    <TeamPageTabs
+      teamId={team.id}
+      teamName={team.name}
+      teamLogo={team.logo}
+      teamColor={team.color}
+      canManage={canManage}
+    />
+  );
 }

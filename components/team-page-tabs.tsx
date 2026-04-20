@@ -8,12 +8,12 @@ type TeamPageTabsProps = {
   teamName: string;
   teamLogo: string | null;
   teamColor: string | null;
+  canManage: boolean;
 };
 
 type TeamTab = "HOME" | "PLAYERS" | "MATCHES" | "STATS" | "TOURNAMENT" | "AWARD";
 
 const tabs: Array<{ key: TeamTab; label: string }> = [
-  { key: "HOME", label: "Home" },
   { key: "PLAYERS", label: "Players" },
   { key: "MATCHES", label: "Matches" },
   { key: "STATS", label: "Stats" },
@@ -29,7 +29,7 @@ function Placeholder({ title }: { title: string }) {
   );
 }
 
-export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor }: TeamPageTabsProps) {
+export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage }: TeamPageTabsProps) {
   const [activeTab, setActiveTab] = useState<TeamTab>("HOME");
 
   const tabContent = (() => {
@@ -48,15 +48,26 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor }: TeamPage
         style={{ backgroundColor: teamColor ?? "#3f3f46" }}
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3">
-            {teamLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 rounded-full object-cover" />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-white/60" />
-            )}
-            <span className="text-lg font-semibold text-white">{teamName}</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            {canManage ? (
+              <Link
+                href="/"
+                aria-label="대시보드로 이동"
+                className="rounded-md px-2 py-1 text-xl font-semibold text-white/90 transition hover:bg-white/20"
+              >
+                ←
+              </Link>
+            ) : null}
+            <button type="button" onClick={() => setActiveTab("HOME")} className="flex items-center gap-3">
+              {teamLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 rounded-full object-cover" />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-white/60" />
+              )}
+              <span className="text-lg font-semibold text-white">{teamName}</span>
+            </button>
+          </div>
 
           <nav className="flex items-center gap-2">
             {tabs.map((tab) => {
@@ -74,12 +85,14 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor }: TeamPage
                 </button>
               );
             })}
-            <Link
-              href={`/team/${teamId}/manager`}
-              className="rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
-            >
-              Manager
-            </Link>
+            {canManage ? (
+              <Link
+                href={`/team/${teamId}/manager`}
+                className="rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
+              >
+                Manager
+              </Link>
+            ) : null}
           </nav>
         </div>
       </header>
