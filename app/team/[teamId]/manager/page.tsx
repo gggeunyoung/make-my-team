@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { TeamManagerContent } from "@/components/team-manager-content";
 import { prisma } from "@/lib/prisma";
 
 type TeamManagerPageProps = {
@@ -28,8 +29,15 @@ export default async function TeamManagerPage({ params }: TeamManagerPageProps) 
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-8">
-      <section className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-600">Manager 페이지 (준비 중)</section>
-    </main>
+    <TeamManagerContent
+      teamId={team.id}
+      initialTeam={{
+        name: team.name,
+        logo: team.logo,
+        color: team.color,
+        sportType: team.sport_type,
+        accessCode: team.access_code,
+      }}
+    />
   );
 }
