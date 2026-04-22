@@ -246,6 +246,15 @@ export function TeamManagerContent({ teamId, initialTeam }: TeamManagerContentPr
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-8">
+      <button
+        type="button"
+        onClick={() => {
+          window.location.href = `/team/${teamId}`;
+        }}
+        className="mb-4 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+      >
+        ← 뒤로가기
+      </button>
       <div className="grid gap-4 md:grid-cols-[220px_1fr]">
         <aside className="rounded-xl border border-zinc-200 bg-white p-2">
           <nav className="flex flex-col gap-1">
