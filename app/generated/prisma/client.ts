@@ -51,3 +51,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type Team = Prisma.TeamModel
+/**
+ * Model Player
+ * 
+ */
+export type Player = Prisma.PlayerModel

@@ -14,7 +14,7 @@ type Team = {
   accessCode: string;
   operator: string;
   admins: string[];
-  players: string[];
+  playerCount: number;
   createdAt: string;
 };
 
@@ -152,7 +152,7 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-zinc-700">
-                    <p>선수 수: {team.players.length}</p>
+                    <p>선수 수: {team.playerCount}</p>
                     <p>생성 연도: {new Date(team.createdAt).getFullYear()}</p>
                   </div>
                   <p className="mt-3 text-xs text-zinc-500">운영자 코드: {team.accessCode}</p>

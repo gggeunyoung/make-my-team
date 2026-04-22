@@ -144,6 +144,36 @@ export type EnumSportTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
 }
 
+export type EnumPlayerStyleFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlayerStyle | Prisma.EnumPlayerStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlayerStyleFilter<$PrismaModel> | $Enums.PlayerStyle
+}
+
+export type BoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
+}
+
+export type EnumPlayerStyleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlayerStyle | Prisma.EnumPlayerStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlayerStyleWithAggregatesFilter<$PrismaModel> | $Enums.PlayerStyle
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPlayerStyleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPlayerStyleFilter<$PrismaModel>
+}
+
+export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -285,6 +315,36 @@ export type NestedEnumSportTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumSportTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumPlayerStyleFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlayerStyle | Prisma.EnumPlayerStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlayerStyleFilter<$PrismaModel> | $Enums.PlayerStyle
+}
+
+export type NestedBoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
+}
+
+export type NestedEnumPlayerStyleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlayerStyle | Prisma.EnumPlayerStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlayerStyle[] | Prisma.ListEnumPlayerStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlayerStyleWithAggregatesFilter<$PrismaModel> | $Enums.PlayerStyle
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPlayerStyleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPlayerStyleFilter<$PrismaModel>
+}
+
+export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>
 }
 
 

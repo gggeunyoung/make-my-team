@@ -23,3 +23,23 @@ export const SportType = {
 } as const
 
 export type SportType = (typeof SportType)[keyof typeof SportType]
+
+
+export const PlayerStyle = {
+  OFFENSIVE: 'OFFENSIVE',
+  BALANCED: 'BALANCED',
+  DEFENSIVE: 'DEFENSIVE',
+  GOALKEEPER: 'GOALKEEPER'
+} as const
+
+export type PlayerStyle = (typeof PlayerStyle)[keyof typeof PlayerStyle]
+
+
+export const Position = {
+  FW: 'FW',
+  MF: 'MF',
+  DF: 'DF',
+  GK: 'GK'
+} as const
+
+export type Position = (typeof Position)[keyof typeof Position]

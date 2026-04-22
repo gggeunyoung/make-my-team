@@ -10,7 +10,13 @@ export async function GET() {
 
   const teams = await prisma.team.findMany({
     where: {
-      OR: [{ operator: email }, { admins: { has: email } }, { players: { has: email } }],
+      OR: [{ operator: email }, { admins: { has: email } }],
+    },
+    include: {
+      players: {
+        where: { isActive: true },
+        select: { id: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -25,7 +31,7 @@ export async function GET() {
       accessCode: team.access_code,
       operator: team.operator,
       admins: team.admins,
-      players: team.players,
+      playerCount: team.players.length,
       createdAt: team.createdAt,
     })),
   });

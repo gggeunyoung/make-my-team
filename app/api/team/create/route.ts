@@ -73,7 +73,6 @@ export async function POST(req: Request) {
           access_code: accessCode,
           operator: email,
           admins: [email],
-          players: [],
         },
       });
 
@@ -87,7 +86,7 @@ export async function POST(req: Request) {
           accessCode: team.access_code,
           operator: team.operator,
           admins: team.admins,
-          players: team.players,
+          playerCount: 0,
           createdAt: team.createdAt,
         },
       });

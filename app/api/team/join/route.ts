@@ -26,8 +26,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const isMember =
-    team.operator === email || team.admins.includes(email) || team.players.includes(email);
+  const isMember = team.operator === email || team.admins.includes(email);
 
   if (isMember) {
     return Response.json(
@@ -44,6 +43,12 @@ export async function POST(req: Request) {
       },
     },
   });
+  const playerCount = await prisma.player.count({
+    where: {
+      teamId: updatedTeam.id,
+      isActive: true,
+    },
+  });
 
   return Response.json({
     team: {
@@ -55,7 +60,7 @@ export async function POST(req: Request) {
       accessCode: updatedTeam.access_code,
       operator: updatedTeam.operator,
       admins: updatedTeam.admins,
-      players: updatedTeam.players,
+      playerCount,
       createdAt: updatedTeam.createdAt,
     },
   });

@@ -48,7 +48,6 @@ export async function GET(_: Request, context: RouteContext) {
       accessCode: team.access_code,
       operator: team.operator,
       admins: team.admins,
-      players: team.players,
       createdAt: team.createdAt,
     },
   });
@@ -119,7 +118,6 @@ export async function PATCH(req: Request, context: RouteContext) {
       accessCode: updatedTeam.access_code,
       operator: updatedTeam.operator,
       admins: updatedTeam.admins,
-      players: updatedTeam.players,
       createdAt: updatedTeam.createdAt,
     },
   });

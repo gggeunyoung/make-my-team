@@ -39,12 +39,41 @@ model Team {
   access_code String    @unique
   operator    String
   admins      String[]
-  players     String[]
+  players     Player[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model Player {
+  id        String       @id @default(cuid())
+  name      String
+  photo     String?
+  position  Position[]
+  style     PlayerStyle
+  teamId    String
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([teamId, createdAt])
 }
 
 enum SportType {
   FUTSAL
   SOCCER
+}
+
+enum PlayerStyle {
+  OFFENSIVE
+  BALANCED
+  DEFENSIVE
+  GOALKEEPER
+}
+
+enum Position {
+  FW
+  MF
+  DF
+  GK
 }

@@ -10,10 +10,17 @@ type TeamManagerPageProps = {
 export default async function TeamManagerPage({ params }: TeamManagerPageProps) {
   const { teamId } = await params;
 
-  const [session, team] = await Promise.all([
+  const [session, team, players] = await Promise.all([
     auth(),
     prisma.team.findUnique({
       where: { id: teamId },
+    }),
+    prisma.player.findMany({
+      where: {
+        teamId,
+        isActive: true,
+      },
+      orderBy: { createdAt: "asc" },
     }),
   ]);
 
@@ -38,6 +45,13 @@ export default async function TeamManagerPage({ params }: TeamManagerPageProps) 
         sportType: team.sport_type,
         accessCode: team.access_code,
       }}
+      initialPlayers={players.map((player) => ({
+        id: player.id,
+        name: player.name,
+        photo: player.photo,
+        style: player.style,
+        position: player.position,
+      }))}
     />
   );
 }
