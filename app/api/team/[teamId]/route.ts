@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateTeamNameUnits } from "@/lib/team";
+import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 
 type RouteContext = {
@@ -106,6 +107,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       color,
     },
   });
+  revalidatePath("/team/[teamId]", "page");
 
   return Response.json({
     team: {
