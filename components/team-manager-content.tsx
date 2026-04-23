@@ -12,6 +12,7 @@ type Player = {
   photo: string | null;
   style: PlayerStyleValue;
   position: PositionValue[];
+  createdAt?: string;
 };
 type PlayerFormItem = {
   clientId: string;
@@ -20,6 +21,7 @@ type PlayerFormItem = {
   photo: string | null;
   style: "" | PlayerStyleValue;
   position: PositionValue[];
+  createdAt: string | null;
   removed: boolean;
   errorMessage: string;
   original: {
@@ -82,6 +84,7 @@ function makePlayerFormItem(player?: Player): PlayerFormItem {
       photo: null,
       style: "",
       position: [],
+      createdAt: null,
       removed: false,
       errorMessage: "",
       original: null,
@@ -95,6 +98,7 @@ function makePlayerFormItem(player?: Player): PlayerFormItem {
     photo: player.photo,
     style: player.style,
     position: player.position,
+    createdAt: player.createdAt ?? null,
     removed: false,
     errorMessage: "",
     original: {
@@ -104,6 +108,14 @@ function makePlayerFormItem(player?: Player): PlayerFormItem {
       position: player.position,
     },
   };
+}
+
+function sortPlayerFormsNewest(forms: PlayerFormItem[]) {
+  return [...forms].sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return timeB - timeA;
+  });
 }
 
 export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
@@ -116,7 +128,9 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
   const [teamMessage, setTeamMessage] = useState("");
   const [teamIsError, setTeamIsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [playerForms, setPlayerForms] = useState<PlayerFormItem[]>(() => initialPlayers.map((player) => makePlayerFormItem(player)));
+  const [playerForms, setPlayerForms] = useState<PlayerFormItem[]>(() =>
+    sortPlayerFormsNewest(initialPlayers.map((player) => makePlayerFormItem(player))),
+  );
   const [playerSubmitting, setPlayerSubmitting] = useState(false);
   const [playerMessage, setPlayerMessage] = useState("");
   const [playerIsError, setPlayerIsError] = useState(false);
@@ -400,7 +414,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
         nextPlayerForms.push(makePlayerFormItem(updateData.player));
       }
 
-      setPlayerForms(nextPlayerForms);
+      setPlayerForms(sortPlayerFormsNewest(nextPlayerForms));
       setPlayerIsError(false);
       setPlayerMessage("저장 완료!");
     } catch (error) {
@@ -518,7 +532,23 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
       return (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900">선수관리</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-zinc-900">선수관리</h2>
+              <span
+                className="cursor-help text-sm text-zinc-500"
+                title={`선수 사진은 있으면 좋고 없어도 괜찮습니다.
+이름은 팀 내에서 중복될 수 없으며 동명이인의 경우 따로 구분해 주세요.
+선수 스타일은 포지션과 무관하게 그 선수의 성향을 선택해 주세요.
+공격 상황에서 적극적인 침투와 움직임을 보여주는 선수는 공격형,
+수비 상황에서 빠른 커버와 압박을 보여주는 선수는 수비형,
+두 가지를 균형있게 수행하면 밸런스형,
+든든한 수문장은 골키퍼를 선택해 주세요.
+(축구팀의 경우 포지션은 복수 선택 가능합니다.)`}
+                aria-label="선수관리 안내"
+              >
+                ℹ️
+              </span>
+            </div>
             <button
               type="button"
               onClick={onAddPlayerContainer}
@@ -527,17 +557,6 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
               선수 추가
             </button>
           </div>
-
-          <p className="mb-4 whitespace-pre-line text-sm text-zinc-600">
-            선수 사진은 있으면 좋고 없어도 괜찮습니다.
-            {"\n"}이름은 팀 내에서 중복될 수 없으며 동명이인의 경우 따로 구분해 주세요.
-            {"\n"}선수 스타일은 포지션과 무관하게 그 선수의 성향을 선택해 주세요.
-            {"\n"}공격 상황에서 적극적인 침투와 움직임을 보여주는 선수는 공격형,
-            {"\n"}수비 상황에서 빠른 커버와 압박을 보여주는 선수는 수비형,
-            {"\n"}두 가지를 균형있게 수행하면 밸런스형,
-            {"\n"}든든한 수문장은 골키퍼를 선택해 주세요.
-            {"\n"}(축구팀의 경우 포지션은 복수 선택 가능합니다.)
-          </p>
 
           <div className="mb-4">
             <button
@@ -549,7 +568,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
             {playerForms.map((item) => {
               if (item.removed) return null;
               return (
