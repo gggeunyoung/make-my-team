@@ -37,7 +37,7 @@ async function convertPlayerPhotoToJpegBuffer(rawPhoto: string) {
   return sharp(imageBuffer).resize(354, 472, { fit: "cover" }).jpeg({ quality: 90 }).toBuffer();
 }
 
-async function ensureBucketConfigured(supabase: ReturnType<typeof createClient>, bucket: string) {
+async function ensureBucketConfigured(supabase: ReturnType<typeof getSupabaseServerClient>, bucket: string) {
   const { data, error } = await supabase.storage.getBucket(bucket);
   if (error) {
     console.error("[player-photo] Failed to read bucket.", {
