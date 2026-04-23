@@ -67,7 +67,12 @@ export async function PUT(req: Request, context: RouteContext) {
         teamId: existingPlayer.teamId,
         rawPhoto,
       });
-    } catch {
+    } catch (error) {
+      console.error("[player-update] Photo upload failed.", {
+        playerId: existingPlayer.id,
+        teamId: existingPlayer.teamId,
+        message: error instanceof Error ? error.message : String(error),
+      });
       return Response.json({ message: "선수 사진 업로드에 실패했습니다." }, { status: 400 });
     }
   } else if (rawPhoto === "") {
