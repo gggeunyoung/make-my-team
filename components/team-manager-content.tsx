@@ -13,11 +13,21 @@ type Player = {
   style: PlayerStyleValue;
   position: PositionValue[];
 };
-type PlayerDraft = {
+type PlayerFormItem = {
+  clientId: string;
+  playerId: string | null;
   name: string;
   photo: string | null;
   style: "" | PlayerStyleValue;
   position: PositionValue[];
+  removed: boolean;
+  errorMessage: string;
+  original: {
+    name: string;
+    photo: string | null;
+    style: PlayerStyleValue;
+    position: PositionValue[];
+  } | null;
 };
 
 type TeamManagerContentProps = {
@@ -63,28 +73,41 @@ function positionLabel(position: PositionValue) {
   return "GK";
 }
 
-function makeEmptyPlayerDraft(): PlayerDraft {
-  return {
-    name: "",
-    photo: null,
-    style: "",
-    position: [],
-  };
-}
+function makePlayerFormItem(player?: Player): PlayerFormItem {
+  if (!player) {
+    return {
+      clientId: crypto.randomUUID(),
+      playerId: null,
+      name: "",
+      photo: null,
+      style: "",
+      position: [],
+      removed: false,
+      errorMessage: "",
+      original: null,
+    };
+  }
 
-function makePlayerDraft(player: Player): PlayerDraft {
   return {
+    clientId: crypto.randomUUID(),
+    playerId: player.id,
     name: player.name,
     photo: player.photo,
     style: player.style,
     position: player.position,
+    removed: false,
+    errorMessage: "",
+    original: {
+      name: player.name,
+      photo: player.photo,
+      style: player.style,
+      position: player.position,
+    },
   };
 }
 
 export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const createFileInputRef = useRef<HTMLInputElement | null>(null);
-  const editFileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeMenu, setActiveMenu] = useState<ManagerTab>("MATCH");
   const [name, setName] = useState(initialTeam.name);
   const [logo, setLogo] = useState<string | null>(initialTeam.logo);
@@ -93,11 +116,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
   const [teamMessage, setTeamMessage] = useState("");
   const [teamIsError, setTeamIsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [players, setPlayers] = useState<Player[]>(initialPlayers);
-  const [showCreatePlayerForm, setShowCreatePlayerForm] = useState(false);
-  const [createPlayerDraft, setCreatePlayerDraft] = useState<PlayerDraft>(makeEmptyPlayerDraft());
-  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
-  const [editPlayerDraft, setEditPlayerDraft] = useState<PlayerDraft>(makeEmptyPlayerDraft());
+  const [playerForms, setPlayerForms] = useState<PlayerFormItem[]>(() => initialPlayers.map((player) => makePlayerFormItem(player)));
   const [playerSubmitting, setPlayerSubmitting] = useState(false);
   const [playerMessage, setPlayerMessage] = useState("");
   const [playerIsError, setPlayerIsError] = useState(false);
@@ -190,10 +209,31 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
     }
   };
 
-  const onPlayerPhotoFileChange = async (
-    file: File | undefined,
-    mode: "create" | "edit",
-  ) => {
+  const onAddPlayerContainer = () => {
+    setPlayerForms((prev) => [...prev, makePlayerFormItem()]);
+    setPlayerMessage("");
+    setPlayerIsError(false);
+  };
+
+  const onRemovePlayerContainer = (clientId: string) => {
+    setPlayerForms((prev) =>
+      prev
+        .map((item) => {
+          if (item.clientId !== clientId) return item;
+          if (!item.playerId) return item;
+          return { ...item, removed: true, errorMessage: "" };
+        })
+        .filter((item) => !(item.clientId === clientId && !item.playerId)),
+    );
+  };
+
+  const onChangePlayerField = (clientId: string, updates: Partial<PlayerFormItem>) => {
+    setPlayerForms((prev) =>
+      prev.map((item) => (item.clientId === clientId ? { ...item, ...updates, errorMessage: "" } : item)),
+    );
+  };
+
+  const onPlayerPhotoFileChange = async (clientId: string, file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setPlayerIsError(true);
@@ -208,172 +248,164 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
       reader.readAsDataURL(file);
     });
 
-    if (mode === "create") {
-      setCreatePlayerDraft((prev) => ({ ...prev, photo: dataUrl }));
-    } else {
-      setEditPlayerDraft((prev) => ({ ...prev, photo: dataUrl }));
-    }
+    onChangePlayerField(clientId, { photo: dataUrl });
     setPlayerIsError(false);
     setPlayerMessage("");
   };
 
-  const onTogglePlayerPosition = (position: PositionValue, mode: "create" | "edit") => {
-    const updater = (draft: PlayerDraft): PlayerDraft => {
-      const exists = draft.position.includes(position);
-      const nextPositions = exists
-        ? draft.position.filter((item) => item !== position)
-        : [...draft.position, position];
-      return { ...draft, position: nextPositions };
-    };
-
-    if (mode === "create") {
-      setCreatePlayerDraft((prev) => updater(prev));
-      return;
-    }
-    setEditPlayerDraft((prev) => updater(prev));
+  const onTogglePlayerPosition = (clientId: string, position: PositionValue) => {
+    setPlayerForms((prev) =>
+      prev.map((item) => {
+        if (item.clientId !== clientId) return item;
+        const exists = item.position.includes(position);
+        const nextPositions = exists ? item.position.filter((p) => p !== position) : [...item.position, position];
+        return { ...item, position: nextPositions, errorMessage: "" };
+      }),
+    );
   };
 
-  const onCreatePlayer = async (e: FormEvent) => {
-    e.preventDefault();
-    if (playerSubmitting) return;
-    if (!createPlayerDraft.name.trim()) {
-      setPlayerIsError(true);
-      setPlayerMessage("선수 이름은 필수입니다.");
-      return;
-    }
-    if (!createPlayerDraft.style) {
-      setPlayerIsError(true);
-      setPlayerMessage("선수 스타일을 선택해주세요.");
-      return;
-    }
+  const samePositions = (a: PositionValue[], b: PositionValue[]) => {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((item, idx) => item === sortedB[idx]);
+  };
 
-    setPlayerSubmitting(true);
-    setPlayerMessage("");
-    setPlayerIsError(false);
+  const validatePlayerForms = () => {
+    const normalizedNames = new Map<string, string[]>();
+    const nextErrors = new Map<string, string>();
+    const activeForms = playerForms.filter((item) => !item.removed);
 
-    try {
-      const res = await fetch("/api/player/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          teamId,
-          name: createPlayerDraft.name.trim(),
-          photo: createPlayerDraft.photo,
-          style: createPlayerDraft.style,
-          position: initialTeam.sportType === "SOCCER" ? createPlayerDraft.position : [],
-        }),
-      });
-      const data = (await res.json()) as { player?: Player; message?: string };
-
-      if (!res.ok) {
-        setPlayerIsError(true);
-        setPlayerMessage(data.message ?? "선수 추가에 실패했습니다.");
-        setPlayerSubmitting(false);
+    activeForms.forEach((item) => {
+      const trimmedName = item.name.trim();
+      if (!trimmedName) {
+        nextErrors.set(item.clientId, "선수 이름은 필수입니다.");
         return;
       }
-      if (data.player) {
-        setPlayers((prev) => [...prev, data.player as Player]);
-      }
-      setShowCreatePlayerForm(false);
-      setCreatePlayerDraft(makeEmptyPlayerDraft());
-      setPlayerIsError(false);
-      setPlayerMessage("선수가 추가되었습니다.");
-    } catch {
-      setPlayerIsError(true);
-      setPlayerMessage("선수 추가 중 오류가 발생했습니다.");
-    } finally {
-      setPlayerSubmitting(false);
-    }
-  };
-
-  const onStartEditPlayer = (player: Player) => {
-    setEditingPlayerId(player.id);
-    setEditPlayerDraft(makePlayerDraft(player));
-    setPlayerIsError(false);
-    setPlayerMessage("");
-  };
-
-  const onUpdatePlayer = async (e: FormEvent) => {
-    e.preventDefault();
-    if (playerSubmitting || !editingPlayerId) return;
-    if (!editPlayerDraft.name.trim()) {
-      setPlayerIsError(true);
-      setPlayerMessage("선수 이름은 필수입니다.");
-      return;
-    }
-    if (!editPlayerDraft.style) {
-      setPlayerIsError(true);
-      setPlayerMessage("선수 스타일을 선택해주세요.");
-      return;
-    }
-
-    setPlayerSubmitting(true);
-    setPlayerMessage("");
-    setPlayerIsError(false);
-
-    try {
-      const res = await fetch(`/api/player/${editingPlayerId}/update`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editPlayerDraft.name.trim(),
-          photo: editPlayerDraft.photo,
-          style: editPlayerDraft.style,
-          position: initialTeam.sportType === "SOCCER" ? editPlayerDraft.position : [],
-        }),
-      });
-      const data = (await res.json()) as { player?: Player; message?: string };
-
-      if (!res.ok) {
-        setPlayerIsError(true);
-        setPlayerMessage(data.message ?? "선수 수정에 실패했습니다.");
-        setPlayerSubmitting(false);
+      if (!item.style) {
+        nextErrors.set(item.clientId, "선수 스타일을 선택해주세요.");
         return;
       }
-      if (data.player) {
-        setPlayers((prev) => prev.map((player) => (player.id === data.player?.id ? (data.player as Player) : player)));
+      if (initialTeam.sportType === "SOCCER" && item.position.length === 0) {
+        nextErrors.set(item.clientId, "축구팀은 최소 1개 이상의 포지션을 선택해주세요.");
+        return;
       }
-      setEditingPlayerId(null);
-      setEditPlayerDraft(makeEmptyPlayerDraft());
-      setPlayerIsError(false);
-      setPlayerMessage("선수 정보가 저장되었습니다.");
-    } catch {
-      setPlayerIsError(true);
-      setPlayerMessage("선수 수정 중 오류가 발생했습니다.");
-    } finally {
-      setPlayerSubmitting(false);
-    }
+      const key = trimmedName.toLowerCase();
+      const ids = normalizedNames.get(key) ?? [];
+      ids.push(item.clientId);
+      normalizedNames.set(key, ids);
+    });
+
+    normalizedNames.forEach((ids) => {
+      if (ids.length <= 1) return;
+      ids.forEach((id) => {
+        nextErrors.set(id, "같은 팀 내 선수 이름은 중복될 수 없습니다.");
+      });
+    });
+
+    setPlayerForms((prev) =>
+      prev.map((item) => ({
+        ...item,
+        errorMessage: nextErrors.get(item.clientId) ?? "",
+      })),
+    );
+
+    return nextErrors.size === 0;
   };
 
-  const onDeactivatePlayer = async (playerId: string) => {
+  const onSavePlayers = async () => {
     if (playerSubmitting) return;
 
-    setPlayerSubmitting(true);
-    setPlayerMessage("");
-    setPlayerIsError(false);
-    try {
-      const res = await fetch(`/api/player/${playerId}/deactivate`, {
-        method: "PUT",
-      });
-      const data = (await res.json()) as { message?: string };
-
-      if (!res.ok) {
-        setPlayerIsError(true);
-        setPlayerMessage(data.message ?? "선수 삭제에 실패했습니다.");
-        setPlayerSubmitting(false);
-        return;
-      }
-
-      setPlayers((prev) => prev.filter((player) => player.id !== playerId));
-      if (editingPlayerId === playerId) {
-        setEditingPlayerId(null);
-        setEditPlayerDraft(makeEmptyPlayerDraft());
-      }
-      setPlayerIsError(false);
-      setPlayerMessage("선수가 비활성화되었습니다.");
-    } catch {
+    const isValid = validatePlayerForms();
+    if (!isValid) {
       setPlayerIsError(true);
-      setPlayerMessage("선수 삭제 중 오류가 발생했습니다.");
+      setPlayerMessage("입력값을 확인해주세요.");
+      return;
+    }
+
+    setPlayerSubmitting(true);
+    setPlayerIsError(false);
+    setPlayerMessage("");
+
+    try {
+      const nextPlayerForms: PlayerFormItem[] = [];
+
+      for (const item of playerForms) {
+        const name = item.name.trim();
+        const position = initialTeam.sportType === "SOCCER" ? item.position : [];
+
+        if (item.removed) {
+          if (item.playerId) {
+            const deactivateRes = await fetch(`/api/player/${item.playerId}/deactivate`, { method: "PUT" });
+            const deactivateData = (await deactivateRes.json()) as { message?: string };
+            if (!deactivateRes.ok) {
+              throw new Error(deactivateData.message ?? "선수 비활성화에 실패했습니다.");
+            }
+          }
+          continue;
+        }
+
+        if (!item.playerId) {
+          const createRes = await fetch("/api/player/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              teamId,
+              name,
+              photo: item.photo,
+              style: item.style,
+              position,
+            }),
+          });
+          const createData = (await createRes.json()) as { player?: Player; message?: string };
+          if (!createRes.ok || !createData.player) {
+            throw new Error(createData.message ?? "선수 추가에 실패했습니다.");
+          }
+          nextPlayerForms.push(makePlayerFormItem(createData.player));
+          continue;
+        }
+
+        const original = item.original;
+        const isChanged =
+          !original ||
+          original.name !== name ||
+          original.photo !== item.photo ||
+          original.style !== item.style ||
+          !samePositions(original.position, position);
+
+        if (!isChanged) {
+          nextPlayerForms.push({
+            ...item,
+            name,
+            position,
+            errorMessage: "",
+          });
+          continue;
+        }
+
+        const updateRes = await fetch(`/api/player/${item.playerId}/update`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            photo: item.photo,
+            style: item.style,
+            position,
+          }),
+        });
+        const updateData = (await updateRes.json()) as { player?: Player; message?: string };
+        if (!updateRes.ok || !updateData.player) {
+          throw new Error(updateData.message ?? "선수 수정에 실패했습니다.");
+        }
+        nextPlayerForms.push(makePlayerFormItem(updateData.player));
+      }
+
+      setPlayerForms(nextPlayerForms);
+      setPlayerIsError(false);
+      setPlayerMessage("저장 완료!");
+    } catch (error) {
+      setPlayerIsError(true);
+      setPlayerMessage(error instanceof Error ? error.message : "선수 저장 중 오류가 발생했습니다.");
     } finally {
       setPlayerSubmitting(false);
     }
@@ -489,261 +521,133 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
             <h2 className="text-lg font-semibold text-zinc-900">선수관리</h2>
             <button
               type="button"
-              onClick={() => {
-                setShowCreatePlayerForm((prev) => !prev);
-                setCreatePlayerDraft(makeEmptyPlayerDraft());
-                setEditingPlayerId(null);
-              }}
+              onClick={onAddPlayerContainer}
               className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
             >
               선수 추가
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            {showCreatePlayerForm ? (
-              <form onSubmit={onCreatePlayer} className="w-full max-w-[260px] rounded-xl border border-zinc-300 bg-zinc-50 p-4">
-                <p className="mb-3 text-sm font-semibold text-zinc-900">선수 추가</p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">선수 사진</label>
-                    {createPlayerDraft.photo ? (
-                      <button
-                        type="button"
-                        onClick={() => createFileInputRef.current?.click()}
-                        className="mb-2 block h-36 w-28 overflow-hidden rounded-lg"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={createPlayerDraft.photo}
-                          alt="선수 사진 미리보기"
-                          className="h-36 w-28 rounded-lg object-cover"
-                        />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => createFileInputRef.current?.click()}
-                        className="mb-2 flex h-36 w-28 items-center justify-center rounded-lg bg-zinc-200 text-xs text-zinc-600"
-                      >
-                        선수 사진
-                      </button>
-                    )}
-                    <input
-                      ref={createFileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => void onPlayerPhotoFileChange(e.target.files?.[0], "create")}
-                      className="block w-full text-xs text-zinc-700"
-                    />
-                  </div>
+          <p className="mb-4 whitespace-pre-line text-sm text-zinc-600">
+            선수 사진은 있으면 좋고 없어도 괜찮습니다.
+            {"\n"}이름은 팀 내에서 중복될 수 없으며 동명이인의 경우 따로 구분해 주세요.
+            {"\n"}선수 스타일은 포지션과 무관하게 그 선수의 성향을 선택해 주세요.
+            {"\n"}공격 상황에서 적극적인 침투와 움직임을 보여주는 선수는 공격형,
+            {"\n"}수비 상황에서 빠른 커버와 압박을 보여주는 선수는 수비형,
+            {"\n"}두 가지를 균형있게 수행하면 밸런스형,
+            {"\n"}든든한 수문장은 골키퍼를 선택해 주세요.
+            {"\n"}(축구팀의 경우 포지션은 복수 선택 가능합니다.)
+          </p>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">선수 이름</label>
-                    <input
-                      value={createPlayerDraft.name}
-                      onChange={(e) => setCreatePlayerDraft((prev) => ({ ...prev, name: e.target.value }))}
-                      className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-sm text-zinc-900"
-                    />
-                  </div>
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => void onSavePlayers()}
+              className="h-10 rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white"
+            >
+              {playerSubmitting ? "저장 중..." : "저장하기"}
+            </button>
+          </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">선수 스타일</label>
-                    <select
-                      value={createPlayerDraft.style}
-                      onChange={(e) =>
-                        setCreatePlayerDraft((prev) => ({
-                          ...prev,
-                          style: e.target.value as PlayerStyleValue | "",
-                        }))
-                      }
-                      className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-sm text-zinc-900"
+          <div className="space-y-4">
+            {playerForms.map((item) => {
+              if (item.removed) return null;
+              return (
+                <div
+                  key={item.clientId}
+                  className={`rounded-xl border bg-zinc-50 p-4 ${item.errorMessage ? "border-red-400" : "border-zinc-300"}`}
+                >
+                  <div className="mb-3 flex items-start justify-between">
+                    <p className="text-sm font-semibold text-zinc-900">{item.playerId ? "기존 선수" : "새 선수"}</p>
+                    <button
+                      type="button"
+                      onClick={() => onRemovePlayerContainer(item.clientId)}
+                      className="rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                      aria-label="선수 삭제"
                     >
-                      <option value="">선택</option>
-                      {PLAYER_STYLE_OPTIONS.map((style) => (
-                        <option key={style} value={style}>
-                          {style}
-                        </option>
-                      ))}
-                    </select>
+                      🗑️
+                    </button>
                   </div>
 
-                  {initialTeam.sportType === "SOCCER" ? (
+                  <div className="space-y-3">
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-zinc-600">선수 포지션</label>
-                      <div className="flex flex-wrap gap-2">
-                        {POSITION_OPTIONS.map((position) => {
-                          const checked = createPlayerDraft.position.includes(position);
-                          return (
-                            <button
-                              key={position}
-                              type="button"
-                              onClick={() => onTogglePlayerPosition(position, "create")}
-                              className={`rounded-md border px-2 py-1 text-xs ${
-                                checked ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"
-                              }`}
-                            >
-                              {position}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <button type="submit" className="h-10 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white">
-                    저장
-                  </button>
-                </div>
-              </form>
-            ) : null}
-
-            {players.map((player) => {
-              if (editingPlayerId === player.id) {
-                return (
-                  <form
-                    key={player.id}
-                    onSubmit={onUpdatePlayer}
-                    className="w-full max-w-[260px] rounded-xl border border-zinc-300 bg-zinc-50 p-4"
-                  >
-                    <p className="mb-3 text-sm font-semibold text-zinc-900">선수 수정</p>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-zinc-600">선수 사진</label>
-                        {editPlayerDraft.photo ? (
-                          <button
-                            type="button"
-                            onClick={() => editFileInputRef.current?.click()}
-                            className="mb-2 block h-36 w-28 overflow-hidden rounded-lg"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={editPlayerDraft.photo}
-                              alt="선수 사진 미리보기"
-                              className="h-36 w-28 rounded-lg object-cover"
-                            />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => editFileInputRef.current?.click()}
-                            className="mb-2 flex h-36 w-28 items-center justify-center rounded-lg bg-zinc-200 text-xs text-zinc-600"
-                          >
-                            선수 사진
-                          </button>
-                        )}
-                        <input
-                          ref={editFileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => void onPlayerPhotoFileChange(e.target.files?.[0], "edit")}
-                          className="block w-full text-xs text-zinc-700"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-zinc-600">선수 이름</label>
-                        <input
-                          value={editPlayerDraft.name}
-                          onChange={(e) => setEditPlayerDraft((prev) => ({ ...prev, name: e.target.value }))}
-                          className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-sm text-zinc-900"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-zinc-600">선수 스타일</label>
-                        <select
-                          value={editPlayerDraft.style}
-                          onChange={(e) =>
-                            setEditPlayerDraft((prev) => ({
-                              ...prev,
-                              style: e.target.value as PlayerStyleValue | "",
-                            }))
-                          }
-                          className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-sm text-zinc-900"
-                        >
-                          <option value="">선택</option>
-                          {PLAYER_STYLE_OPTIONS.map((style) => (
-                            <option key={style} value={style}>
-                              {style}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {initialTeam.sportType === "SOCCER" ? (
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-zinc-600">선수 포지션</label>
-                          <div className="flex flex-wrap gap-2">
-                            {POSITION_OPTIONS.map((position) => {
-                              const checked = editPlayerDraft.position.includes(position);
-                              return (
-                                <button
-                                  key={position}
-                                  type="button"
-                                  onClick={() => onTogglePlayerPosition(position, "edit")}
-                                  className={`rounded-md border px-2 py-1 text-xs ${
-                                    checked
-                                      ? "border-zinc-900 bg-zinc-900 text-white"
-                                      : "border-zinc-300 text-zinc-700"
-                                  }`}
-                                >
-                                  {position}
-                                </button>
-                              );
-                            })}
-                          </div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">선수 사진</label>
+                      {item.photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.photo} alt="선수 사진 미리보기" className="mb-2 h-36 w-28 rounded-lg object-cover" />
+                      ) : (
+                        <div className="mb-2 flex h-36 w-28 items-center justify-center rounded-lg bg-zinc-200 text-xs text-zinc-500">
+                          No Photo
                         </div>
-                      ) : null}
-
-                      <div className="grid grid-cols-2 gap-2">
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => void onPlayerPhotoFileChange(item.clientId, e.target.files?.[0])}
+                        className="block w-full text-xs text-zinc-700"
+                      />
+                      {item.photo ? (
                         <button
                           type="button"
-                          onClick={() => {
-                            setEditingPlayerId(null);
-                            setEditPlayerDraft(makeEmptyPlayerDraft());
-                          }}
-                          className="h-10 rounded-lg border border-zinc-300 text-sm font-medium text-zinc-700"
+                          onClick={() => onChangePlayerField(item.clientId, { photo: null })}
+                          className="mt-2 rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
                         >
-                          취소
+                          사진 제거
                         </button>
-                        <button type="submit" className="h-10 rounded-lg bg-zinc-900 text-sm font-semibold text-white">
-                          저장
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => void onDeactivatePlayer(player.id)}
-                        className="h-10 w-full rounded-lg border border-red-300 text-sm font-medium text-red-600"
-                      >
-                        삭제(비활성화)
-                      </button>
+                      ) : null}
                     </div>
-                  </form>
-                );
-              }
 
-              return (
-                <button
-                  key={player.id}
-                  type="button"
-                  onClick={() => onStartEditPlayer(player)}
-                  className="w-full max-w-[260px] rounded-xl border border-zinc-200 bg-white p-4 text-left transition hover:border-zinc-300"
-                >
-                  {player.photo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={player.photo} alt={`${player.name} 사진`} className="h-36 w-28 rounded-lg object-cover" />
-                  ) : (
-                    <div className="flex h-36 w-28 items-center justify-center rounded-lg bg-zinc-200 text-xs text-zinc-500">
-                      No Photo
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">선수 이름</label>
+                      <input
+                        value={item.name}
+                        onChange={(e) => onChangePlayerField(item.clientId, { name: e.target.value })}
+                        className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-sm text-zinc-900"
+                      />
                     </div>
-                  )}
-                  <p className="mt-3 text-sm font-semibold text-zinc-900">{player.name}</p>
-                  <p className="mt-1 text-xs text-zinc-600">{playerStyleLabel(player.style)}</p>
-                  {initialTeam.sportType === "SOCCER" && player.position.length > 0 ? (
-                    <p className="mt-1 text-xs text-zinc-500">{player.position.map((item) => positionLabel(item)).join(", ")}</p>
-                  ) : null}
-                </button>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">선수 스타일</label>
+                      <select
+                        value={item.style}
+                        onChange={(e) => onChangePlayerField(item.clientId, { style: e.target.value as PlayerStyleValue | "" })}
+                        className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-sm text-zinc-900"
+                      >
+                        <option value="">선택</option>
+                        {PLAYER_STYLE_OPTIONS.map((style) => (
+                          <option key={style} value={style}>
+                            {playerStyleLabel(style)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {initialTeam.sportType === "SOCCER" ? (
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">선수 포지션</label>
+                        <div className="flex flex-wrap gap-2">
+                          {POSITION_OPTIONS.map((position) => {
+                            const checked = item.position.includes(position);
+                            return (
+                              <button
+                                key={position}
+                                type="button"
+                                onClick={() => onTogglePlayerPosition(item.clientId, position)}
+                                className={`rounded-md border px-2 py-1 text-xs ${
+                                  checked ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"
+                                }`}
+                              >
+                                {positionLabel(position)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {item.errorMessage ? <p className="mt-3 text-sm text-red-600">{item.errorMessage}</p> : null}
+                </div>
               );
             })}
           </div>
