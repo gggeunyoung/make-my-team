@@ -134,6 +134,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
   const [playerSubmitting, setPlayerSubmitting] = useState(false);
   const [playerMessage, setPlayerMessage] = useState("");
   const [playerIsError, setPlayerIsError] = useState(false);
+  const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
 
   const units = useMemo(() => calculateTeamNameUnits(name), [name]);
   const progress = Math.min((units / 30) * 100, 100);
@@ -534,20 +535,14 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-zinc-900">선수관리</h2>
-              <span
-                className="cursor-help text-sm text-zinc-500"
-                title={`선수 사진은 있으면 좋고 없어도 괜찮습니다.
-이름은 팀 내에서 중복될 수 없으며 동명이인의 경우 따로 구분해 주세요.
-선수 스타일은 포지션과 무관하게 그 선수의 성향을 선택해 주세요.
-공격 상황에서 적극적인 침투와 움직임을 보여주는 선수는 공격형,
-수비 상황에서 빠른 커버와 압박을 보여주는 선수는 수비형,
-두 가지를 균형있게 수행하면 밸런스형,
-든든한 수문장은 골키퍼를 선택해 주세요.
-(축구팀의 경우 포지션은 복수 선택 가능합니다.)`}
-                aria-label="선수관리 안내"
+              <button
+                type="button"
+                onClick={() => setShowPlayerInfoModal(true)}
+                className="text-sm text-zinc-500"
+                aria-label="선수관리 안내 열기"
               >
                 ℹ️
-              </span>
+              </button>
             </div>
             <button
               type="button"
@@ -673,6 +668,34 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
 
           {playerMessage ? (
             <p className={`mt-4 text-sm ${playerIsError ? "text-red-600" : "text-emerald-600"}`}>{playerMessage}</p>
+          ) : null}
+
+          {showPlayerInfoModal ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-zinc-900">선수관리 안내</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlayerInfoModal(false)}
+                    className="rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100"
+                    aria-label="안내 닫기"
+                  >
+                    X
+                  </button>
+                </div>
+                <p className="whitespace-pre-line text-sm text-zinc-700">
+                  선수 사진은 있으면 좋고 없어도 괜찮습니다.
+                  {"\n"}이름은 팀 내에서 중복될 수 없으며 동명이인의 경우 따로 구분해 주세요.
+                  {"\n"}선수 스타일은 포지션과 무관하게 그 선수의 성향을 선택해 주세요.
+                  {"\n"}공격 상황에서 적극적인 침투와 움직임을 보여주는 선수는 공격형,
+                  {"\n"}수비 상황에서 빠른 커버와 압박을 보여주는 선수는 수비형,
+                  {"\n"}두 가지를 균형있게 수행하면 밸런스형,
+                  {"\n"}든든한 수문장은 골키퍼를 선택해 주세요.
+                  {"\n"}(축구팀의 경우 포지션은 복수 선택 가능합니다.)
+                </p>
+              </div>
+            </div>
           ) : null}
         </section>
       );
