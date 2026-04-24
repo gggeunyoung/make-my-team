@@ -132,8 +132,8 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
             </div>
           ) : (
             teams.map((team) => (
-              <Link key={team.id} href={`/team/${team.id}`} className="block">
-                <article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:shadow">
+              <Link key={team.id} href={`/team/${team.id}`} className="block h-full">
+                <article className="min-h-[220px] rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:shadow">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {team.logo ? (
