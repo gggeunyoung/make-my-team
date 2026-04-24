@@ -32,3 +32,18 @@ export type Team = Prisma.TeamModel
  * 
  */
 export type Player = Prisma.PlayerModel
+/**
+ * Model Match
+ * 
+ */
+export type Match = Prisma.MatchModel
+/**
+ * Model Game
+ * 
+ */
+export type Game = Prisma.GameModel
+/**
+ * Model GoalEvent
+ * 
+ */
+export type GoalEvent = Prisma.GoalEventModel

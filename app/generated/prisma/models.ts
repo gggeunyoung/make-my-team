@@ -11,4 +11,7 @@
 export type * from './models/User'
 export type * from './models/Team'
 export type * from './models/Player'
+export type * from './models/Match'
+export type * from './models/Game'
+export type * from './models/GoalEvent'
 export type * from './commonInputTypes'

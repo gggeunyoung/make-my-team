@@ -53,7 +53,10 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Team: 'Team',
-  Player: 'Player'
+  Player: 'Player',
+  Match: 'Match',
+  Game: 'Game',
+  GoalEvent: 'GoalEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -115,6 +118,63 @@ export const PlayerScalarFieldEnum = {
 } as const
 
 export type PlayerScalarFieldEnum = (typeof PlayerScalarFieldEnum)[keyof typeof PlayerScalarFieldEnum]
+
+
+export const MatchScalarFieldEnum = {
+  id: 'id',
+  teamId: 'teamId',
+  opponent_name: 'opponent_name',
+  opponent_level: 'opponent_level',
+  date: 'date',
+  attendees: 'attendees',
+  total_score_us: 'total_score_us',
+  total_score_them: 'total_score_them',
+  total_result: 'total_result',
+  count_win: 'count_win',
+  count_draw: 'count_draw',
+  count_loss: 'count_loss',
+  is_tournament: 'is_tournament',
+  is_pso: 'is_pso',
+  pso_result: 'pso_result',
+  stage: 'stage',
+  tournamentId: 'tournamentId',
+  mom: 'mom',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MatchScalarFieldEnum = (typeof MatchScalarFieldEnum)[keyof typeof MatchScalarFieldEnum]
+
+
+export const GameScalarFieldEnum = {
+  id: 'id',
+  matchId: 'matchId',
+  score_us: 'score_us',
+  score_them: 'score_them',
+  result: 'result',
+  players_all: 'players_all',
+  players_fw: 'players_fw',
+  players_mf: 'players_mf',
+  players_df: 'players_df',
+  players_gk: 'players_gk',
+  createdAt: 'createdAt'
+} as const
+
+export type GameScalarFieldEnum = (typeof GameScalarFieldEnum)[keyof typeof GameScalarFieldEnum]
+
+
+export const GoalEventScalarFieldEnum = {
+  id: 'id',
+  gameId: 'gameId',
+  matchId: 'matchId',
+  scorer_id: 'scorer_id',
+  scorer_type: 'scorer_type',
+  assister_id: 'assister_id',
+  assister_type: 'assister_type',
+  createdAt: 'createdAt'
+} as const
+
+export type GoalEventScalarFieldEnum = (typeof GoalEventScalarFieldEnum)[keyof typeof GoalEventScalarFieldEnum]
 
 
 export const SortOrder = {

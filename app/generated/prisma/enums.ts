@@ -43,3 +43,48 @@ export const Position = {
 } as const
 
 export type Position = (typeof Position)[keyof typeof Position]
+
+
+export const OpponentLevel = {
+  TOP: 'TOP',
+  HIGH: 'HIGH',
+  MID: 'MID',
+  LOW: 'LOW'
+} as const
+
+export type OpponentLevel = (typeof OpponentLevel)[keyof typeof OpponentLevel]
+
+
+export const MatchResult = {
+  WIN: 'WIN',
+  DRAW: 'DRAW',
+  LOSS: 'LOSS'
+} as const
+
+export type MatchResult = (typeof MatchResult)[keyof typeof MatchResult]
+
+
+export const RecordType = {
+  PLAYER: 'PLAYER',
+  MERCENARY: 'MERCENARY',
+  OWN_GOAL: 'OWN_GOAL',
+  NONE: 'NONE'
+} as const
+
+export type RecordType = (typeof RecordType)[keyof typeof RecordType]
+
+
+export const PsoResult = {
+  WIN: 'WIN',
+  LOSS: 'LOSS'
+} as const
+
+export type PsoResult = (typeof PsoResult)[keyof typeof PsoResult]
+
+
+export const TournamentStage = {
+  PRELIMINARY: 'PRELIMINARY',
+  MAIN: 'MAIN'
+} as const
+
+export type TournamentStage = (typeof TournamentStage)[keyof typeof TournamentStage]

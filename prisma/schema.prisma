@@ -40,6 +40,7 @@ model Team {
   operator    String
   admins      String[]
   players     Player[]
+  matches     Match[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -59,6 +60,61 @@ model Player {
   @@index([teamId, createdAt])
 }
 
+model Match {
+  id               String           @id @default(cuid())
+  teamId           String
+  team             Team             @relation(fields: [teamId], references: [id])
+  opponent_name    String
+  opponent_level   OpponentLevel
+  date             DateTime
+  attendees        String[] // Player id 목록
+  total_score_us   Int              @default(0)
+  total_score_them Int              @default(0)
+  total_result     MatchResult
+  count_win        Int              @default(0)
+  count_draw       Int              @default(0)
+  count_loss       Int              @default(0)
+  is_tournament    Boolean          @default(false)
+  is_pso           Boolean          @default(false)
+  pso_result       PsoResult?
+  stage            TournamentStage?
+  tournamentId     String?
+  mom              String? // Player id
+  games            Game[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([teamId, date])
+}
+
+model Game {
+  id          String      @id @default(cuid())
+  matchId     String
+  match       Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  score_us    Int
+  score_them  Int
+  result      MatchResult
+  players_all String[]
+  players_fw  String[]
+  players_mf  String[]
+  players_df  String[]
+  players_gk  String[]
+  goal_events GoalEvent[]
+  createdAt   DateTime    @default(now())
+}
+
+model GoalEvent {
+  id            String     @id @default(cuid())
+  gameId        String
+  game          Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  matchId       String
+  scorer_id     String?
+  scorer_type   RecordType
+  assister_id   String?
+  assister_type RecordType
+  createdAt     DateTime   @default(now())
+}
+
 enum SportType {
   FUTSAL
   SOCCER
@@ -76,4 +132,34 @@ enum Position {
   MF
   DF
   GK
+}
+
+enum OpponentLevel {
+  TOP
+  HIGH
+  MID
+  LOW
+}
+
+enum MatchResult {
+  WIN
+  DRAW
+  LOSS
+}
+
+enum RecordType {
+  PLAYER
+  MERCENARY
+  OWN_GOAL
+  NONE
+}
+
+enum PsoResult {
+  WIN
+  LOSS
+}
+
+enum TournamentStage {
+  PRELIMINARY
+  MAIN
 }
