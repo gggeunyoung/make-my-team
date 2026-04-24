@@ -117,9 +117,11 @@ export async function POST(req: Request) {
     if (!isNonNegativeInteger(game.scoreUs) || !isNonNegativeInteger(game.scoreThem)) {
       return Response.json({ message: `${gameIdx + 1}경기 스코어를 확인해주세요.` }, { status: 400 });
     }
+    const scoreUs = game.scoreUs as number;
+    const scoreThem = game.scoreThem as number;
 
     const goals = game.goals ?? [];
-    if (goals.length !== game.scoreUs) {
+    if (goals.length !== scoreUs) {
       return Response.json(
         { message: `${gameIdx + 1}경기 우리팀 득점 수와 골 기록 수가 일치하지 않습니다.` },
         { status: 400 },
@@ -177,9 +179,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const result = calcResult(game.scoreUs, game.scoreThem);
-    totalUs += game.scoreUs;
-    totalThem += game.scoreThem;
+    const result = calcResult(scoreUs, scoreThem);
+    totalUs += scoreUs;
+    totalThem += scoreThem;
     if (result === "WIN") countWin += 1;
     if (result === "DRAW") countDraw += 1;
     if (result === "LOSS") countLoss += 1;
