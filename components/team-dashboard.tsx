@@ -1,5 +1,6 @@
 "use client";
 
+import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -180,7 +181,9 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [teamName, setTeamName] = useState("");
   const [sportType, setSportType] = useState<"" | "FUTSAL" | "SOCCER">("");
-  const [logo, setLogo] = useState<string | null>(null);
+  const [logoPublicUrl, setLogoPublicUrl] = useState<string | null>(null);
+  const [logoPreviewIsImage, setLogoPreviewIsImage] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [color, setColor] = useState("#2563eb");
   const [errorMessage, setErrorMessage] = useState("");
   const [nameLimitMessage, setNameLimitMessage] = useState("");
@@ -191,19 +194,59 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
   const onFileChange = async (file: File | undefined) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setErrorMessage("이미지 파일만 업로드할 수 있습니다.");
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setErrorMessage("NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY 가 필요합니다.");
       return;
     }
 
-    const reader = new FileReader();
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      reader.onload = () => resolve(String(reader.result ?? ""));
-      reader.onerror = () => reject(new Error("파일을 읽지 못했습니다."));
-      reader.readAsDataURL(file);
-    });
-    setLogo(dataUrl);
+    setLogoUploading(true);
     setErrorMessage("");
+    setLogoPublicUrl(null);
+
+    try {
+      const signRes = await fetch("/api/team/logo-signed-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contentType: file.type || undefined,
+          fileName: file.name,
+        }),
+      });
+      const signData = (await signRes.json()) as {
+        bucket?: string;
+        path?: string;
+        token?: string;
+        publicUrl?: string;
+        message?: string;
+      };
+
+      if (!signRes.ok) {
+        setErrorMessage(signData.message ?? "업로드 준비에 실패했습니다.");
+        return;
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { error: uploadError } = await supabase.storage
+        .from(signData.bucket!)
+        .uploadToSignedUrl(signData.path!, signData.token!, file, {
+          contentType: file.type || "application/octet-stream",
+        });
+
+      if (uploadError) {
+        setErrorMessage("파일 업로드에 실패했습니다.");
+        return;
+      }
+
+      setLogoPublicUrl(signData.publicUrl!);
+      setLogoPreviewIsImage(file.type.startsWith("image/"));
+    } catch {
+      setErrorMessage("파일 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setLogoUploading(false);
+    }
   };
 
   const onTeamNameChange = (nextName: string) => {
@@ -240,7 +283,7 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
       body: JSON.stringify({
         name: teamName.trim(),
         sportType,
-        logo,
+        logo: logoPublicUrl,
         color,
       }),
     });
@@ -274,32 +317,62 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">팀 로고</label>
-            {logo ? (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mb-2 block h-28 w-28 overflow-hidden rounded-xl"
-                aria-label="팀 로고 업로드"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logo} alt="업로드된 팀 로고 미리보기" className="h-28 w-28 rounded-xl object-cover" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mb-2 flex h-28 w-28 items-center justify-center rounded-xl bg-zinc-200 text-sm text-zinc-600"
-                aria-label="팀 로고 업로드"
-              >
-                팀 로고
-              </button>
-            )}
+            <div className="relative mb-2 h-28 w-28">
+              {logoPublicUrl && logoPreviewIsImage ? (
+                <button
+                  type="button"
+                  onClick={() => !logoUploading && fileInputRef.current?.click()}
+                  disabled={logoUploading}
+                  className="block h-28 w-28 overflow-hidden rounded-xl disabled:opacity-60"
+                  aria-label="팀 로고 업로드"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logoPublicUrl}
+                    alt="업로드된 팀 로고 미리보기"
+                    className="h-28 w-28 rounded-xl object-cover"
+                  />
+                </button>
+              ) : logoPublicUrl ? (
+                <button
+                  type="button"
+                  onClick={() => !logoUploading && fileInputRef.current?.click()}
+                  disabled={logoUploading}
+                  className="flex h-28 w-28 items-center justify-center rounded-xl bg-zinc-200 px-2 text-center text-xs font-medium text-zinc-700 disabled:opacity-60"
+                  aria-label="팀 로고 파일 교체"
+                >
+                  파일 업로드됨
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => !logoUploading && fileInputRef.current?.click()}
+                  disabled={logoUploading}
+                  className="flex h-28 w-28 items-center justify-center rounded-xl bg-zinc-200 text-sm text-zinc-600 disabled:opacity-60"
+                  aria-label="팀 로고 업로드"
+                >
+                  팀 로고
+                </button>
+              )}
+              {logoUploading ? (
+                <div
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/45 text-center text-xs font-semibold text-white"
+                  aria-live="polite"
+                >
+                  업로드 중...
+                </div>
+              ) : null}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
-              onChange={(e) => void onFileChange(e.target.files?.[0])}
-              className="block w-full text-sm text-zinc-700"
+              disabled={logoUploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                void onFileChange(f);
+                e.target.value = "";
+              }}
+              className="block w-full text-sm text-zinc-700 disabled:opacity-60"
             />
           </div>
 
@@ -358,7 +431,7 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || logoUploading}
             className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white disabled:opacity-60"
           >
             {submitting ? "생성 중..." : "팀 생성하기"}

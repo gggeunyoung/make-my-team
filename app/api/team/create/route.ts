@@ -1,25 +1,11 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateTeamNameUnits, generateAccessCode, validateSportType } from "@/lib/team";
-import sharp from "sharp";
+import { getTeamLogoBucket } from "@/lib/supabase-service";
+import { isValidTeamLogoPublicUrl } from "@/lib/team-logo-url";
 
 function isHexColor(color: string) {
   return /^#[0-9a-fA-F]{6}$/.test(color);
-}
-
-async function convertLogoToJpegDataUrl(logo: string) {
-  const match = logo.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/);
-  if (!match) {
-    throw new Error("INVALID_IMAGE_DATA");
-  }
-
-  const imageBuffer = Buffer.from(match[1], "base64");
-  const converted = await sharp(imageBuffer)
-    .resize(1024, 1024, { fit: "cover" })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-
-  return `data:image/jpeg;base64,${converted.toString("base64")}`;
 }
 
 export async function POST(req: Request) {
@@ -41,6 +27,7 @@ export async function POST(req: Request) {
   const rawLogo = body.logo?.trim() || null;
   const color = body.color?.trim() ?? "";
   const units = calculateTeamNameUnits(name);
+  const logoBucket = getTeamLogoBucket();
 
   if (units < 2 || units > 30) {
     return Response.json({ message: "팀 이름은 2~30 Unit이어야 합니다." }, { status: 400 });
@@ -54,11 +41,10 @@ export async function POST(req: Request) {
 
   let logo: string | null = null;
   if (rawLogo) {
-    try {
-      logo = await convertLogoToJpegDataUrl(rawLogo);
-    } catch {
-      return Response.json({ message: "이미지 변환에 실패했습니다." }, { status: 400 });
+    if (!isValidTeamLogoPublicUrl(rawLogo, logoBucket)) {
+      return Response.json({ message: "유효한 팀 로고 URL이 아닙니다." }, { status: 400 });
     }
+    logo = rawLogo;
   }
 
   for (let i = 0; i < 10; i += 1) {
