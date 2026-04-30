@@ -28,8 +28,10 @@ type GoalForm = {
   id: string;
   scorerId: string | null;
   scorerType: RecordType;
+  scorerQuery: string;
   assisterId: string | null;
   assisterType: RecordType;
+  assisterQuery: string;
 };
 
 type GameForm = {
@@ -50,7 +52,12 @@ type MatchManagerTabProps = {
   players: PlayerLite[];
 };
 
-const OPPONENT_LEVEL_OPTIONS: OpponentLevel[] = ["TOP", "HIGH", "MID", "LOW"];
+/** 일반 매치 폼: DB에는 HIGH/MID/LOW 영문 그대로 저장, 표시만 한글 */
+const OPPONENT_LEVEL_FORM_OPTIONS: Array<{ value: "HIGH" | "MID" | "LOW"; label: string }> = [
+  { value: "HIGH", label: "상" },
+  { value: "MID", label: "중" },
+  { value: "LOW", label: "하" },
+];
 
 function todayIso() {
   const now = new Date();
@@ -65,8 +72,10 @@ function createGoalForm(): GoalForm {
     id: crypto.randomUUID(),
     scorerId: null,
     scorerType: "PLAYER",
+    scorerQuery: "",
     assisterId: null,
     assisterType: "PLAYER",
+    assisterQuery: "",
   };
 }
 
@@ -85,8 +94,8 @@ function createGameForm(attendees: string[]): GameForm {
 }
 
 function levelLabel(level: OpponentLevel) {
-  if (level === "TOP") return "상";
-  if (level === "HIGH") return "중상";
+  if (level === "TOP") return "최상";
+  if (level === "HIGH") return "상";
   if (level === "MID") return "중";
   return "하";
 }
@@ -95,6 +104,88 @@ function resultLabel(result: MatchListItem["total_result"]) {
   if (result === "WIN") return "승";
   if (result === "DRAW") return "무";
   return "패";
+}
+
+function resultAccentClass(result: MatchListItem["total_result"]) {
+  if (result === "WIN") return "text-emerald-600 font-bold text-lg";
+  if (result === "DRAW") return "text-zinc-500 font-bold text-lg";
+  return "text-red-600 font-bold text-lg";
+}
+
+const GOAL_COUNT_MISMATCH_MSG = "우리팀 득점 수와 골 기록 수가 일치하지 않습니다.";
+
+function isGoalCountMismatch(game: GameForm): boolean {
+  const parsed = toInt(game.scoreUs);
+  if (parsed === null) {
+    return game.goals.length > 0;
+  }
+  return parsed !== game.goals.length;
+}
+
+type AttendeeOption = { id: string; name: string };
+
+function PlayerNameSuggestInput({
+  value,
+  disabled,
+  attendeePlayers,
+  onCommit,
+  placeholder,
+}: {
+  value: string;
+  disabled: boolean;
+  attendeePlayers: AttendeeOption[];
+  onCommit: (text: string, resolvedId: string | null) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const suggestions = useMemo(() => {
+    const q = value.trim();
+    if (!q) return [];
+    return attendeePlayers.filter((p) => p.name.includes(q));
+  }, [value, attendeePlayers]);
+
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        disabled={disabled}
+        placeholder={placeholder}
+        onFocus={() => setOpen(true)}
+        onBlur={() => {
+          window.setTimeout(() => setOpen(false), 120);
+        }}
+        onChange={(e) => {
+          const text = e.target.value;
+          const resolved =
+            text.trim() && attendeePlayers.some((p) => p.name === text.trim())
+              ? attendeePlayers.find((p) => p.name === text.trim())!.id
+              : null;
+          onCommit(text, resolved);
+        }}
+        className="h-9 w-full rounded border border-zinc-300 px-2 text-sm disabled:bg-zinc-100"
+        autoComplete="off"
+      />
+      {open && !disabled && suggestions.length > 0 ? (
+        <ul className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border border-zinc-200 bg-white py-1 text-sm shadow-md">
+          {suggestions.map((p) => (
+            <li key={p.id}>
+              <button
+                type="button"
+                className="w-full px-2 py-1.5 text-left hover:bg-zinc-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onCommit(p.name, p.id);
+                  setOpen(false);
+                }}
+              >
+                {p.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
 }
 
 function toInt(value: string) {
@@ -124,17 +215,8 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     () => attendees.map((id) => ({ id, name: playerMap.get(id) ?? "알 수 없는 선수" })),
     [attendees, playerMap],
   );
-  const attendeeNameSet = useMemo(() => new Set(attendeePlayers.map((player) => player.name)), [attendeePlayers]);
 
-  const playerNameById = (playerId: string | null) => {
-    if (!playerId) return "";
-    return playerMap.get(playerId) ?? "";
-  };
-
-  const playerIdByName = (name: string) => {
-    if (!name.trim() || !attendeeNameSet.has(name.trim())) return null;
-    return attendeePlayers.find((player) => player.name === name.trim())?.id ?? null;
-  };
+  const [matchInfoOpen, setMatchInfoOpen] = useState(false);
 
   const fetchMatches = useCallback(async () => {
     setLoading(true);
@@ -270,7 +352,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
       const scoreUs = toInt(game.scoreUs);
       const scoreThem = toInt(game.scoreThem);
       if (scoreUs === null || scoreThem === null) return `${gameIdx + 1}경기 스코어를 입력해주세요.`;
-      if (scoreUs !== game.goals.length) return `${gameIdx + 1}경기 우리팀 득점 수와 골 기록 수가 일치해야 합니다.`;
+      if (scoreUs !== game.goals.length) return `${gameIdx + 1}경기: ${GOAL_COUNT_MISMATCH_MSG}`;
 
       if (sportType === "SOCCER") {
         const deployed = [...game.playersFw, ...game.playersMf, ...game.playersDf, ...game.playersGk];
@@ -366,8 +448,18 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   if (view === "LIST") {
     return (
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900">매칭관리</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-zinc-900">매칭관리</h2>
+            <button
+              type="button"
+              aria-label="매칭관리 안내"
+              onClick={() => setMatchInfoOpen(true)}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-xs font-semibold text-zinc-600 hover:bg-zinc-100"
+            >
+              ?
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setView("FORM")}
@@ -380,34 +472,67 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         {errorMessage ? <p className="mb-3 text-sm text-red-600">{errorMessage}</p> : null}
         {loading ? <p className="text-sm text-zinc-500">불러오는 중...</p> : null}
 
-        <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-[70vh] overflow-y-auto pr-1">
           {!loading && matches.length === 0 ? <p className="text-sm text-zinc-500">등록된 매치가 없습니다.</p> : null}
-          {matches.map((match) => (
-            <article key={match.id} className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1 text-sm text-zinc-700">
-                  <p className="text-base font-semibold text-zinc-900">VS {match.opponent_name}</p>
-                  <p>총합 결과: {resultLabel(match.total_result)}</p>
-                  <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
-                  <p>상대팀 수준: {levelLabel(match.opponent_level)}</p>
-                  <p>
-                    총합 스코어: {match.total_score_us} : {match.total_score_them}
-                  </p>
-                  <p>
-                    종합 승무패: {match.count_win}승 {match.count_draw}무 {match.count_loss}패
-                  </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {matches.map((match) => (
+              <article key={match.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-zinc-900">VS {match.opponent_name}</p>
+                    <button
+                      type="button"
+                      onClick={() => void deleteMatch(match.id)}
+                      className="shrink-0 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <p className={resultAccentClass(match.total_result)}>{resultLabel(match.total_result)}</p>
+                  <div className="space-y-0.5 text-xs text-zinc-600">
+                    <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
+                    <p>상대팀 수준: {levelLabel(match.opponent_level)}</p>
+                    <p>
+                      스코어: {match.total_score_us} : {match.total_score_them}
+                    </p>
+                    <p>
+                      종합 승무패: {match.count_win}승 {match.count_draw}무 {match.count_loss}패
+                    </p>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void deleteMatch(match.id)}
-                  className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                >
-                  삭제
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
         </div>
+
+        {matchInfoOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="match-info-title"
+            onClick={() => setMatchInfoOpen(false)}
+          >
+            <div
+              className="max-w-sm rounded-xl border border-zinc-200 bg-white p-5 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 id="match-info-title" className="mb-3 text-sm font-semibold text-zinc-900">
+                안내
+              </h3>
+              <p className="text-sm leading-relaxed text-zinc-700">
+                경기 기록 계산 때문에 수정이 불가능합니다. 잘못 입력했을 경우, 삭제 후 다시 입력해주세요.
+              </p>
+              <button
+                type="button"
+                onClick={() => setMatchInfoOpen(false)}
+                className="mt-4 h-10 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
     );
   }
@@ -430,31 +555,43 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
 
       <div className="space-y-6">
         <div className="rounded-lg border border-zinc-200 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">매치 시트</h3>
+          <h3 className="mb-2 text-sm font-semibold text-zinc-900">매치 시트</h3>
+          <p className="mb-3 text-xs leading-relaxed text-zinc-600">
+            아래 항목을 채운 뒤 출석 선수를 선택하고 경기 시트를 추가하세요. 저장 값은 서버에 영문 코드로 기록됩니다.
+          </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <input
-              value={opponentName}
-              onChange={(e) => setOpponentName(e.target.value)}
-              placeholder="상대팀 이름(필수)"
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-            />
-            <input
-              type="date"
-              value={matchDate}
-              onChange={(e) => setMatchDate(e.target.value)}
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-            />
-            <select
-              value={opponentLevel}
-              onChange={(e) => setOpponentLevel(e.target.value as OpponentLevel)}
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-            >
-              {OPPONENT_LEVEL_OPTIONS.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
+              <span>상대팀 이름</span>
+              <input
+                value={opponentName}
+                onChange={(e) => setOpponentName(e.target.value)}
+                placeholder="필수 입력"
+                className="h-10 rounded-md border border-zinc-300 px-3 text-sm font-normal"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
+              <span>경기 날짜</span>
+              <input
+                type="date"
+                value={matchDate}
+                onChange={(e) => setMatchDate(e.target.value)}
+                className="h-10 rounded-md border border-zinc-300 px-3 text-sm font-normal"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
+              <span>상대팀 수준</span>
+              <select
+                value={opponentLevel}
+                onChange={(e) => setOpponentLevel(e.target.value as OpponentLevel)}
+                className="h-10 rounded-md border border-zinc-300 px-3 text-sm font-normal"
+              >
+                {OPPONENT_LEVEL_FORM_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <p className="mb-2 mt-4 text-sm font-medium text-zinc-700">출석 선수 선택</p>
@@ -489,15 +626,21 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
           const assignedSoccer = new Set([...game.playersFw, ...game.playersMf, ...game.playersDf, ...game.playersGk]);
           const soccerLeftPlayers = attendeePlayers.filter((player) => !assignedSoccer.has(player.id));
           const gameNo = gameIndex + 1;
+          const goalMismatch = isGoalCountMismatch(game);
 
           return (
-            <div key={game.id} className="rounded-lg border border-zinc-200 p-4">
+            <div
+              key={game.id}
+              className={`rounded-lg p-4 ${goalMismatch ? "border-2 border-red-500 bg-red-50" : "border border-zinc-200"}`}
+            >
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-zinc-900">{gameNo}경기</h3>
                 <button type="button" onClick={() => removeGame(game.id)} className="text-sm text-red-600">
                   X
                 </button>
               </div>
+
+              {goalMismatch ? <p className="mb-3 text-sm font-medium text-red-600">{GOAL_COUNT_MISMATCH_MSG}</p> : null}
 
               <div className="mb-3 grid gap-3 md:grid-cols-2">
                 <input
@@ -631,19 +774,15 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="space-y-2 rounded-md bg-zinc-50 p-2">
                         <p className="text-xs font-semibold text-zinc-700">득점자</p>
-                        <input
-                          list={`scorer-${game.id}`}
-                          value={playerNameById(goal.scorerId)}
+                        <PlayerNameSuggestInput
+                          value={goal.scorerQuery}
                           disabled={goal.scorerType !== "PLAYER"}
-                          onChange={(e) => updateGoal(game.id, goal.id, { scorerId: playerIdByName(e.target.value) })}
+                          attendeePlayers={attendeePlayers}
                           placeholder="선수 이름 입력"
-                          className="h-9 w-full rounded border border-zinc-300 px-2 text-sm disabled:bg-zinc-100"
+                          onCommit={(text, resolvedId) =>
+                            updateGoal(game.id, goal.id, { scorerQuery: text, scorerId: resolvedId })
+                          }
                         />
-                        <datalist id={`scorer-${game.id}`}>
-                          {attendeePlayers.map((player) => (
-                            <option key={player.id} value={player.name} />
-                          ))}
-                        </datalist>
                         <div className="flex gap-3 text-xs text-zinc-700">
                           <label className="inline-flex items-center gap-1">
                             <input
@@ -654,6 +793,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                                 updateGoal(game.id, goal.id, {
                                   scorerType: checked ? "MERCENARY" : "PLAYER",
                                   scorerId: null,
+                                  scorerQuery: "",
                                 });
                               }}
                             />
@@ -668,8 +808,10 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                                 updateGoal(game.id, goal.id, {
                                   scorerType: checked ? "OWN_GOAL" : "PLAYER",
                                   scorerId: null,
+                                  scorerQuery: "",
                                   assisterType: checked ? "NONE" : goal.assisterType,
                                   assisterId: checked ? null : goal.assisterId,
+                                  assisterQuery: checked ? "" : goal.assisterQuery,
                                 });
                               }}
                             />
@@ -680,19 +822,15 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
 
                       <div className="space-y-2 rounded-md bg-zinc-50 p-2">
                         <p className="text-xs font-semibold text-zinc-700">도움자</p>
-                        <input
-                          list={`assister-${game.id}`}
-                          value={playerNameById(goal.assisterId)}
+                        <PlayerNameSuggestInput
+                          value={goal.assisterQuery}
                           disabled={goal.assisterType !== "PLAYER" || goal.scorerType === "OWN_GOAL"}
-                          onChange={(e) => updateGoal(game.id, goal.id, { assisterId: playerIdByName(e.target.value) })}
+                          attendeePlayers={attendeePlayers}
                           placeholder="선수 이름 입력"
-                          className="h-9 w-full rounded border border-zinc-300 px-2 text-sm disabled:bg-zinc-100"
+                          onCommit={(text, resolvedId) =>
+                            updateGoal(game.id, goal.id, { assisterQuery: text, assisterId: resolvedId })
+                          }
                         />
-                        <datalist id={`assister-${game.id}`}>
-                          {attendeePlayers.map((player) => (
-                            <option key={player.id} value={player.name} />
-                          ))}
-                        </datalist>
                         <div className="flex gap-3 text-xs text-zinc-700">
                           <label className="inline-flex items-center gap-1">
                             <input
@@ -704,6 +842,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                                 updateGoal(game.id, goal.id, {
                                   assisterType: checked ? "MERCENARY" : "PLAYER",
                                   assisterId: null,
+                                  assisterQuery: "",
                                 });
                               }}
                             />
@@ -718,6 +857,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                                 updateGoal(game.id, goal.id, {
                                   assisterType: checked ? "NONE" : "PLAYER",
                                   assisterId: null,
+                                  assisterQuery: "",
                                 });
                               }}
                             />
