@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { uploadPlayerPhotoToSupabase } from "@/lib/player-server";
 import { isPlayerStyle, normalizePlayerName, parsePlayerPositions } from "@/lib/player";
+import { revalidatePath } from "next/cache";
 
 type CreatePlayerBody = {
   teamId?: string;
@@ -80,6 +81,9 @@ export async function POST(req: Request) {
       isActive: true,
     },
   });
+
+  revalidatePath("/team/[teamId]", "page");
+  revalidatePath("/team/[teamId]/manager", "page");
 
   return Response.json({
     player: {

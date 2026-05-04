@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
@@ -121,6 +122,7 @@ function sortPlayerFormsNewest(forms: PlayerFormItem[]) {
 }
 
 export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeMenu, setActiveMenu] = useState<ManagerTab>("MATCH");
   const [name, setName] = useState(initialTeam.name);
@@ -477,6 +479,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
       setPlayerForms(sortPlayerFormsNewest(nextPlayerForms));
       setPlayerIsError(false);
       setPlayerMessage("저장 완료!");
+      router.refresh();
     } catch (error) {
       setPlayerIsError(true);
       setPlayerMessage(error instanceof Error ? error.message : "선수 저장 중 오류가 발생했습니다.");
