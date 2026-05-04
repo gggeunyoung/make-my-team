@@ -115,8 +115,13 @@ function makePlayerFormItem(player?: Player): PlayerFormItem {
 
 function sortPlayerFormsNewest(forms: PlayerFormItem[]) {
   return [...forms].sort((a, b) => {
-    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    const aNew = !a.createdAt;
+    const bNew = !b.createdAt;
+    if (aNew && bNew) return 0;
+    if (aNew) return -1;
+    if (bNew) return 1;
+    const timeA = new Date(a.createdAt!).getTime();
+    const timeB = new Date(b.createdAt!).getTime();
     return timeB - timeA;
   });
 }
@@ -286,7 +291,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
   };
 
   const onAddPlayerContainer = () => {
-    setPlayerForms((prev) => [...prev, makePlayerFormItem()]);
+    setPlayerForms((prev) => [makePlayerFormItem(), ...prev]);
     setPlayerMessage("");
     setPlayerIsError(false);
   };

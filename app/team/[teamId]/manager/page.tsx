@@ -20,7 +20,7 @@ export default async function TeamManagerPage({ params }: TeamManagerPageProps) 
         teamId,
         isActive: true,
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -51,6 +51,7 @@ export default async function TeamManagerPage({ params }: TeamManagerPageProps) 
         photo: player.photo,
         style: player.style,
         position: player.position,
+        createdAt: player.createdAt.toISOString(),
       }))}
     />
   );
