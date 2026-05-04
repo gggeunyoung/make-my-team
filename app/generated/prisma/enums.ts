@@ -88,3 +88,14 @@ export const TournamentStage = {
 } as const
 
 export type TournamentStage = (typeof TournamentStage)[keyof typeof TournamentStage]
+
+
+export const TournamentResult = {
+  WINNER: 'WINNER',
+  RUNNER_UP: 'RUNNER_UP',
+  THIRD: 'THIRD',
+  SEMIFINAL: 'SEMIFINAL',
+  GROUP_STAGE: 'GROUP_STAGE'
+} as const
+
+export type TournamentResult = (typeof TournamentResult)[keyof typeof TournamentResult]

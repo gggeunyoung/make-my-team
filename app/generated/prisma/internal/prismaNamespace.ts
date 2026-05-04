@@ -386,6 +386,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Team: 'Team',
+  Tournament: 'Tournament',
   Player: 'Player',
   Match: 'Match',
   Game: 'Game',
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "team" | "player" | "match" | "game" | "goalEvent"
+    modelProps: "user" | "team" | "tournament" | "player" | "match" | "game" | "goalEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -554,6 +555,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TeamCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TeamCountAggregateOutputType> | number
+        }
+      }
+    }
+    Tournament: {
+      payload: Prisma.$TournamentPayload<ExtArgs>
+      fields: Prisma.TournamentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TournamentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TournamentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>
+        }
+        findFirst: {
+          args: Prisma.TournamentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TournamentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>
+        }
+        findMany: {
+          args: Prisma.TournamentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>[]
+        }
+        create: {
+          args: Prisma.TournamentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>
+        }
+        createMany: {
+          args: Prisma.TournamentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TournamentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>[]
+        }
+        delete: {
+          args: Prisma.TournamentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>
+        }
+        update: {
+          args: Prisma.TournamentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>
+        }
+        deleteMany: {
+          args: Prisma.TournamentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TournamentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TournamentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>[]
+        }
+        upsert: {
+          args: Prisma.TournamentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TournamentPayload>
+        }
+        aggregate: {
+          args: Prisma.TournamentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTournament>
+        }
+        groupBy: {
+          args: Prisma.TournamentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TournamentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TournamentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TournamentCountAggregateOutputType> | number
         }
       }
     }
@@ -922,6 +997,30 @@ export const TeamScalarFieldEnum = {
 export type TeamScalarFieldEnum = (typeof TeamScalarFieldEnum)[keyof typeof TeamScalarFieldEnum]
 
 
+export const TournamentScalarFieldEnum = {
+  id: 'id',
+  tournament_name: 'tournament_name',
+  tournament_result: 'tournament_result',
+  start_date: 'start_date',
+  finish_date: 'finish_date',
+  attendees: 'attendees',
+  pick_1st: 'pick_1st',
+  pick_2nd: 'pick_2nd',
+  pick_3rd: 'pick_3rd',
+  v_score1: 'v_score1',
+  v_score2: 'v_score2',
+  v_score3: 'v_score3',
+  v_score_others: 'v_score_others',
+  final_mvp: 'final_mvp',
+  is_completed: 'is_completed',
+  teamId: 'teamId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TournamentScalarFieldEnum = (typeof TournamentScalarFieldEnum)[keyof typeof TournamentScalarFieldEnum]
+
+
 export const PlayerScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1081,6 +1180,41 @@ export type ListEnumSportTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
+ * Reference to a field of type 'TournamentResult'
+ */
+export type EnumTournamentResultFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentResult'>
+    
+
+
+/**
+ * Reference to a field of type 'TournamentResult[]'
+ */
+export type ListEnumTournamentResultFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TournamentResult[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'Position[]'
  */
 export type ListEnumPositionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Position[]'>
@@ -1105,13 +1239,6 @@ export type EnumPlayerStyleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pris
  * Reference to a field of type 'PlayerStyle[]'
  */
 export type ListEnumPlayerStyleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlayerStyle[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1196,20 +1323,6 @@ export type EnumRecordTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prism
  * Reference to a field of type 'RecordType[]'
  */
 export type ListEnumRecordTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecordType[]'>
-    
-
-
-/**
- * Reference to a field of type 'Float'
- */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-/**
- * Reference to a field of type 'Float[]'
- */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1309,6 +1422,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   team?: Prisma.TeamOmit
+  tournament?: Prisma.TournamentOmit
   player?: Prisma.PlayerOmit
   match?: Prisma.MatchOmit
   game?: Prisma.GameOmit

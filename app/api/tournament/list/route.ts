@@ -22,23 +22,17 @@ export async function GET(req: Request) {
     return Response.json({ message: "접근 권한이 없습니다." }, { status: 403 });
   }
 
-  const matches = await prisma.match.findMany({
-    where: { teamId, is_tournament: false },
-    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+  const tournaments = await prisma.tournament.findMany({
+    where: { teamId, is_completed: true },
+    orderBy: [{ finish_date: "desc" }, { updatedAt: "desc" }],
     select: {
       id: true,
-      opponent_name: true,
-      opponent_level: true,
-      date: true,
-      total_score_us: true,
-      total_score_them: true,
-      total_result: true,
-      count_win: true,
-      count_draw: true,
-      count_loss: true,
-      createdAt: true,
+      tournament_name: true,
+      tournament_result: true,
+      start_date: true,
+      finish_date: true,
     },
   });
 
-  return Response.json({ matches });
+  return Response.json({ tournaments });
 }

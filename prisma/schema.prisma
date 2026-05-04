@@ -31,18 +31,44 @@ enum UserRole {
 }
 
 model Team {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   sport_type  SportType
   logo        String?
-  color       String?   // 팀 대표 색깔 (hex 코드)
-  access_code String    @unique
+  color       String? // 팀 대표 색깔 (hex 코드)
+  access_code String       @unique
   operator    String
   admins      String[]
   players     Player[]
   matches     Match[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  tournaments Tournament[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Tournament {
+  id                String            @id @default(cuid())
+  tournament_name   String?
+  tournament_result TournamentResult?
+  start_date        DateTime?
+  finish_date       DateTime?
+  attendees         String[]
+  pick_1st          String?
+  pick_2nd          String?
+  pick_3rd          String?
+  v_score1          Float?
+  v_score2          Float?
+  v_score3          Float?
+  v_score_others    Float?
+  final_mvp         String?
+  is_completed      Boolean           @default(false)
+  teamId            String
+  team              Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  matches           Match[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([teamId, is_completed])
 }
 
 model Player {
@@ -79,12 +105,14 @@ model Match {
   pso_result       PsoResult?
   stage            TournamentStage?
   tournamentId     String?
+  tournament       Tournament?      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   mom              String? // Player id
   games            Game[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   @@index([teamId, date])
+  @@index([tournamentId])
 }
 
 model Game {
@@ -162,4 +190,12 @@ enum PsoResult {
 enum TournamentStage {
   PRELIMINARY
   MAIN
+}
+
+enum TournamentResult {
+  WINNER
+  RUNNER_UP
+  THIRD
+  SEMIFINAL
+  GROUP_STAGE
 }

@@ -6,6 +6,7 @@ import { FormEvent, useMemo, useRef, useState } from "react";
 import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
 import { MatchManagerTab } from "@/components/match-manager-tab";
+import { TournamentManagerTab } from "@/components/tournament-manager-tab";
 
 type ManagerTab = "MATCH" | "PLAYER" | "TOURNAMENT" | "TEAM";
 type SportType = "FUTSAL" | "SOCCER";
@@ -798,7 +799,13 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
     }
 
     if (activeMenu === "TOURNAMENT") {
-      return <section className="rounded-xl border border-zinc-200 bg-white p-8" />;
+      return (
+        <TournamentManagerTab
+          teamId={teamId}
+          sportType={initialTeam.sportType}
+          players={initialPlayers.map((player) => ({ id: player.id, name: player.name }))}
+        />
+      );
     }
 
     return (

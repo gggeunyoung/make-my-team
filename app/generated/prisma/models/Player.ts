@@ -462,10 +462,6 @@ export type EnumPlayerStyleFieldUpdateOperationsInput = {
   set?: $Enums.PlayerStyle
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type PlayerCreateWithoutTeamInput = {
   id?: string
   name: string
