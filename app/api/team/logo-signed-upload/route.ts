@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import {
   ensureBucketConfigured,
   getSupabaseServiceRoleClient,
@@ -32,7 +33,29 @@ function extensionFromUpload(payload: { contentType?: string; fileName?: string 
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.email?.trim()) {
+  const email = session?.user?.email?.trim();
+  const provider = (session?.user as (typeof session.user & { provider?: string }) | undefined)?.provider;
+  const providerAccountId = (
+    session?.user as (typeof session.user & { providerAccountId?: string }) | undefined
+  )?.providerAccountId;
+  const resolvedEmail =
+    email ??
+    (
+      provider && providerAccountId
+        ? (
+            await prisma.user.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider,
+                  providerAccountId,
+                },
+              },
+              select: { email: true },
+            })
+          )?.email?.trim()
+        : undefined
+    );
+  if (!resolvedEmail) {
     return Response.json({ message: "로그인이 필요합니다." }, { status: 401 });
   }
 

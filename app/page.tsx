@@ -4,10 +4,15 @@ import { TeamDashboard } from "@/components/team-dashboard";
 
 export default async function Home() {
   const session = await auth();
-  const userEmail = session?.user?.email?.trim();
+  const user = session?.user as
+    | (NonNullable<typeof session>["user"] & { providerAccountId?: string })
+    | undefined;
+  const userEmail = user?.email?.trim();
+  const providerAccountId = user?.providerAccountId?.trim();
+  const dashboardIdentity = userEmail ?? providerAccountId;
 
-  if (userEmail) {
-    return <TeamDashboard userEmail={userEmail} userName={session?.user?.name} />;
+  if (dashboardIdentity) {
+    return <TeamDashboard userEmail={dashboardIdentity} userName={session?.user?.name} />;
   }
 
   return (

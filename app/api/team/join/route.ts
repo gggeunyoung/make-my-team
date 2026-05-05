@@ -4,7 +4,28 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   const session = await auth();
   const email = session?.user?.email?.trim();
-  if (!email) {
+  const provider = (session?.user as (typeof session.user & { provider?: string }) | undefined)?.provider;
+  const providerAccountId = (
+    session?.user as (typeof session.user & { providerAccountId?: string }) | undefined
+  )?.providerAccountId;
+  const resolvedEmail =
+    email ??
+    (
+      provider && providerAccountId
+        ? (
+            await prisma.user.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider,
+                  providerAccountId,
+                },
+              },
+              select: { email: true },
+            })
+          )?.email?.trim()
+        : undefined
+    );
+  if (!resolvedEmail) {
     return Response.json({ message: "로그인이 필요합니다." }, { status: 401 });
   }
 
@@ -26,7 +47,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const isMember = team.operator === email || team.admins.includes(email);
+  const isMember = team.operator === resolvedEmail || team.admins.includes(resolvedEmail);
 
   if (isMember) {
     return Response.json(
@@ -39,7 +60,7 @@ export async function POST(req: Request) {
     where: { id: team.id },
     data: {
       admins: {
-        push: email,
+        push: resolvedEmail,
       },
     },
   });

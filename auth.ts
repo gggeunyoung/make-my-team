@@ -136,10 +136,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
     async session({ session, token }) {
+      const provider = typeof token.provider === "string" ? token.provider : undefined;
+      const providerAccountId =
+        typeof token.providerAccountId === "string" ? token.providerAccountId : undefined;
+
+      if (session.user) {
+        (
+          session.user as typeof session.user & {
+            provider?: string;
+            providerAccountId?: string;
+          }
+        ).provider = provider;
+        (
+          session.user as typeof session.user & {
+            provider?: string;
+            providerAccountId?: string;
+          }
+        ).providerAccountId = providerAccountId;
+      }
+
       console.log("✅ [session 콜백] session:", session);
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, account }) {
+      if (account?.provider) {
+        token.provider = account.provider;
+      }
+      if (account?.providerAccountId) {
+        token.providerAccountId = account.providerAccountId;
+      }
       console.log("✅ [jwt 콜백] token:", token);
       return token;
     },

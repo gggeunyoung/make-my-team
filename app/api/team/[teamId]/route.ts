@@ -43,7 +43,28 @@ export async function PATCH(req: Request, context: RouteContext) {
   const { teamId } = await context.params;
   const session = await auth();
   const email = session?.user?.email?.trim();
-  if (!email) {
+  const provider = (session?.user as (typeof session.user & { provider?: string }) | undefined)?.provider;
+  const providerAccountId = (
+    session?.user as (typeof session.user & { providerAccountId?: string }) | undefined
+  )?.providerAccountId;
+  const resolvedEmail =
+    email ??
+    (
+      provider && providerAccountId
+        ? (
+            await prisma.user.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider,
+                  providerAccountId,
+                },
+              },
+              select: { email: true },
+            })
+          )?.email?.trim()
+        : undefined
+    );
+  if (!resolvedEmail) {
     return Response.json({ message: "로그인이 필요합니다." }, { status: 401 });
   }
 
@@ -53,7 +74,7 @@ export async function PATCH(req: Request, context: RouteContext) {
   if (!team) {
     return Response.json({ message: "팀을 찾을 수 없습니다." }, { status: 404 });
   }
-  if (!team.admins.includes(email)) {
+  if (!team.admins.includes(resolvedEmail)) {
     return Response.json({ message: "접근 권한이 없습니다." }, { status: 403 });
   }
 
