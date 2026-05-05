@@ -363,6 +363,12 @@ export function TournamentMatchRecordForm({
     }
     if (games.length < 1) return "경기 시트를 1개 이상 추가해주세요.";
 
+    const totalScoreUs = games.reduce((sum, game) => sum + (toInt(game.scoreUs) ?? 0), 0);
+    const totalScoreThem = games.reduce((sum, game) => sum + (toInt(game.scoreThem) ?? 0), 0);
+    if (isPso && totalScoreUs !== totalScoreThem) {
+      return "승부차기는 결과가 무승부일 때만 가능합니다";
+    }
+
     for (let gameIdx = 0; gameIdx < games.length; gameIdx += 1) {
       const game = games[gameIdx];
       const scoreUs = toInt(game.scoreUs);
@@ -467,6 +473,9 @@ export function TournamentMatchRecordForm({
 
   const dateMin = tournamentMeta.startDate || undefined;
   const dateMax = tournamentMeta.finishDate || undefined;
+  const totalScoreUs = games.reduce((sum, game) => sum + (toInt(game.scoreUs) ?? 0), 0);
+  const totalScoreThem = games.reduce((sum, game) => sum + (toInt(game.scoreThem) ?? 0), 0);
+  const isPsoScoreInvalid = isPso && games.length > 0 && totalScoreUs !== totalScoreThem;
 
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-6">
@@ -835,7 +844,12 @@ export function TournamentMatchRecordForm({
           );
         })}
 
-        {formMessage ? <p className={`text-sm ${formIsError ? "text-red-600" : "text-emerald-600"}`}>{formMessage}</p> : null}
+        {isPsoScoreInvalid ? (
+          <p className="text-sm text-red-600">승부차기는 결과가 무승부일 때만 가능합니다</p>
+        ) : null}
+        {formMessage && formMessage !== "승부차기는 결과가 무승부일 때만 가능합니다" ? (
+          <p className={`text-sm ${formIsError ? "text-red-600" : "text-emerald-600"}`}>{formMessage}</p>
+        ) : null}
 
         <button
           type="button"

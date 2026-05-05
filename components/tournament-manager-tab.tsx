@@ -34,7 +34,7 @@ type TournamentMatchRow = {
   count_loss: number;
   stage: "PRELIMINARY" | "MAIN" | null;
   is_pso: boolean;
-  pso_result: "WIN" | "LOSS" | null;
+  pso_result: "WIN" | "LOSS" | "PSO_WIN" | "PSO_LOSE" | null;
 };
 
 type DetailModel = {
@@ -100,6 +100,12 @@ function matchResultLabel(result: TournamentMatchRow["total_result"]) {
   if (result === "WIN") return "승";
   if (result === "DRAW") return "무";
   return "패";
+}
+
+function psoResultLabel(result: TournamentMatchRow["pso_result"]) {
+  if (result === "WIN" || result === "PSO_WIN") return "승부차기 승";
+  if (result === "LOSS" || result === "PSO_LOSE") return "승부차기 패";
+  return "승부차기";
 }
 
 function resultAccentClass(result: TournamentMatchRow["total_result"]) {
@@ -244,7 +250,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
         tournament_result: t.tournament_result ?? "",
         start_date: t.start_date ? t.start_date.slice(0, 10) : "",
         finish_date: t.finish_date ? t.finish_date.slice(0, 10) : "",
-        attendees: t.attendees,
+        attendees: t.attendees.length > 0 ? t.attendees : players.map((p) => p.id),
         pick_1st: t.pick_1st,
         pick_2nd: t.pick_2nd,
         pick_3rd: t.pick_3rd,
@@ -267,7 +273,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
       syncPick(t.pick_2nd, setPick2Query, setPick2Id);
       syncPick(t.pick_3rd, setPick3Query, setPick3Id);
     },
-    [playerMap],
+    [playerMap, players],
   );
 
   const fetchDetail = useCallback(
@@ -479,21 +485,6 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
     });
   };
 
-  const selectAllPlayers = () => {
-    if (!detail || detail.is_completed) return;
-    setDetail((prev) => (prev ? { ...prev, attendees: players.map((p) => p.id) } : prev));
-  };
-
-  const clearAttendees = () => {
-    if (!detail || detail.is_completed) return;
-    setDetail((prev) => {
-      if (!prev) return prev;
-      const blocked = new Set(prev.attendeeRemovalBlockedIds);
-      const cannotRemove = prev.attendees.filter((id) => blocked.has(id));
-      return { ...prev, attendees: cannotRemove };
-    });
-  };
-
   const deleteMatch = async (matchId: string) => {
     if (!detail || detail.is_completed) return;
     const ok = window.confirm("이 매치를 삭제할까요?");
@@ -550,20 +541,22 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
           <h2 className="text-lg font-semibold text-zinc-900">
             {view.mode === "view" ? "대회 조회" : "대회 입력"}
           </h2>
-          <button
-            type="button"
-            onClick={() => {
-              setView({ type: "LIST" });
-              setDetail(null);
-            }}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700"
-          >
-            {view.mode === "view" ? "목록으로" : "← 목록으로"}
-          </button>
+          {view.mode === "view" ? (
+            <button
+              type="button"
+              onClick={() => {
+                setView({ type: "LIST" });
+                setDetail(null);
+              }}
+              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700"
+            >
+              목록으로
+            </button>
+          ) : null}
         </div>
 
         {detailLoading ? <p className="text-sm text-zinc-500">불러오는 중...</p> : null}
-        {!detailLoading && detailMessage ? (
+        {!detailLoading && detailMessage && !detailIsError ? (
           <p className={`mb-3 text-sm ${detailIsError ? "text-red-600" : "text-emerald-600"}`}>{detailMessage}</p>
         ) : null}
 
@@ -603,7 +596,9 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                             [{tournamentStageLabel(m.stage)}] VS {m.opponent_name}
                           </p>
                         </div>
-                        <p className={resultAccentClass(m.total_result)}>{matchResultLabel(m.total_result)}</p>
+                        <p className={m.is_pso ? "text-violet-600 font-bold text-lg" : resultAccentClass(m.total_result)}>
+                          {m.is_pso ? psoResultLabel(m.pso_result) : matchResultLabel(m.total_result)}
+                        </p>
                         <div className="space-y-0.5 text-xs text-zinc-600">
                           <p>매치 날짜: {new Date(m.date).toLocaleDateString("ko-KR")}</p>
                           <p>상대팀 수준: {opponentLevelLabel(m.opponent_level)}</p>
@@ -644,7 +639,9 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                       onChange={(e) =>
                         setDetail({ ...detail, tournament_result: e.target.value as DetailModel["tournament_result"] })
                       }
-                      className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
+                      className={`h-10 rounded-md border border-zinc-300 px-3 ${
+                        detail.tournament_result ? "text-base font-bold" : "text-sm font-normal"
+                      }`}
                       disabled={detail.is_completed}
                     >
                       <option value="">선택</option>
@@ -680,22 +677,6 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                 <div className="mt-4">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <p className="text-sm font-medium text-zinc-900">참여 선수</p>
-                    <button
-                      type="button"
-                      onClick={selectAllPlayers}
-                      className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
-                      disabled={detail.is_completed}
-                    >
-                      전체 선택
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearAttendees}
-                      className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
-                      disabled={detail.is_completed}
-                    >
-                      선택 초기화
-                    </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {players.map((p) => {
@@ -764,7 +745,9 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                             </button>
                           ) : null}
                         </div>
-                        <p className={resultAccentClass(m.total_result)}>{matchResultLabel(m.total_result)}</p>
+                        <p className={m.is_pso ? "text-violet-600 font-bold text-lg" : resultAccentClass(m.total_result)}>
+                          {m.is_pso ? psoResultLabel(m.pso_result) : matchResultLabel(m.total_result)}
+                        </p>
                         <div className="space-y-0.5 text-xs text-zinc-600">
                           <p>매치 날짜: {new Date(m.date).toLocaleDateString("ko-KR")}</p>
                           <p>상대팀 수준: {opponentLevelLabel(m.opponent_level)}</p>
@@ -831,12 +814,15 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
 
               {!detail.is_completed ? (
                 <div className="flex flex-wrap gap-3">
+                  {detailMessage && detailIsError ? (
+                    <p className="w-full text-sm text-red-600">{detailMessage}</p>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => void onCancelDraft()}
                     className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700"
                   >
-                    등록 취소
+                    등록취소
                   </button>
                   <button
                     type="button"
