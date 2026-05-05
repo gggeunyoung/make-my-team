@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getSessionIdentity } from "@/lib/session";
 import { calculateTeamNameUnits } from "@/lib/team";
 import { getTeamLogoBucket } from "@/lib/supabase-service";
 import { isValidTeamLogoPublicUrl } from "@/lib/team-logo-url";
@@ -45,11 +46,7 @@ export async function PATCH(req: Request, context: RouteContext) {
   if (!session) {
     return Response.json({ message: "로그인이 필요합니다." }, { status: 401 });
   }
-  const email = session?.user?.email?.trim();
-  const provider = (session?.user as (typeof session.user & { provider?: string }) | undefined)?.provider;
-  const providerAccountId = (
-    session?.user as (typeof session.user & { providerAccountId?: string }) | undefined
-  )?.providerAccountId;
+  const { email, provider, providerAccountId } = getSessionIdentity(session);
   const resolvedEmail =
     email ??
     (

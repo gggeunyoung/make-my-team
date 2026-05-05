@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getSessionIdentity } from "@/lib/session";
 import {
   ensureBucketConfigured,
   getSupabaseServiceRoleClient,
@@ -33,11 +34,7 @@ function extensionFromUpload(payload: { contentType?: string; fileName?: string 
 
 export async function POST(req: Request) {
   const session = await auth();
-  const email = session?.user?.email?.trim();
-  const provider = (session?.user as (typeof session.user & { provider?: string }) | undefined)?.provider;
-  const providerAccountId = (
-    session?.user as (typeof session.user & { providerAccountId?: string }) | undefined
-  )?.providerAccountId;
+  const { email, provider, providerAccountId } = getSessionIdentity(session);
   const resolvedEmail =
     email ??
     (
