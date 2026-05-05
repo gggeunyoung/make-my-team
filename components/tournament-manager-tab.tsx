@@ -114,6 +114,12 @@ function resultAccentClass(result: TournamentMatchRow["total_result"]) {
   return "text-red-600 font-bold text-lg";
 }
 
+function psoResultAccentClass(result: TournamentMatchRow["pso_result"]) {
+  if (result === "WIN" || result === "PSO_WIN") return resultAccentClass("WIN");
+  if (result === "LOSS" || result === "PSO_LOSE") return resultAccentClass("LOSS");
+  return "text-zinc-500 font-bold text-lg";
+}
+
 type AttendeeOption = { id: string; name: string };
 
 function PlayerNameSuggestInput({
@@ -596,7 +602,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                             [{tournamentStageLabel(m.stage)}] VS {m.opponent_name}
                           </p>
                         </div>
-                        <p className={m.is_pso ? "text-violet-600 font-bold text-lg" : resultAccentClass(m.total_result)}>
+                        <p className={m.is_pso ? psoResultAccentClass(m.pso_result) : resultAccentClass(m.total_result)}>
                           {m.is_pso ? psoResultLabel(m.pso_result) : matchResultLabel(m.total_result)}
                         </p>
                         <div className="space-y-0.5 text-xs text-zinc-600">
@@ -639,9 +645,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                       onChange={(e) =>
                         setDetail({ ...detail, tournament_result: e.target.value as DetailModel["tournament_result"] })
                       }
-                      className={`h-10 rounded-md border border-zinc-300 px-3 ${
-                        detail.tournament_result ? "text-base font-bold" : "text-sm font-normal"
-                      }`}
+                      className="h-10 rounded-md border border-zinc-300 px-3 text-sm font-normal"
                       disabled={detail.is_completed}
                     >
                       <option value="">선택</option>
@@ -651,6 +655,9 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                       <option value="SEMIFINAL">{tournamentResultLabel("SEMIFINAL")}</option>
                       <option value="GROUP_STAGE">{tournamentResultLabel("GROUP_STAGE")}</option>
                     </select>
+                    <p className="text-lg font-bold text-zinc-900">
+                      {detail.tournament_result ? tournamentResultLabel(detail.tournament_result) : "-"}
+                    </p>
                   </label>
                   <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
                     시작일
@@ -723,9 +730,13 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                     매치 추가
                   </button>
                 </div>
-                {!detail.start_date || !detail.finish_date ? (
-                  <p className="mb-3 text-xs text-zinc-600">대회 기간을 먼저 입력해주세요.</p>
-                ) : null}
+                <p
+                  className={`mb-3 text-xs ${
+                    !detail.start_date || !detail.finish_date ? "text-zinc-600" : "text-transparent"
+                  }`}
+                >
+                  대회 기간을 먼저 입력해주세요.
+                </p>
 
                 <div className="grid gap-3 md:grid-cols-2">
                   {detail.matches.map((m) => (
@@ -745,8 +756,8 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                             </button>
                           ) : null}
                         </div>
-                        <p className={m.is_pso ? "text-violet-600 font-bold text-lg" : resultAccentClass(m.total_result)}>
-                          {m.is_pso ? psoResultLabel(m.pso_result) : matchResultLabel(m.total_result)}
+                        <p className={m.is_pso ? "text-transparent font-bold text-lg" : resultAccentClass(m.total_result)}>
+                          {m.is_pso ? "\u00A0" : matchResultLabel(m.total_result)}
                         </p>
                         <div className="space-y-0.5 text-xs text-zinc-600">
                           <p>매치 날짜: {new Date(m.date).toLocaleDateString("ko-KR")}</p>
@@ -870,10 +881,8 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                 onClick={() => setView({ type: "DETAIL", tournamentId: item.id, mode: "view" })}
                 className="flex-1 text-left"
               >
-                <p className="text-sm font-semibold text-zinc-900">{item.tournament_name?.trim() || "(이름 없음)"}</p>
-                <p className="mt-1 text-xs text-zinc-600">
-                  결과: {tournamentResultLabel(item.tournament_result)}
-                </p>
+                <p className="text-lg font-bold text-zinc-900">결과: {tournamentResultLabel(item.tournament_result)}</p>
+                <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{item.tournament_name?.trim() || "(이름 없음)"}</p>
                 <p className="mt-1 text-xs text-zinc-600">기간: {formatPeriod(item.start_date, item.finish_date)}</p>
               </button>
               <button
