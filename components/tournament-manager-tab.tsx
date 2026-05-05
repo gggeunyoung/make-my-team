@@ -655,9 +655,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                       <option value="SEMIFINAL">{tournamentResultLabel("SEMIFINAL")}</option>
                       <option value="GROUP_STAGE">{tournamentResultLabel("GROUP_STAGE")}</option>
                     </select>
-                    <p className="text-lg font-bold text-zinc-900">
-                      {detail.tournament_result ? tournamentResultLabel(detail.tournament_result) : "-"}
-                    </p>
+                
                   </label>
                   <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
                     시작일
@@ -881,8 +879,8 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                 onClick={() => setView({ type: "DETAIL", tournamentId: item.id, mode: "view" })}
                 className="flex-1 text-left"
               >
-                <p className="text-lg font-bold text-zinc-900">결과: {tournamentResultLabel(item.tournament_result)}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{item.tournament_name?.trim() || "(이름 없음)"}</p>
+                <p className="text-lg font-bold text-zinc-900">{tournamentResultLabel(item.tournament_result)}</p>
+                <p className="mt-1 line-clamp-2 text-xs text-zinc-600">대회이름 : {item.tournament_name?.trim() || "(이름 없음)"}</p>
                 <p className="mt-1 text-xs text-zinc-600">기간: {formatPeriod(item.start_date, item.finish_date)}</p>
               </button>
               <button
