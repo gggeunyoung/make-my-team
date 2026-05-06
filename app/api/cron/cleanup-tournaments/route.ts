@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const cutoff = new Date(Date.now() - 1 * 60 * 1000);
 
   const result = await prisma.tournament.deleteMany({
     where: {
