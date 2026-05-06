@@ -6,6 +6,7 @@ type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
 type RecordType = "PLAYER" | "MERCENARY" | "OWN_GOAL" | "NONE";
 type TournamentStage = "PRELIMINARY" | "MAIN";
+type MatchFormatFutsal = "FIVE_VS_FIVE" | "SIX_VS_SIX";
 
 type PlayerLite = {
   id: string;
@@ -184,6 +185,7 @@ export function TournamentMatchRecordForm({
   const [opponentName, setOpponentName] = useState("");
   const [matchDate, setMatchDate] = useState(todayIso());
   const [opponentLevel, setOpponentLevel] = useState<OpponentLevel>("MID");
+  const [matchFormatFutsal, setMatchFormatFutsal] = useState<MatchFormatFutsal>("FIVE_VS_FIVE");
   const [stage, setStage] = useState<TournamentStage>("PRELIMINARY");
   const [isPso, setIsPso] = useState(false);
   const [psoResult, setPsoResult] = useState<"WIN" | "LOSS" | null>(null);
@@ -355,6 +357,7 @@ export function TournamentMatchRecordForm({
     if (matchDate < tournamentMeta.startDate || matchDate > tournamentMeta.finishDate) {
       return "경기 날짜는 대회 기간 안에서만 선택할 수 있습니다.";
     }
+    if (sportType === "FUTSAL" && !matchFormatFutsal) return "매치 포맷을 선택해주세요.";
     if (!stage) return "예선/본선 구분을 선택해주세요.";
     if (isPso && !psoResult) return "승부차기 결과를 선택해주세요.";
     if (attendees.length < 1) return "출석 선수는 최소 1명 이상 선택해주세요.";
@@ -411,6 +414,7 @@ export function TournamentMatchRecordForm({
         teamId,
         opponentName: opponentName.trim(),
         opponentLevel,
+        matchFormatFutsal: sportType === "FUTSAL" ? matchFormatFutsal : null,
         date: matchDate,
         attendees,
         stage,
@@ -535,6 +539,19 @@ export function TournamentMatchRecordForm({
                 ))}
               </select>
             </label>
+            {sportType === "FUTSAL" ? (
+              <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
+                <span>매치 포맷</span>
+                <select
+                  value={matchFormatFutsal}
+                  onChange={(e) => setMatchFormatFutsal(e.target.value as MatchFormatFutsal)}
+                  className="h-10 rounded-md border border-zinc-300 px-3 text-sm font-normal"
+                >
+                  <option value="FIVE_VS_FIVE">5vs5</option>
+                  <option value="SIX_VS_SIX">6vs6</option>
+                </select>
+              </label>
+            ) : null}
           </div>
 
           <div className="mt-4 rounded-md border border-zinc-200 p-3">

@@ -1052,6 +1052,7 @@ export const MatchScalarFieldEnum = {
   is_tournament: 'is_tournament',
   is_pso: 'is_pso',
   pso_result: 'pso_result',
+  match_format_futsal: 'match_format_futsal',
   stage: 'stage',
   tournamentId: 'tournamentId',
   mom: 'mom',
@@ -1295,6 +1296,20 @@ export type EnumPsoResultFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
  * Reference to a field of type 'PsoResult[]'
  */
 export type ListEnumPsoResultFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PsoResult[]'>
+    
+
+
+/**
+ * Reference to a field of type 'MatchFormatFutsal'
+ */
+export type EnumMatchFormatFutsalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MatchFormatFutsal'>
+    
+
+
+/**
+ * Reference to a field of type 'MatchFormatFutsal[]'
+ */
+export type ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MatchFormatFutsal[]'>
     
 
 

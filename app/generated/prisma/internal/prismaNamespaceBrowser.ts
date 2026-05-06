@@ -161,6 +161,7 @@ export const MatchScalarFieldEnum = {
   is_tournament: 'is_tournament',
   is_pso: 'is_pso',
   pso_result: 'pso_result',
+  match_format_futsal: 'match_format_futsal',
   stage: 'stage',
   tournamentId: 'tournamentId',
   mom: 'mom',

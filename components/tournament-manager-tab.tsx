@@ -5,6 +5,7 @@ import { validateTournamentCompletePayload } from "@/lib/tournament-complete-val
 import { TournamentMatchRecordForm } from "@/components/tournament-match-record-form";
 
 type SportType = "FUTSAL" | "SOCCER";
+type MatchFormatFutsal = "FIVE_VS_FIVE" | "SIX_VS_SIX";
 
 type PlayerLite = {
   id: string;
@@ -35,6 +36,7 @@ type TournamentMatchRow = {
   stage: "PRELIMINARY" | "MAIN" | null;
   is_pso: boolean;
   pso_result: "WIN" | "LOSS" | "PSO_WIN" | "PSO_LOSE" | null;
+  match_format_futsal: MatchFormatFutsal | null;
 };
 
 type DetailModel = {
@@ -118,6 +120,12 @@ function psoResultAccentClass(result: TournamentMatchRow["pso_result"]) {
   if (result === "WIN" || result === "PSO_WIN") return resultAccentClass("WIN");
   if (result === "LOSS" || result === "PSO_LOSE") return resultAccentClass("LOSS");
   return "text-zinc-500 font-bold text-lg";
+}
+
+function futsalFormatLabel(format: MatchFormatFutsal | null) {
+  if (format === "FIVE_VS_FIVE") return "5vs5";
+  if (format === "SIX_VS_SIX") return "6vs6";
+  return "-";
 }
 
 type AttendeeOption = { id: string; name: string };
@@ -608,6 +616,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                         <div className="space-y-0.5 text-xs text-zinc-600">
                           <p>매치 날짜: {new Date(m.date).toLocaleDateString("ko-KR")}</p>
                           <p>상대팀 수준: {opponentLevelLabel(m.opponent_level)}</p>
+                          {sportType === "FUTSAL" ? <p>매치 포맷: {futsalFormatLabel(m.match_format_futsal)}</p> : null}
                           <p>
                             스코어: {m.total_score_us} : {m.total_score_them}
                           </p>
@@ -760,6 +769,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                         <div className="space-y-0.5 text-xs text-zinc-600">
                           <p>매치 날짜: {new Date(m.date).toLocaleDateString("ko-KR")}</p>
                           <p>상대팀 수준: {opponentLevelLabel(m.opponent_level)}</p>
+                          {sportType === "FUTSAL" ? <p>매치 포맷: {futsalFormatLabel(m.match_format_futsal)}</p> : null}
                           <p>
                             스코어: {m.total_score_us} : {m.total_score_them}
                           </p>

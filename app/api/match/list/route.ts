@@ -36,6 +36,7 @@ export async function GET(req: Request) {
       count_win: true,
       count_draw: true,
       count_loss: true,
+      match_format_futsal: true,
       createdAt: true,
     },
   });

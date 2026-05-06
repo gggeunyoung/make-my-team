@@ -275,6 +275,13 @@ export type EnumPsoResultNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumPsoResultNullableFilter<$PrismaModel> | $Enums.PsoResult | null
 }
 
+export type EnumMatchFormatFutsalNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.MatchFormatFutsal | Prisma.EnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  in?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel> | $Enums.MatchFormatFutsal | null
+}
+
 export type EnumTournamentStageNullableFilter<$PrismaModel = never> = {
   equals?: $Enums.TournamentStage | Prisma.EnumTournamentStageFieldRefInput<$PrismaModel> | null
   in?: $Enums.TournamentStage[] | Prisma.ListEnumTournamentStageFieldRefInput<$PrismaModel> | null
@@ -326,6 +333,16 @@ export type EnumPsoResultNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPsoResultNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPsoResultNullableFilter<$PrismaModel>
+}
+
+export type EnumMatchFormatFutsalNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MatchFormatFutsal | Prisma.EnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  in?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumMatchFormatFutsalNullableWithAggregatesFilter<$PrismaModel> | $Enums.MatchFormatFutsal | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel>
 }
 
 export type EnumTournamentStageNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -618,6 +635,13 @@ export type NestedEnumPsoResultNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumPsoResultNullableFilter<$PrismaModel> | $Enums.PsoResult | null
 }
 
+export type NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.MatchFormatFutsal | Prisma.EnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  in?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel> | $Enums.MatchFormatFutsal | null
+}
+
 export type NestedEnumTournamentStageNullableFilter<$PrismaModel = never> = {
   equals?: $Enums.TournamentStage | Prisma.EnumTournamentStageFieldRefInput<$PrismaModel> | null
   in?: $Enums.TournamentStage[] | Prisma.ListEnumTournamentStageFieldRefInput<$PrismaModel> | null
@@ -680,6 +704,16 @@ export type NestedEnumPsoResultNullableWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPsoResultNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPsoResultNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumMatchFormatFutsalNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MatchFormatFutsal | Prisma.EnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  in?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.MatchFormatFutsal[] | Prisma.ListEnumMatchFormatFutsalFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumMatchFormatFutsalNullableWithAggregatesFilter<$PrismaModel> | $Enums.MatchFormatFutsal | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMatchFormatFutsalNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumTournamentStageNullableWithAggregatesFilter<$PrismaModel = never> = {

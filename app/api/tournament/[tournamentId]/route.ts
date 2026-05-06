@@ -67,6 +67,7 @@ export async function GET(_: Request, context: RouteContext) {
         stage: m.stage,
         is_pso: m.is_pso,
         pso_result: m.pso_result,
+        match_format_futsal: m.match_format_futsal,
       })),
       attendeeRemovalBlockedIds,
     },

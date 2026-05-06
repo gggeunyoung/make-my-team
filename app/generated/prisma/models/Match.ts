@@ -57,6 +57,7 @@ export type MatchMinAggregateOutputType = {
   is_tournament: boolean | null
   is_pso: boolean | null
   pso_result: $Enums.PsoResult | null
+  match_format_futsal: $Enums.MatchFormatFutsal | null
   stage: $Enums.TournamentStage | null
   tournamentId: string | null
   mom: string | null
@@ -79,6 +80,7 @@ export type MatchMaxAggregateOutputType = {
   is_tournament: boolean | null
   is_pso: boolean | null
   pso_result: $Enums.PsoResult | null
+  match_format_futsal: $Enums.MatchFormatFutsal | null
   stage: $Enums.TournamentStage | null
   tournamentId: string | null
   mom: string | null
@@ -102,6 +104,7 @@ export type MatchCountAggregateOutputType = {
   is_tournament: number
   is_pso: number
   pso_result: number
+  match_format_futsal: number
   stage: number
   tournamentId: number
   mom: number
@@ -142,6 +145,7 @@ export type MatchMinAggregateInputType = {
   is_tournament?: true
   is_pso?: true
   pso_result?: true
+  match_format_futsal?: true
   stage?: true
   tournamentId?: true
   mom?: true
@@ -164,6 +168,7 @@ export type MatchMaxAggregateInputType = {
   is_tournament?: true
   is_pso?: true
   pso_result?: true
+  match_format_futsal?: true
   stage?: true
   tournamentId?: true
   mom?: true
@@ -187,6 +192,7 @@ export type MatchCountAggregateInputType = {
   is_tournament?: true
   is_pso?: true
   pso_result?: true
+  match_format_futsal?: true
   stage?: true
   tournamentId?: true
   mom?: true
@@ -297,6 +303,7 @@ export type MatchGroupByOutputType = {
   is_tournament: boolean
   is_pso: boolean
   pso_result: $Enums.PsoResult | null
+  match_format_futsal: $Enums.MatchFormatFutsal | null
   stage: $Enums.TournamentStage | null
   tournamentId: string | null
   mom: string | null
@@ -343,6 +350,7 @@ export type MatchWhereInput = {
   is_tournament?: Prisma.BoolFilter<"Match"> | boolean
   is_pso?: Prisma.BoolFilter<"Match"> | boolean
   pso_result?: Prisma.EnumPsoResultNullableFilter<"Match"> | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.EnumMatchFormatFutsalNullableFilter<"Match"> | $Enums.MatchFormatFutsal | null
   stage?: Prisma.EnumTournamentStageNullableFilter<"Match"> | $Enums.TournamentStage | null
   tournamentId?: Prisma.StringNullableFilter<"Match"> | string | null
   mom?: Prisma.StringNullableFilter<"Match"> | string | null
@@ -369,6 +377,7 @@ export type MatchOrderByWithRelationInput = {
   is_tournament?: Prisma.SortOrder
   is_pso?: Prisma.SortOrder
   pso_result?: Prisma.SortOrderInput | Prisma.SortOrder
+  match_format_futsal?: Prisma.SortOrderInput | Prisma.SortOrder
   stage?: Prisma.SortOrderInput | Prisma.SortOrder
   tournamentId?: Prisma.SortOrderInput | Prisma.SortOrder
   mom?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -398,6 +407,7 @@ export type MatchWhereUniqueInput = Prisma.AtLeast<{
   is_tournament?: Prisma.BoolFilter<"Match"> | boolean
   is_pso?: Prisma.BoolFilter<"Match"> | boolean
   pso_result?: Prisma.EnumPsoResultNullableFilter<"Match"> | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.EnumMatchFormatFutsalNullableFilter<"Match"> | $Enums.MatchFormatFutsal | null
   stage?: Prisma.EnumTournamentStageNullableFilter<"Match"> | $Enums.TournamentStage | null
   tournamentId?: Prisma.StringNullableFilter<"Match"> | string | null
   mom?: Prisma.StringNullableFilter<"Match"> | string | null
@@ -424,6 +434,7 @@ export type MatchOrderByWithAggregationInput = {
   is_tournament?: Prisma.SortOrder
   is_pso?: Prisma.SortOrder
   pso_result?: Prisma.SortOrderInput | Prisma.SortOrder
+  match_format_futsal?: Prisma.SortOrderInput | Prisma.SortOrder
   stage?: Prisma.SortOrderInput | Prisma.SortOrder
   tournamentId?: Prisma.SortOrderInput | Prisma.SortOrder
   mom?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -455,6 +466,7 @@ export type MatchScalarWhereWithAggregatesInput = {
   is_tournament?: Prisma.BoolWithAggregatesFilter<"Match"> | boolean
   is_pso?: Prisma.BoolWithAggregatesFilter<"Match"> | boolean
   pso_result?: Prisma.EnumPsoResultNullableWithAggregatesFilter<"Match"> | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.EnumMatchFormatFutsalNullableWithAggregatesFilter<"Match"> | $Enums.MatchFormatFutsal | null
   stage?: Prisma.EnumTournamentStageNullableWithAggregatesFilter<"Match"> | $Enums.TournamentStage | null
   tournamentId?: Prisma.StringNullableWithAggregatesFilter<"Match"> | string | null
   mom?: Prisma.StringNullableWithAggregatesFilter<"Match"> | string | null
@@ -477,6 +489,7 @@ export type MatchCreateInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   mom?: string | null
   createdAt?: Date | string
@@ -502,6 +515,7 @@ export type MatchUncheckedCreateInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   tournamentId?: string | null
   mom?: string | null
@@ -525,6 +539,7 @@ export type MatchUpdateInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -550,6 +565,7 @@ export type MatchUncheckedUpdateInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -574,6 +590,7 @@ export type MatchCreateManyInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   tournamentId?: string | null
   mom?: string | null
@@ -596,6 +613,7 @@ export type MatchUpdateManyMutationInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -618,6 +636,7 @@ export type MatchUncheckedUpdateManyInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -651,6 +670,7 @@ export type MatchCountOrderByAggregateInput = {
   is_tournament?: Prisma.SortOrder
   is_pso?: Prisma.SortOrder
   pso_result?: Prisma.SortOrder
+  match_format_futsal?: Prisma.SortOrder
   stage?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrder
   mom?: Prisma.SortOrder
@@ -681,6 +701,7 @@ export type MatchMaxOrderByAggregateInput = {
   is_tournament?: Prisma.SortOrder
   is_pso?: Prisma.SortOrder
   pso_result?: Prisma.SortOrder
+  match_format_futsal?: Prisma.SortOrder
   stage?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrder
   mom?: Prisma.SortOrder
@@ -703,6 +724,7 @@ export type MatchMinOrderByAggregateInput = {
   is_tournament?: Prisma.SortOrder
   is_pso?: Prisma.SortOrder
   pso_result?: Prisma.SortOrder
+  match_format_futsal?: Prisma.SortOrder
   stage?: Prisma.SortOrder
   tournamentId?: Prisma.SortOrder
   mom?: Prisma.SortOrder
@@ -836,6 +858,10 @@ export type NullableEnumPsoResultFieldUpdateOperationsInput = {
   set?: $Enums.PsoResult | null
 }
 
+export type NullableEnumMatchFormatFutsalFieldUpdateOperationsInput = {
+  set?: $Enums.MatchFormatFutsal | null
+}
+
 export type NullableEnumTournamentStageFieldUpdateOperationsInput = {
   set?: $Enums.TournamentStage | null
 }
@@ -869,6 +895,7 @@ export type MatchCreateWithoutTeamInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   mom?: string | null
   createdAt?: Date | string
@@ -892,6 +919,7 @@ export type MatchUncheckedCreateWithoutTeamInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   tournamentId?: string | null
   mom?: string | null
@@ -945,6 +973,7 @@ export type MatchScalarWhereInput = {
   is_tournament?: Prisma.BoolFilter<"Match"> | boolean
   is_pso?: Prisma.BoolFilter<"Match"> | boolean
   pso_result?: Prisma.EnumPsoResultNullableFilter<"Match"> | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.EnumMatchFormatFutsalNullableFilter<"Match"> | $Enums.MatchFormatFutsal | null
   stage?: Prisma.EnumTournamentStageNullableFilter<"Match"> | $Enums.TournamentStage | null
   tournamentId?: Prisma.StringNullableFilter<"Match"> | string | null
   mom?: Prisma.StringNullableFilter<"Match"> | string | null
@@ -967,6 +996,7 @@ export type MatchCreateWithoutTournamentInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   mom?: string | null
   createdAt?: Date | string
@@ -991,6 +1021,7 @@ export type MatchUncheckedCreateWithoutTournamentInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   mom?: string | null
   createdAt?: Date | string
@@ -1039,6 +1070,7 @@ export type MatchCreateWithoutGamesInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   mom?: string | null
   createdAt?: Date | string
@@ -1063,6 +1095,7 @@ export type MatchUncheckedCreateWithoutGamesInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   tournamentId?: string | null
   mom?: string | null
@@ -1101,6 +1134,7 @@ export type MatchUpdateWithoutGamesInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1125,6 +1159,7 @@ export type MatchUncheckedUpdateWithoutGamesInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1147,6 +1182,7 @@ export type MatchCreateManyTeamInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   tournamentId?: string | null
   mom?: string | null
@@ -1169,6 +1205,7 @@ export type MatchUpdateWithoutTeamInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1192,6 +1229,7 @@ export type MatchUncheckedUpdateWithoutTeamInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1215,6 +1253,7 @@ export type MatchUncheckedUpdateManyWithoutTeamInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   tournamentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1238,6 +1277,7 @@ export type MatchCreateManyTournamentInput = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: $Enums.PsoResult | null
+  match_format_futsal?: $Enums.MatchFormatFutsal | null
   stage?: $Enums.TournamentStage | null
   mom?: string | null
   createdAt?: Date | string
@@ -1259,6 +1299,7 @@ export type MatchUpdateWithoutTournamentInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1283,6 +1324,7 @@ export type MatchUncheckedUpdateWithoutTournamentInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1306,6 +1348,7 @@ export type MatchUncheckedUpdateManyWithoutTournamentInput = {
   is_tournament?: Prisma.BoolFieldUpdateOperationsInput | boolean
   is_pso?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pso_result?: Prisma.NullableEnumPsoResultFieldUpdateOperationsInput | $Enums.PsoResult | null
+  match_format_futsal?: Prisma.NullableEnumMatchFormatFutsalFieldUpdateOperationsInput | $Enums.MatchFormatFutsal | null
   stage?: Prisma.NullableEnumTournamentStageFieldUpdateOperationsInput | $Enums.TournamentStage | null
   mom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1359,6 +1402,7 @@ export type MatchSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: boolean
+  match_format_futsal?: boolean
   stage?: boolean
   tournamentId?: boolean
   mom?: boolean
@@ -1386,6 +1430,7 @@ export type MatchSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: boolean
+  match_format_futsal?: boolean
   stage?: boolean
   tournamentId?: boolean
   mom?: boolean
@@ -1411,6 +1456,7 @@ export type MatchSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: boolean
+  match_format_futsal?: boolean
   stage?: boolean
   tournamentId?: boolean
   mom?: boolean
@@ -1436,6 +1482,7 @@ export type MatchSelectScalar = {
   is_tournament?: boolean
   is_pso?: boolean
   pso_result?: boolean
+  match_format_futsal?: boolean
   stage?: boolean
   tournamentId?: boolean
   mom?: boolean
@@ -1443,7 +1490,7 @@ export type MatchSelectScalar = {
   updatedAt?: boolean
 }
 
-export type MatchOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "teamId" | "opponent_name" | "opponent_level" | "date" | "attendees" | "total_score_us" | "total_score_them" | "total_result" | "count_win" | "count_draw" | "count_loss" | "is_tournament" | "is_pso" | "pso_result" | "stage" | "tournamentId" | "mom" | "createdAt" | "updatedAt", ExtArgs["result"]["match"]>
+export type MatchOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "teamId" | "opponent_name" | "opponent_level" | "date" | "attendees" | "total_score_us" | "total_score_them" | "total_result" | "count_win" | "count_draw" | "count_loss" | "is_tournament" | "is_pso" | "pso_result" | "match_format_futsal" | "stage" | "tournamentId" | "mom" | "createdAt" | "updatedAt", ExtArgs["result"]["match"]>
 export type MatchInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   team?: boolean | Prisma.TeamDefaultArgs<ExtArgs>
   tournament?: boolean | Prisma.Match$tournamentArgs<ExtArgs>
@@ -1482,6 +1529,7 @@ export type $MatchPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     is_tournament: boolean
     is_pso: boolean
     pso_result: $Enums.PsoResult | null
+    match_format_futsal: $Enums.MatchFormatFutsal | null
     stage: $Enums.TournamentStage | null
     tournamentId: string | null
     mom: string | null
@@ -1928,6 +1976,7 @@ export interface MatchFieldRefs {
   readonly is_tournament: Prisma.FieldRef<"Match", 'Boolean'>
   readonly is_pso: Prisma.FieldRef<"Match", 'Boolean'>
   readonly pso_result: Prisma.FieldRef<"Match", 'PsoResult'>
+  readonly match_format_futsal: Prisma.FieldRef<"Match", 'MatchFormatFutsal'>
   readonly stage: Prisma.FieldRef<"Match", 'TournamentStage'>
   readonly tournamentId: Prisma.FieldRef<"Match", 'String'>
   readonly mom: Prisma.FieldRef<"Match", 'String'>

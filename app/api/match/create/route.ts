@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
 type MatchResult = "WIN" | "DRAW" | "LOSS";
 type RecordType = "PLAYER" | "MERCENARY" | "OWN_GOAL" | "NONE";
+type MatchFormatFutsal = "FIVE_VS_FIVE" | "SIX_VS_SIX";
 
 type GoalInput = {
   scorerId?: string | null;
@@ -27,6 +28,7 @@ type CreateMatchBody = {
   teamId?: string;
   opponentName?: string;
   opponentLevel?: OpponentLevel;
+  matchFormatFutsal?: MatchFormatFutsal | null;
   date?: string;
   attendees?: string[];
   games?: GameInput[];
@@ -34,6 +36,7 @@ type CreateMatchBody = {
 
 const OPPONENT_LEVELS = new Set<OpponentLevel>(["TOP", "HIGH", "MID", "LOW"]);
 const RECORD_TYPES = new Set<RecordType>(["PLAYER", "MERCENARY", "OWN_GOAL", "NONE"]);
+const FUTSAL_MATCH_FORMATS = new Set<MatchFormatFutsal>(["FIVE_VS_FIVE", "SIX_VS_SIX"]);
 
 function calcResult(us: number, them: number): MatchResult {
   if (us > them) return "WIN";
@@ -60,6 +63,7 @@ export async function POST(req: Request) {
   const teamId = body.teamId?.trim() ?? "";
   const opponentName = body.opponentName?.trim() ?? "";
   const opponentLevel = body.opponentLevel;
+  const matchFormatFutsal = body.matchFormatFutsal ?? null;
   const dateString = body.date?.trim() ?? "";
   const attendees = dedupe(body.attendees);
   const games = body.games ?? [];
@@ -98,6 +102,12 @@ export async function POST(req: Request) {
   }
   if (!team.admins.includes(email)) {
     return Response.json({ message: "접근 권한이 없습니다." }, { status: 403 });
+  }
+  if (team.sport_type === "FUTSAL" && (!matchFormatFutsal || !FUTSAL_MATCH_FORMATS.has(matchFormatFutsal))) {
+    return Response.json({ message: "매치 포맷을 선택해주세요." }, { status: 400 });
+  }
+  if (team.sport_type === "SOCCER" && matchFormatFutsal !== null) {
+    return Response.json({ message: "축구팀은 매치 포맷을 저장할 수 없습니다." }, { status: 400 });
   }
 
   const teamPlayerIdSet = new Set(team.players.map((player) => player.id));
@@ -205,6 +215,7 @@ export async function POST(req: Request) {
         count_loss: countLoss,
         is_tournament: false,
         is_pso: false,
+        match_format_futsal: team.sport_type === "FUTSAL" ? matchFormatFutsal : null,
       },
     });
 

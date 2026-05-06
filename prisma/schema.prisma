@@ -103,6 +103,7 @@ model Match {
   is_tournament    Boolean          @default(false)
   is_pso           Boolean          @default(false)
   pso_result       PsoResult?
+  match_format_futsal MatchFormatFutsal?
   stage            TournamentStage?
   tournamentId     String?
   tournament       Tournament?      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
@@ -113,6 +114,11 @@ model Match {
 
   @@index([teamId, date])
   @@index([tournamentId])
+}
+
+enum MatchFormatFutsal {
+  FIVE_VS_FIVE
+  SIX_VS_SIX
 }
 
 model Game {

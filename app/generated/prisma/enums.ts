@@ -17,6 +17,14 @@ export const UserRole = {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const MatchFormatFutsal = {
+  FIVE_VS_FIVE: 'FIVE_VS_FIVE',
+  SIX_VS_SIX: 'SIX_VS_SIX'
+} as const
+
+export type MatchFormatFutsal = (typeof MatchFormatFutsal)[keyof typeof MatchFormatFutsal]
+
+
 export const SportType = {
   FUTSAL: 'FUTSAL',
   SOCCER: 'SOCCER'

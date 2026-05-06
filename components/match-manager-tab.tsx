@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
 type RecordType = "PLAYER" | "MERCENARY" | "OWN_GOAL" | "NONE";
+type MatchFormatFutsal = "FIVE_VS_FIVE" | "SIX_VS_SIX";
 
 type PlayerLite = {
   id: string;
@@ -22,6 +23,7 @@ type MatchListItem = {
   count_win: number;
   count_draw: number;
   count_loss: number;
+  match_format_futsal: MatchFormatFutsal | null;
 };
 
 type GoalForm = {
@@ -110,6 +112,12 @@ function resultAccentClass(result: MatchListItem["total_result"]) {
   if (result === "WIN") return "text-emerald-600 font-bold text-lg";
   if (result === "DRAW") return "text-zinc-500 font-bold text-lg";
   return "text-red-600 font-bold text-lg";
+}
+
+function futsalFormatLabel(format: MatchFormatFutsal | null) {
+  if (format === "FIVE_VS_FIVE") return "5vs5";
+  if (format === "SIX_VS_SIX") return "6vs6";
+  return "-";
 }
 
 const GOAL_COUNT_MISMATCH_MSG = "우리팀 득점 수와 골 기록 수가 일치하지 않습니다.";
@@ -204,6 +212,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   const [opponentName, setOpponentName] = useState("");
   const [matchDate, setMatchDate] = useState(todayIso());
   const [opponentLevel, setOpponentLevel] = useState<OpponentLevel>("MID");
+  const [matchFormatFutsal, setMatchFormatFutsal] = useState<MatchFormatFutsal>("FIVE_VS_FIVE");
   const [attendees, setAttendees] = useState<string[]>([]);
   const [games, setGames] = useState<GameForm[]>([]);
   const [formMessage, setFormMessage] = useState("");
@@ -243,6 +252,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     setOpponentName("");
     setMatchDate(todayIso());
     setOpponentLevel("MID");
+    setMatchFormatFutsal("FIVE_VS_FIVE");
     setAttendees([]);
     setGames([]);
     setFormMessage("");
@@ -344,6 +354,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   const validateBeforeSubmit = () => {
     if (!opponentName.trim()) return "상대팀 이름을 입력해주세요.";
     if (!matchDate) return "경기 날짜를 선택해주세요.";
+    if (sportType === "FUTSAL" && !matchFormatFutsal) return "매치 포맷을 선택해주세요.";
     if (attendees.length < 1) return "출석 선수는 최소 1명 이상 선택해주세요.";
     if (games.length < 1) return "경기 시트를 1개 이상 추가해주세요.";
 
@@ -389,6 +400,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         teamId,
         opponentName: opponentName.trim(),
         opponentLevel,
+        matchFormatFutsal: sportType === "FUTSAL" ? matchFormatFutsal : null,
         date: matchDate,
         attendees,
         games: games.map((game) => ({
@@ -492,6 +504,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                   <div className="space-y-0.5 text-xs text-zinc-600">
                     <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
                     <p>상대팀 수준: {levelLabel(match.opponent_level)}</p>
+                    {sportType === "FUTSAL" ? <p>매치 포맷: {futsalFormatLabel(match.match_format_futsal)}</p> : null}
                     <p>
                       스코어: {match.total_score_us} : {match.total_score_them}
                     </p>
@@ -592,6 +605,19 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                 ))}
               </select>
             </label>
+            {sportType === "FUTSAL" ? (
+              <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
+                <span>매치 포맷</span>
+                <select
+                  value={matchFormatFutsal}
+                  onChange={(e) => setMatchFormatFutsal(e.target.value as MatchFormatFutsal)}
+                  className="h-10 rounded-md border border-zinc-300 px-3 text-sm font-normal"
+                >
+                  <option value="FIVE_VS_FIVE">5vs5</option>
+                  <option value="SIX_VS_SIX">6vs6</option>
+                </select>
+              </label>
+            ) : null}
           </div>
 
           <p className="mb-2 mt-4 text-sm font-medium text-zinc-700">출석 선수 선택</p>
