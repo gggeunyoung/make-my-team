@@ -57,7 +57,9 @@ export const ModelName = {
   Player: 'Player',
   Match: 'Match',
   Game: 'Game',
-  GoalEvent: 'GoalEvent'
+  GoalEvent: 'GoalEvent',
+  Player_Stat: 'Player_Stat',
+  Duo_Stat: 'Duo_Stat'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -201,6 +203,43 @@ export const GoalEventScalarFieldEnum = {
 } as const
 
 export type GoalEventScalarFieldEnum = (typeof GoalEventScalarFieldEnum)[keyof typeof GoalEventScalarFieldEnum]
+
+
+export const Player_StatScalarFieldEnum = {
+  id: 'id',
+  playerId: 'playerId',
+  matchId: 'matchId',
+  teamId: 'teamId',
+  goals: 'goals',
+  assist: 'assist',
+  attack_point: 'attack_point',
+  perf_attack: 'perf_attack',
+  perf_defense: 'perf_defense',
+  perf_total: 'perf_total',
+  is_clean_sheet: 'is_clean_sheet',
+  is_mom: 'is_mom',
+  is_tournament: 'is_tournament',
+  match_date: 'match_date',
+  opponent_level: 'opponent_level',
+  snapshot_position: 'snapshot_position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type Player_StatScalarFieldEnum = (typeof Player_StatScalarFieldEnum)[keyof typeof Player_StatScalarFieldEnum]
+
+
+export const Duo_StatScalarFieldEnum = {
+  id: 'id',
+  playerAId: 'playerAId',
+  playerBId: 'playerBId',
+  teamId: 'teamId',
+  joint_goals: 'joint_goals',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type Duo_StatScalarFieldEnum = (typeof Duo_StatScalarFieldEnum)[keyof typeof Duo_StatScalarFieldEnum]
 
 
 export const SortOrder = {

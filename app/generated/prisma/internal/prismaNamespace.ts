@@ -390,7 +390,9 @@ export const ModelName = {
   Player: 'Player',
   Match: 'Match',
   Game: 'Game',
-  GoalEvent: 'GoalEvent'
+  GoalEvent: 'GoalEvent',
+  Player_Stat: 'Player_Stat',
+  Duo_Stat: 'Duo_Stat'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -406,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "team" | "tournament" | "player" | "match" | "game" | "goalEvent"
+    modelProps: "user" | "team" | "tournament" | "player" | "match" | "game" | "goalEvent" | "player_Stat" | "duo_Stat"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -928,6 +930,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Player_Stat: {
+      payload: Prisma.$Player_StatPayload<ExtArgs>
+      fields: Prisma.Player_StatFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.Player_StatFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.Player_StatFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>
+        }
+        findFirst: {
+          args: Prisma.Player_StatFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.Player_StatFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>
+        }
+        findMany: {
+          args: Prisma.Player_StatFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>[]
+        }
+        create: {
+          args: Prisma.Player_StatCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>
+        }
+        createMany: {
+          args: Prisma.Player_StatCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.Player_StatCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>[]
+        }
+        delete: {
+          args: Prisma.Player_StatDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>
+        }
+        update: {
+          args: Prisma.Player_StatUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>
+        }
+        deleteMany: {
+          args: Prisma.Player_StatDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.Player_StatUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.Player_StatUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>[]
+        }
+        upsert: {
+          args: Prisma.Player_StatUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Player_StatPayload>
+        }
+        aggregate: {
+          args: Prisma.Player_StatAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlayer_Stat>
+        }
+        groupBy: {
+          args: Prisma.Player_StatGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Player_StatGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.Player_StatCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Player_StatCountAggregateOutputType> | number
+        }
+      }
+    }
+    Duo_Stat: {
+      payload: Prisma.$Duo_StatPayload<ExtArgs>
+      fields: Prisma.Duo_StatFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.Duo_StatFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.Duo_StatFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>
+        }
+        findFirst: {
+          args: Prisma.Duo_StatFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.Duo_StatFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>
+        }
+        findMany: {
+          args: Prisma.Duo_StatFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>[]
+        }
+        create: {
+          args: Prisma.Duo_StatCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>
+        }
+        createMany: {
+          args: Prisma.Duo_StatCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.Duo_StatCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>[]
+        }
+        delete: {
+          args: Prisma.Duo_StatDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>
+        }
+        update: {
+          args: Prisma.Duo_StatUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>
+        }
+        deleteMany: {
+          args: Prisma.Duo_StatDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.Duo_StatUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.Duo_StatUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>[]
+        }
+        upsert: {
+          args: Prisma.Duo_StatUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Duo_StatPayload>
+        }
+        aggregate: {
+          args: Prisma.Duo_StatAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDuo_Stat>
+        }
+        groupBy: {
+          args: Prisma.Duo_StatGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Duo_StatGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.Duo_StatCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Duo_StatCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1092,6 +1242,43 @@ export const GoalEventScalarFieldEnum = {
 } as const
 
 export type GoalEventScalarFieldEnum = (typeof GoalEventScalarFieldEnum)[keyof typeof GoalEventScalarFieldEnum]
+
+
+export const Player_StatScalarFieldEnum = {
+  id: 'id',
+  playerId: 'playerId',
+  matchId: 'matchId',
+  teamId: 'teamId',
+  goals: 'goals',
+  assist: 'assist',
+  attack_point: 'attack_point',
+  perf_attack: 'perf_attack',
+  perf_defense: 'perf_defense',
+  perf_total: 'perf_total',
+  is_clean_sheet: 'is_clean_sheet',
+  is_mom: 'is_mom',
+  is_tournament: 'is_tournament',
+  match_date: 'match_date',
+  opponent_level: 'opponent_level',
+  snapshot_position: 'snapshot_position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type Player_StatScalarFieldEnum = (typeof Player_StatScalarFieldEnum)[keyof typeof Player_StatScalarFieldEnum]
+
+
+export const Duo_StatScalarFieldEnum = {
+  id: 'id',
+  playerAId: 'playerAId',
+  playerBId: 'playerBId',
+  teamId: 'teamId',
+  joint_goals: 'joint_goals',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type Duo_StatScalarFieldEnum = (typeof Duo_StatScalarFieldEnum)[keyof typeof Duo_StatScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1442,6 +1629,8 @@ export type GlobalOmitConfig = {
   match?: Prisma.MatchOmit
   game?: Prisma.GameOmit
   goalEvent?: Prisma.GoalEventOmit
+  player_Stat?: Prisma.Player_StatOmit
+  duo_Stat?: Prisma.Duo_StatOmit
 }
 
 /* Types for Logging */

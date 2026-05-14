@@ -41,6 +41,8 @@ model Team {
   admins      String[]
   players     Player[]
   matches     Match[]
+  playerStats Player_Stat[]
+  duoStats    Duo_Stat[]
   tournaments Tournament[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -79,6 +81,9 @@ model Player {
   style     PlayerStyle
   teamId    String
   team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  playerStats Player_Stat[]
+  duoStatsA   Duo_Stat[] @relation("DuoStatA")
+  duoStatsB   Duo_Stat[] @relation("DuoStatB")
   isActive  Boolean      @default(true)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
@@ -109,6 +114,7 @@ model Match {
   tournament       Tournament?      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   mom              String? // Player id
   games            Game[]
+  playerStats      Player_Stat[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -147,6 +153,45 @@ model GoalEvent {
   assister_id   String?
   assister_type RecordType
   createdAt     DateTime   @default(now())
+}
+
+model Player_Stat {
+  id                String         @id @default(cuid())
+  player            Player         @relation(fields: [playerId], references: [id])
+  playerId          String
+  match             Match          @relation(fields: [matchId], references: [id])
+  matchId           String
+  team              Team           @relation(fields: [teamId], references: [id])
+  teamId            String
+  goals             Int            @default(0)
+  assist            Int            @default(0)
+  attack_point      Int            @default(0)
+  perf_attack       Float          @default(0)
+  perf_defense      Float          @default(0)
+  perf_total        Float          @default(0)
+  is_clean_sheet    Boolean        @default(false)
+  is_mom            Boolean        @default(false)
+  is_tournament     Boolean        @default(false)
+  match_date        DateTime
+  opponent_level    OpponentLevel
+  snapshot_position Position? // 축구일 때만 사용
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model Duo_Stat {
+  id          String   @id @default(cuid())
+  player_A    Player   @relation("DuoStatA", fields: [playerAId], references: [id])
+  playerAId   String
+  player_B    Player   @relation("DuoStatB", fields: [playerBId], references: [id])
+  playerBId   String
+  team        Team     @relation(fields: [teamId], references: [id])
+  teamId      String
+  joint_goals Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([playerAId, playerBId, teamId])
 }
 
 enum SportType {
