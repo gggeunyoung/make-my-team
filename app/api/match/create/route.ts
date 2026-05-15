@@ -272,6 +272,8 @@ export async function POST(req: Request) {
         date: match.date,
         stage: match.stage ?? null,
         match_format_futsal: match.match_format_futsal ?? null,
+        is_pso: match.is_pso,
+        pso_result: match.pso_result,
       },
       games: gamesWithGoals.map((g) => ({
         score_us: g.score_us,

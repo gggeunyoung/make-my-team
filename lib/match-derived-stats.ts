@@ -1,5 +1,13 @@
 import type { Prisma } from "@/app/generated/prisma/client";
-import type { MatchFormatFutsal, MatchResult, OpponentLevel, PlayerStyle, Position, RecordType } from "@/app/generated/prisma/enums";
+import type {
+  MatchFormatFutsal,
+  MatchResult,
+  OpponentLevel,
+  PlayerStyle,
+  Position,
+  PsoResult,
+  RecordType,
+} from "@/app/generated/prisma/enums";
 
 type Tx = Prisma.TransactionClient;
 
@@ -36,6 +44,8 @@ export type MatchDerivedMatchContext = {
   date: Date;
   stage: "PRELIMINARY" | "MAIN" | null;
   match_format_futsal: MatchFormatFutsal | null;
+  is_pso?: boolean;
+  pso_result?: PsoResult | null;
 };
 
 function round4(n: number): number {
@@ -58,7 +68,14 @@ function resultMultTournamentPrelim(result: MatchResult): number {
   return 0.6;
 }
 
-function resultMultTournamentMain(result: MatchResult): number {
+function resultMultTournamentMain(
+  result: MatchResult,
+  pso?: { isPso: boolean; psoResult: PsoResult | null | undefined },
+): number {
+  if (result === "DRAW" && pso?.isPso) {
+    if (pso.psoResult === "WIN") return 1.8;
+    if (pso.psoResult === "LOSS") return 0.55;
+  }
   if (result === "WIN") return 1.8;
   if (result === "LOSS") return 0.55;
   return 1.0;
@@ -200,9 +217,24 @@ function computePerfAttack(params: {
   isDecisiveGoal: boolean;
   gameResult: MatchResult;
   opponentLevel: OpponentLevel;
+  isPso: boolean;
+  psoResult: PsoResult | null | undefined;
 }): number {
-  const { isFutsal, isSoccer, isTournament, isPreliminary, isMain, goals, assist, isDecisiveGoal, gameResult, opponentLevel } =
-    params;
+  const {
+    isFutsal,
+    isSoccer,
+    isTournament,
+    isPreliminary,
+    isMain,
+    goals,
+    assist,
+    isDecisiveGoal,
+    gameResult,
+    opponentLevel,
+    isPso,
+    psoResult,
+  } = params;
+  const mainPso = { isPso, psoResult };
   if (goals === 0 && assist === 0) return 0;
 
   const dec = isDecisiveGoal ? 1 : 0;
@@ -220,7 +252,7 @@ function computePerfAttack(params: {
   if (isFutsal && isTournament && isMain) {
     return (
       (goals * 6 + assist * 4 + dec) *
-      resultMultTournamentMain(gameResult) *
+      resultMultTournamentMain(gameResult, mainPso) *
       oppTopHighMidFutsalMainAttack(opponentLevel)
     );
   }
@@ -237,7 +269,7 @@ function computePerfAttack(params: {
   if (isSoccer && isTournament && isMain) {
     return (
       (goals * 8 + assist * 5 + dec) *
-      resultMultTournamentMain(gameResult) *
+      resultMultTournamentMain(gameResult, mainPso) *
       oppTopHighMidSoccerMainAttack(opponentLevel)
     );
   }
@@ -259,6 +291,8 @@ function computePerfDefense(params: {
   isCleanSheetGame: boolean;
   playerStyle: PlayerStyle;
   snapshotPosition: Position | null;
+  isPso: boolean;
+  psoResult: PsoResult | null | undefined;
 }): number {
   const {
     isFutsal,
@@ -275,9 +309,12 @@ function computePerfDefense(params: {
     isCleanSheetGame,
     playerStyle,
     snapshotPosition,
+    isPso,
+    psoResult,
   } = params;
 
   const cs = isCleanSheetGame ? 1 : 0;
+  const mainPso = { isPso, psoResult };
 
   if (isFutsal && is5vs5 && isGoalkeeper) {
     if (!isTournament) {
@@ -299,7 +336,7 @@ function computePerfDefense(params: {
     if (isMain) {
       return (
         (5 - scoreThemClamped * 0.7 + cs) *
-        resultMultTournamentMain(gameResult) *
+        resultMultTournamentMain(gameResult, mainPso) *
         oppTopHighMidMainDefense(opponentLevel) *
         1.2
       );
@@ -321,7 +358,7 @@ function computePerfDefense(params: {
     }
     if (isMain) {
       return (
-        (5 - scoreThemClamped * 0.7) * resultMultTournamentMain(gameResult) * oppTopHighMidMainDefense(opponentLevel) * sm
+        (5 - scoreThemClamped * 0.7) * resultMultTournamentMain(gameResult, mainPso) * oppTopHighMidMainDefense(opponentLevel) * sm
       );
     }
   }
@@ -341,7 +378,7 @@ function computePerfDefense(params: {
     if (isMain) {
       return (
         (5 - scoreThemClamped * 0.7 + cs) *
-        resultMultTournamentMain(gameResult) *
+        resultMultTournamentMain(gameResult, mainPso) *
         oppTopHighMidMainDefense(opponentLevel) *
         1.2
       );
@@ -363,7 +400,7 @@ function computePerfDefense(params: {
     }
     if (isMain) {
       return (
-        (5 - scoreThemClamped * 0.7) * resultMultTournamentMain(gameResult) * oppTopHighMidMainDefense(opponentLevel) * sm
+        (5 - scoreThemClamped * 0.7) * resultMultTournamentMain(gameResult, mainPso) * oppTopHighMidMainDefense(opponentLevel) * sm
       );
     }
   }
@@ -388,7 +425,7 @@ function computePerfDefense(params: {
     if (isMain) {
       return (
         (5 - scoreThemClamped * 1.0 + cs) *
-        resultMultTournamentMain(gameResult) *
+        resultMultTournamentMain(gameResult, mainPso) *
         oppTopHighMidMainDefense(opponentLevel) *
         1.2
       );
@@ -412,7 +449,7 @@ function computePerfDefense(params: {
     }
     if (isMain) {
       return (
-        (5 - scoreThemClamped * 1.0) * resultMultTournamentMain(gameResult) * oppTopHighMidMainDefense(opponentLevel) * sm * pm
+        (5 - scoreThemClamped * 1.0) * resultMultTournamentMain(gameResult, mainPso) * oppTopHighMidMainDefense(opponentLevel) * sm * pm
       );
     }
   }
@@ -450,6 +487,8 @@ export async function persistMatchDerivedStats(
   const isTournament = match.is_tournament;
   const isPreliminary = match.stage === "PRELIMINARY";
   const isMain = match.stage === "MAIN";
+  const isPso = match.is_pso ?? false;
+  const psoResult = match.pso_result ?? null;
 
   const playerById = new Map(players.map((p) => [p.id, p]));
 
@@ -516,6 +555,8 @@ export async function persistMatchDerivedStats(
         isDecisiveGoal,
         gameResult: g.result,
         opponentLevel: match.opponent_level,
+        isPso,
+        psoResult,
       });
 
       const perfD = computePerfDefense({
@@ -533,6 +574,8 @@ export async function persistMatchDerivedStats(
         isCleanSheetGame,
         playerStyle: p.style,
         snapshotPosition: snap,
+        isPso,
+        psoResult,
       });
 
       acc.perfAttackSum += perfA;
