@@ -523,7 +523,12 @@ export async function persistMatchDerivedStats(
       const p = playerById.get(playerId);
       if (!p) continue;
 
-      const inGame = g.players_all.includes(playerId);
+      const inGame = isFutsal
+        ? g.players_all.includes(playerId)
+        : g.players_fw.includes(playerId) ||
+          g.players_mf.includes(playerId) ||
+          g.players_df.includes(playerId) ||
+          g.players_gk.includes(playerId);
       if (!inGame) continue;
 
       let goals = 0;
