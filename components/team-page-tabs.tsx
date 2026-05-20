@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TeamMatchesTab } from "@/components/team-matches-tab";
 import { TeamPlayersTab } from "@/components/team-players-tab";
 
 type TeamPageTabsProps = {
@@ -36,7 +37,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   const tabContent = (() => {
     if (activeTab === "HOME") return <Placeholder title="Home" />;
     if (activeTab === "PLAYERS") return <TeamPlayersTab teamId={teamId} teamColor={teamColor} />;
-    if (activeTab === "MATCHES") return <Placeholder title="Matches" />;
+    if (activeTab === "MATCHES") return <TeamMatchesTab teamId={teamId} teamColor={teamColor} />;
     if (activeTab === "STATS") return <Placeholder title="Stats" />;
     if (activeTab === "TOURNAMENT") return <Placeholder title="Tournament" />;
     return <Placeholder title="Award" />;
