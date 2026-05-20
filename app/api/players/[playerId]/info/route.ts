@@ -26,6 +26,7 @@ export async function GET(req: Request, context: RouteContext) {
         photo: true,
         style: true,
         position: true,
+        createdAt: true,
       },
     }),
   ]);
@@ -38,6 +39,9 @@ export async function GET(req: Request, context: RouteContext) {
   }
 
   const quarterInfo = getCurrentQuarterInfo();
+  const attendanceFrom =
+    player.createdAt > quarterInfo.range.start ? player.createdAt : quarterInfo.range.start;
+
   const [momMatches, quarterMatches] = await Promise.all([
     prisma.match.findMany({
       where: { teamId, mom: playerId },
@@ -51,7 +55,10 @@ export async function GET(req: Request, context: RouteContext) {
     prisma.match.findMany({
       where: {
         teamId,
-        date: { gte: quarterInfo.range.start, lte: quarterInfo.range.end },
+        date: {
+          gte: attendanceFrom,
+          lte: quarterInfo.range.end,
+        },
       },
       select: { attendees: true },
     }),
@@ -62,9 +69,11 @@ export async function GET(req: Request, context: RouteContext) {
   const attendanceRate =
     totalQuarterMatches === 0 ? 0 : Math.round((attendedQuarterMatches / totalQuarterMatches) * 100);
 
+  const { createdAt: _playerCreatedAt, ...playerResponse } = player;
+
   return Response.json({
     sportType: team.sport_type,
-    player,
+    player: playerResponse,
     momMatches: momMatches.map((m) => ({
       id: m.id,
       opponentName: m.opponent_name,

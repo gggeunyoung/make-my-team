@@ -94,10 +94,18 @@ export async function POST(req: Request) {
     return Response.json({ message: "경기는 최소 1개 이상 등록해야 합니다." }, { status: 400 });
   }
 
-  const team = await prisma.team.findUnique({
-    where: { id: teamId },
-    include: { players: { where: { isActive: true }, select: { id: true, name: true, style: true } } },
-  });
+  const [team, teamMatches] = await Promise.all([
+    prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        players: { where: { isActive: true }, select: { id: true, name: true, style: true, createdAt: true } },
+      },
+    }),
+    prisma.match.findMany({
+      where: { teamId },
+      select: { date: true, attendees: true },
+    }),
+  ]);
   if (!team) {
     return Response.json({ message: "팀을 찾을 수 없습니다." }, { status: 404 });
   }
@@ -265,6 +273,7 @@ export async function POST(req: Request) {
       teamId,
       attendees,
       players: team.players,
+      teamMatches,
       sportType: team.sport_type,
       match: {
         is_tournament: match.is_tournament,

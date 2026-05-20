@@ -36,6 +36,12 @@ export type MatchDerivedPlayer = {
   id: string;
   name: string;
   style: PlayerStyle;
+  createdAt: Date;
+};
+
+export type MatchDerivedTeamMatch = {
+  date: Date;
+  attendees: string[];
 };
 
 export type MatchDerivedMatchContext = {
@@ -461,6 +467,57 @@ function newStatId(): string {
   return crypto.randomUUID();
 }
 
+function attendanceRate(
+  playerId: string,
+  playerCreatedAt: Date,
+  teamMatches: MatchDerivedTeamMatch[],
+): number {
+  let total = 0;
+  let attended = 0;
+  for (const m of teamMatches) {
+    if (m.date < playerCreatedAt) continue;
+    total += 1;
+    if (m.attendees.includes(playerId)) attended += 1;
+  }
+  return total === 0 ? 0 : attended / total;
+}
+
+/** 음수면 a가 MOM 우선, 양수면 b가 MOM 우선 */
+function compareMomCandidates(
+  a: string,
+  b: string,
+  perfTotals: Map<string, number>,
+  playerCreatedAt: Map<string, Date>,
+  teamMatches: MatchDerivedTeamMatch[],
+): number {
+  const perfA = perfTotals.get(a) ?? 0;
+  const perfB = perfTotals.get(b) ?? 0;
+  if (perfA !== perfB) return perfB - perfA;
+
+  const createdA = playerCreatedAt.get(a)!;
+  const createdB = playerCreatedAt.get(b)!;
+  const rateA = attendanceRate(a, createdA, teamMatches);
+  const rateB = attendanceRate(b, createdB, teamMatches);
+  if (rateA !== rateB) return rateB - rateA;
+
+  return createdA.getTime() - createdB.getTime();
+}
+
+function selectMomId(
+  attendees: string[],
+  perfTotals: Map<string, number>,
+  playerCreatedAt: Map<string, Date>,
+  teamMatches: MatchDerivedTeamMatch[],
+): string | null {
+  let momId: string | null = null;
+  for (const playerId of attendees) {
+    if (momId === null || compareMomCandidates(playerId, momId, perfTotals, playerCreatedAt, teamMatches) < 0) {
+      momId = playerId;
+    }
+  }
+  return momId;
+}
+
 /**
  * 매치·게임·골 이벤트 저장 이후, 동일 트랜잭션 안에서 Player_Stat / Duo_Stat / Match.mom 을 반영합니다.
  */
@@ -471,12 +528,13 @@ export async function persistMatchDerivedStats(
     teamId: string;
     attendees: string[];
     players: MatchDerivedPlayer[];
+    teamMatches: MatchDerivedTeamMatch[];
     sportType: "FUTSAL" | "SOCCER";
     match: MatchDerivedMatchContext;
     games: MatchDerivedGame[];
   },
 ): Promise<void> {
-  const { matchId, teamId, attendees, players, sportType, match, games } = args;
+  const { matchId, teamId, attendees, players, teamMatches, sportType, match, games } = args;
 
   const isFutsal = sportType === "FUTSAL";
   const isSoccer = sportType === "SOCCER";
@@ -651,15 +709,8 @@ export async function persistMatchDerivedStats(
     });
   }
 
-  let momId: string | null = null;
-  let bestTotal = -Infinity;
-  for (const playerId of attendees) {
-    const t = perfTotals.get(playerId) ?? 0;
-    if (t > bestTotal || (t === bestTotal && (momId === null || playerId > momId))) {
-      bestTotal = t;
-      momId = playerId;
-    }
-  }
+  const playerCreatedAt = new Map(players.map((p) => [p.id, p.createdAt]));
+  const momId = selectMomId(attendees, perfTotals, playerCreatedAt, teamMatches);
 
   await tx.match.update({
     where: { id: matchId },
