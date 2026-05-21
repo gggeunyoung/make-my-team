@@ -467,7 +467,7 @@ function PlayerStatsContent({
 export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
   const accent = teamColor ?? "#3f3f46";
 
-  const [view, setView] = useState<StatsView>("TEAM");
+  const [view, setView] = useState<StatsView>("PLAYER");
   const [periods, setPeriods] = useState<PeriodsResponse["periods"] | null>(null);
   const [period, setPeriod] = useState<PeriodType>("MONTHLY");
   const [subPeriod, setSubPeriod] = useState("");
