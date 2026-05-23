@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
 import type { PlayerStyleValue, PositionValue } from "@/lib/player";
 import {
   formatMatchDate,
@@ -11,7 +12,15 @@ import {
   psoResultLabel,
   type OpponentLevelValue,
 } from "@/lib/player-display";
-import { periodTypeLabel, type PeriodOption, type PeriodType } from "@/lib/player-period";
+import {
+  formatHalfLabel,
+  formatMonthLabel,
+  formatQuarterLabel,
+  formatYearLabel,
+  periodTypeLabel,
+  type PeriodOption,
+  type PeriodType,
+} from "@/lib/player-period";
 
 type SportType = "FUTSAL" | "SOCCER";
 
@@ -29,13 +38,59 @@ type MomMatchItem = {
   date: string;
 };
 
+type PlayerAwardItem = {
+  period: AwardPeriod;
+  subPeriod: string;
+  category: AwardCategory;
+  rank: number;
+  statValue: number;
+};
+
 type PlayerInfoResponse = {
   sportType: SportType;
   player: PlayerListItem;
   momMatches: MomMatchItem[];
   attendanceRate: number;
   quarterLabel: string;
+  awards: PlayerAwardItem[];
 };
+
+const AWARD_INFO: Record<AwardCategory, { name: string }> = {
+  BEST_PLAYER: { name: "최우수 선수" },
+  ATTACK_RANKING: { name: "공격수 랭킹" },
+  DEFENSE_RANKING: { name: "수비수 랭킹" },
+  ATTACK_COMBO: { name: "공격 듀오" },
+  STRONG_VS_TOP: { name: "큰경기에 강함" },
+  STRONG_VS_LOW: { name: "양학러" },
+  TOP_SCORER: { name: "득점왕" },
+  TOP_ASSIST: { name: "도움왕" },
+  ATTACK_POINT: { name: "플레이메이커" },
+  ATTENDANCE: { name: "출석왕" },
+};
+
+function formatAwardPeriodLabel(period: AwardPeriod, subPeriod: string) {
+  if (period === "MONTHLY") {
+    const match = /^(\d{4})-(\d{2})$/.exec(subPeriod);
+    if (!match) return subPeriod;
+    return formatMonthLabel(Number(match[1]), Number(match[2]));
+  }
+
+  if (period === "QUARTERLY") {
+    const match = /^(\d{4})-Q([1-4])$/.exec(subPeriod);
+    if (!match) return subPeriod;
+    return formatQuarterLabel(Number(match[1]), Number(match[2]));
+  }
+
+  if (period === "SEMIANNUAL") {
+    const match = /^(\d{4})-H([12])$/.exec(subPeriod);
+    if (!match) return subPeriod;
+    return formatHalfLabel(Number(match[1]), Number(match[2]) as 1 | 2);
+  }
+
+  const match = /^(\d{4})$/.exec(subPeriod);
+  if (match) return formatYearLabel(Number(match[1]));
+  return subPeriod;
+}
 
 type StatsSummary = {
   matchCount: number;
@@ -394,8 +449,24 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                       </div>
                     ) : null}
                     <div>
-                      <span className="text-zinc-500">상 받은 횟수</span>
-                      <p className="text-zinc-400">추후 업데이트 예정</p>
+                      <span className="text-zinc-500">수상 이력</span>
+                      <ul className="mt-1 max-h-[132px] space-y-2 overflow-y-auto pr-1 text-sm">
+                        {(playerInfo?.awards ?? []).length === 0 ? (
+                          <li className="text-zinc-400">수상 이력이 없습니다</li>
+                        ) : (
+                          playerInfo?.awards.map((award) => (
+                            <li
+                              key={`${award.period}-${award.subPeriod}-${award.category}`}
+                              className="rounded border border-zinc-100 bg-zinc-50 px-2 py-1.5"
+                            >
+                              <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
+                              <p className="text-xs text-zinc-500">
+                                {formatAwardPeriodLabel(award.period, award.subPeriod)} · 1위
+                              </p>
+                            </li>
+                          ))
+                        )}
+                      </ul>
                     </div>
                     <div>
                       <span className="text-zinc-500">출석률</span>

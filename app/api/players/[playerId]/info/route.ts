@@ -42,7 +42,7 @@ export async function GET(req: Request, context: RouteContext) {
   const attendanceFrom =
     player.createdAt > quarterInfo.range.start ? player.createdAt : quarterInfo.range.start;
 
-  const [momMatches, quarterMatches] = await Promise.all([
+  const [momMatches, quarterMatches, awards] = await Promise.all([
     prisma.match.findMany({
       where: { teamId, mom: playerId },
       orderBy: { date: "desc" },
@@ -61,6 +61,17 @@ export async function GET(req: Request, context: RouteContext) {
         },
       },
       select: { attendees: true },
+    }),
+    prisma.award.findMany({
+      where: { playerId, teamId, rank: 1 },
+      select: {
+        period: true,
+        subPeriod: true,
+        category: true,
+        rank: true,
+        statValue: true,
+      },
+      orderBy: { subPeriod: "desc" },
     }),
   ]);
 
@@ -81,5 +92,12 @@ export async function GET(req: Request, context: RouteContext) {
     })),
     attendanceRate,
     quarterLabel: quarterInfo.label,
+    awards: awards.map((award) => ({
+      period: award.period,
+      subPeriod: award.subPeriod,
+      category: award.category,
+      rank: award.rank,
+      statValue: award.statValue,
+    })),
   });
 }
