@@ -71,6 +71,8 @@ type MatchDetailResponse = {
 type TeamMatchesTabProps = {
   teamId: string;
   teamColor: string | null;
+  openMatchId?: string | null;
+  onOpenMatchIdConsumed?: () => void;
 };
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "md" | "sm" }) {
@@ -113,7 +115,12 @@ function Toast({ message }: { message: string }) {
   );
 }
 
-export function TeamMatchesTab({ teamId, teamColor }: TeamMatchesTabProps) {
+export function TeamMatchesTab({
+  teamId,
+  teamColor,
+  openMatchId = null,
+  onOpenMatchIdConsumed,
+}: TeamMatchesTabProps) {
   const [view, setView] = useState<"LIST" | "DETAIL">("LIST");
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [matches, setMatches] = useState<MatchListItem[]>([]);
@@ -143,6 +150,13 @@ export function TeamMatchesTab({ teamId, teamColor }: TeamMatchesTabProps) {
     };
     void load();
   }, [teamId]);
+
+  useEffect(() => {
+    if (!openMatchId) return;
+    setSelectedMatchId(openMatchId);
+    setView("DETAIL");
+    onOpenMatchIdConsumed?.();
+  }, [openMatchId, onOpenMatchIdConsumed]);
 
   useEffect(() => {
     if (view !== "DETAIL" || !selectedMatchId) {

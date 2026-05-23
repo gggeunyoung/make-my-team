@@ -104,9 +104,7 @@ type TableSortKey =
   | "goalsPerMatch"
   | "assistsPerMatch"
   | "attackPointsPerMatch"
-  | "attendanceRate"
-  | "perfAttack"
-  | "perfDefense";
+  | "attendanceRate";
 
 const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "goals", label: "골" },
@@ -116,8 +114,6 @@ const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "assistsPerMatch", label: "경기당 도움" },
   { key: "attackPointsPerMatch", label: "경기당 공격포인트" },
   { key: "attendanceRate", label: "출석률" },
-  { key: "perfAttack", label: "공격퍼포먼스" },
-  { key: "perfDefense", label: "수비퍼포먼스" },
 ];
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
@@ -369,28 +365,34 @@ function PlayerStatsContent({
                   <p className="text-xs text-zinc-400">데이터 없음</p>
                 ) : (
                   <ul className="space-y-3">
-                    {cat.items.map((item) => (
-                      <li key={item.id} className="flex items-center gap-2">
-                        <span
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                          style={{ backgroundColor: accent }}
-                        >
-                          {item.rank}
-                        </span>
-                        {item.photo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.photo} alt={item.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
-                        ) : (
-                          <DefaultPlayerPhoto name={item.name} size="sm" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                          <p className="text-xs font-semibold text-zinc-600">
-                            {formatRankingValue(cat.key, item.value)}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
+                    {cat.items.map((item) => {
+                      const hideValue = cat.key === "attack" || cat.key === "defense";
+
+                      return (
+                        <li key={item.id} className="flex items-center gap-2">
+                          <span
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                            style={{ backgroundColor: accent }}
+                          >
+                            {item.rank}
+                          </span>
+                          {item.photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.photo} alt={item.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
+                          ) : (
+                            <DefaultPlayerPhoto name={item.name} size="sm" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                            {!hideValue ? (
+                              <p className="text-xs font-semibold text-zinc-600">
+                                {formatRankingValue(cat.key, item.value)}
+                              </p>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -451,8 +453,6 @@ function PlayerStatsContent({
                       {row.attackPointsPerMatch.toFixed(2)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.attendanceRate}%</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.perfAttack.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.perfDefense.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

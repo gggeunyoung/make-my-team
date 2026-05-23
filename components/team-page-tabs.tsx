@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TeamAwardTab } from "@/components/team-award-tab";
+import { TeamHomeTab } from "@/components/team-home-tab";
 import { TeamMatchesTab } from "@/components/team-matches-tab";
 import { TeamPlayersTab } from "@/components/team-players-tab";
 import { TeamStatsTab } from "@/components/team-stats-tab";
@@ -26,21 +27,32 @@ const tabs: Array<{ key: TeamTab; label: string }> = [
   { key: "AWARD", label: "Award" },
 ];
 
-function Placeholder({ title }: { title: string }) {
-  return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-600">{title} 탭 (준비 중)</div>
-    </section>
-  );
-}
-
 export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage }: TeamPageTabsProps) {
   const [activeTab, setActiveTab] = useState<TeamTab>("HOME");
+  const [matchesOpenMatchId, setMatchesOpenMatchId] = useState<string | null>(null);
 
   const tabContent = (() => {
-    if (activeTab === "HOME") return <Placeholder title="Home" />;
+    if (activeTab === "HOME")
+      return (
+        <TeamHomeTab
+          teamId={teamId}
+          teamColor={teamColor}
+          onMatchClick={(matchId) => {
+            setMatchesOpenMatchId(matchId);
+            setActiveTab("MATCHES");
+          }}
+        />
+      );
     if (activeTab === "PLAYERS") return <TeamPlayersTab teamId={teamId} teamColor={teamColor} />;
-    if (activeTab === "MATCHES") return <TeamMatchesTab teamId={teamId} teamColor={teamColor} />;
+    if (activeTab === "MATCHES")
+      return (
+        <TeamMatchesTab
+          teamId={teamId}
+          teamColor={teamColor}
+          openMatchId={matchesOpenMatchId}
+          onOpenMatchIdConsumed={() => setMatchesOpenMatchId(null)}
+        />
+      );
     if (activeTab === "STATS") return <TeamStatsTab teamId={teamId} teamColor={teamColor} />;
     if (activeTab === "TOURNAMENT") return <TeamTournamentTab teamId={teamId} teamColor={teamColor} />;
     if (activeTab === "AWARD") return <TeamAwardTab teamId={teamId} teamColor={teamColor} />;

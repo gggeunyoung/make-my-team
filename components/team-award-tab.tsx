@@ -234,6 +234,7 @@ function RankSlot({
   isFirstPlace: boolean;
 }) {
   const styles = medalStyles(rank);
+  const hideStatValue = category === "ATTACK_RANKING" || category === "DEFENSE_RANKING";
 
   if (entries.length === 0) {
     return (
@@ -250,7 +251,9 @@ function RankSlot({
 
   return (
     <div
-      className={`rounded-xl border border-white/10 bg-white/5 px-3 py-4 ${styles.ring} ${isFirstPlace ? "min-h-[180px] shadow-[0_0_30px_rgba(251,191,36,0.15)]" : "min-h-[140px]"}`}
+      className={`rounded-xl border border-white/10 bg-white/5 px-3 py-4 ${styles.ring} ${
+        isFirstPlace ? "min-h-[180px] shadow-[0_0_30px_rgba(251,191,36,0.15)]" : "min-h-[140px]"
+      } ${hideStatValue ? "flex flex-col justify-center" : ""}`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}>
@@ -263,22 +266,38 @@ function RankSlot({
         ) : null}
       </div>
 
-      <div className="mt-3 space-y-3">
-        {entries.map((entry) => (
-          <div key={`${entry.rank}-${entry.playerId}`} className="flex flex-col items-center text-center">
-            <PlayerAvatar
-              name={entry.playerName}
-              photo={entry.playerPhoto}
-              size={isFirstPlace ? "lg" : rank === 2 ? "md" : "sm"}
-            />
-            <p className={`mt-2 font-semibold text-white ${isFirstPlace ? "text-base" : "text-sm"}`}>
-              {entry.playerName}
-            </p>
-            <p className={`mt-0.5 font-medium text-amber-200/90 ${isFirstPlace ? "text-sm" : "text-xs"}`}>
-              {formatStatValue(category, entry.statValue)}
-            </p>
-          </div>
-        ))}
+      <div className={`mt-3 space-y-3 ${hideStatValue ? "flex flex-col justify-center" : ""}`}>
+        {entries.map((entry) =>
+          hideStatValue ? (
+            <div
+              key={`${entry.rank}-${entry.playerId}`}
+              className="flex items-center justify-center gap-3"
+            >
+              <PlayerAvatar
+                name={entry.playerName}
+                photo={entry.playerPhoto}
+                size={isFirstPlace ? "lg" : rank === 2 ? "md" : "sm"}
+              />
+              <p className={`font-semibold text-white ${isFirstPlace ? "text-base" : "text-sm"}`}>
+                {entry.playerName}
+              </p>
+            </div>
+          ) : (
+            <div key={`${entry.rank}-${entry.playerId}`} className="flex flex-col items-center text-center">
+              <PlayerAvatar
+                name={entry.playerName}
+                photo={entry.playerPhoto}
+                size={isFirstPlace ? "lg" : rank === 2 ? "md" : "sm"}
+              />
+              <p className={`mt-2 font-semibold text-white ${isFirstPlace ? "text-base" : "text-sm"}`}>
+                {entry.playerName}
+              </p>
+              <p className={`mt-0.5 font-medium text-amber-200/90 ${isFirstPlace ? "text-sm" : "text-xs"}`}>
+                {formatStatValue(category, entry.statValue)}
+              </p>
+            </div>
+          ),
+        )}
       </div>
     </div>
   );
