@@ -59,7 +59,8 @@ export const ModelName = {
   Game: 'Game',
   GoalEvent: 'GoalEvent',
   Player_Stat: 'Player_Stat',
-  Duo_Stat: 'Duo_Stat'
+  Duo_Stat: 'Duo_Stat',
+  Award: 'Award'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -240,6 +241,21 @@ export const Duo_StatScalarFieldEnum = {
 } as const
 
 export type Duo_StatScalarFieldEnum = (typeof Duo_StatScalarFieldEnum)[keyof typeof Duo_StatScalarFieldEnum]
+
+
+export const AwardScalarFieldEnum = {
+  id: 'id',
+  playerId: 'playerId',
+  teamId: 'teamId',
+  period: 'period',
+  subPeriod: 'subPeriod',
+  category: 'category',
+  rank: 'rank',
+  statValue: 'statValue',
+  createdAt: 'createdAt'
+} as const
+
+export type AwardScalarFieldEnum = (typeof AwardScalarFieldEnum)[keyof typeof AwardScalarFieldEnum]
 
 
 export const SortOrder = {

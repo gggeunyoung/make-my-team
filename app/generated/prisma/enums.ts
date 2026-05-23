@@ -107,3 +107,29 @@ export const TournamentResult = {
 } as const
 
 export type TournamentResult = (typeof TournamentResult)[keyof typeof TournamentResult]
+
+
+export const AwardPeriod = {
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY',
+  SEMIANNUAL: 'SEMIANNUAL',
+  ANNUAL: 'ANNUAL'
+} as const
+
+export type AwardPeriod = (typeof AwardPeriod)[keyof typeof AwardPeriod]
+
+
+export const AwardCategory = {
+  ATTACK_RANKING: 'ATTACK_RANKING',
+  DEFENSE_RANKING: 'DEFENSE_RANKING',
+  ATTACK_COMBO: 'ATTACK_COMBO',
+  TOP_SCORER: 'TOP_SCORER',
+  TOP_ASSIST: 'TOP_ASSIST',
+  ATTACK_POINT: 'ATTACK_POINT',
+  STRONG_VS_TOP: 'STRONG_VS_TOP',
+  STRONG_VS_LOW: 'STRONG_VS_LOW',
+  ATTENDANCE: 'ATTENDANCE',
+  BEST_PLAYER: 'BEST_PLAYER'
+} as const
+
+export type AwardCategory = (typeof AwardCategory)[keyof typeof AwardCategory]

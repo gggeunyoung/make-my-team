@@ -392,7 +392,8 @@ export const ModelName = {
   Game: 'Game',
   GoalEvent: 'GoalEvent',
   Player_Stat: 'Player_Stat',
-  Duo_Stat: 'Duo_Stat'
+  Duo_Stat: 'Duo_Stat',
+  Award: 'Award'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -408,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "team" | "tournament" | "player" | "match" | "game" | "goalEvent" | "player_Stat" | "duo_Stat"
+    modelProps: "user" | "team" | "tournament" | "player" | "match" | "game" | "goalEvent" | "player_Stat" | "duo_Stat" | "award"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1078,6 +1079,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Award: {
+      payload: Prisma.$AwardPayload<ExtArgs>
+      fields: Prisma.AwardFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AwardFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AwardFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>
+        }
+        findFirst: {
+          args: Prisma.AwardFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AwardFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>
+        }
+        findMany: {
+          args: Prisma.AwardFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>[]
+        }
+        create: {
+          args: Prisma.AwardCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>
+        }
+        createMany: {
+          args: Prisma.AwardCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AwardCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>[]
+        }
+        delete: {
+          args: Prisma.AwardDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>
+        }
+        update: {
+          args: Prisma.AwardUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>
+        }
+        deleteMany: {
+          args: Prisma.AwardDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AwardUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AwardUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>[]
+        }
+        upsert: {
+          args: Prisma.AwardUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AwardPayload>
+        }
+        aggregate: {
+          args: Prisma.AwardAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAward>
+        }
+        groupBy: {
+          args: Prisma.AwardGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AwardGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AwardCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AwardCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1279,6 +1354,21 @@ export const Duo_StatScalarFieldEnum = {
 } as const
 
 export type Duo_StatScalarFieldEnum = (typeof Duo_StatScalarFieldEnum)[keyof typeof Duo_StatScalarFieldEnum]
+
+
+export const AwardScalarFieldEnum = {
+  id: 'id',
+  playerId: 'playerId',
+  teamId: 'teamId',
+  period: 'period',
+  subPeriod: 'subPeriod',
+  category: 'category',
+  rank: 'rank',
+  statValue: 'statValue',
+  createdAt: 'createdAt'
+} as const
+
+export type AwardScalarFieldEnum = (typeof AwardScalarFieldEnum)[keyof typeof AwardScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1527,6 +1617,34 @@ export type EnumRecordTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prism
 export type ListEnumRecordTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecordType[]'>
     
 
+
+/**
+ * Reference to a field of type 'AwardPeriod'
+ */
+export type EnumAwardPeriodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AwardPeriod'>
+    
+
+
+/**
+ * Reference to a field of type 'AwardPeriod[]'
+ */
+export type ListEnumAwardPeriodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AwardPeriod[]'>
+    
+
+
+/**
+ * Reference to a field of type 'AwardCategory'
+ */
+export type EnumAwardCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AwardCategory'>
+    
+
+
+/**
+ * Reference to a field of type 'AwardCategory[]'
+ */
+export type ListEnumAwardCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AwardCategory[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1631,6 +1749,7 @@ export type GlobalOmitConfig = {
   goalEvent?: Prisma.GoalEventOmit
   player_Stat?: Prisma.Player_StatOmit
   duo_Stat?: Prisma.Duo_StatOmit
+  award?: Prisma.AwardOmit
 }
 
 /* Types for Logging */

@@ -416,6 +416,40 @@ export type EnumPositionNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumPositionNullableFilter<$PrismaModel>
 }
 
+export type EnumAwardPeriodFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardPeriod | Prisma.EnumAwardPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardPeriodFilter<$PrismaModel> | $Enums.AwardPeriod
+}
+
+export type EnumAwardCategoryFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardCategory | Prisma.EnumAwardCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardCategoryFilter<$PrismaModel> | $Enums.AwardCategory
+}
+
+export type EnumAwardPeriodWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardPeriod | Prisma.EnumAwardPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardPeriodWithAggregatesFilter<$PrismaModel> | $Enums.AwardPeriod
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAwardPeriodFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAwardPeriodFilter<$PrismaModel>
+}
+
+export type EnumAwardCategoryWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardCategory | Prisma.EnumAwardCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardCategoryWithAggregatesFilter<$PrismaModel> | $Enums.AwardCategory
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAwardCategoryFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAwardCategoryFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -818,6 +852,40 @@ export type NestedEnumPositionNullableWithAggregatesFilter<$PrismaModel = never>
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPositionNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPositionNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumAwardPeriodFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardPeriod | Prisma.EnumAwardPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardPeriodFilter<$PrismaModel> | $Enums.AwardPeriod
+}
+
+export type NestedEnumAwardCategoryFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardCategory | Prisma.EnumAwardCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardCategoryFilter<$PrismaModel> | $Enums.AwardCategory
+}
+
+export type NestedEnumAwardPeriodWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardPeriod | Prisma.EnumAwardPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardPeriod[] | Prisma.ListEnumAwardPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardPeriodWithAggregatesFilter<$PrismaModel> | $Enums.AwardPeriod
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAwardPeriodFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAwardPeriodFilter<$PrismaModel>
+}
+
+export type NestedEnumAwardCategoryWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AwardCategory | Prisma.EnumAwardCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AwardCategory[] | Prisma.ListEnumAwardCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAwardCategoryWithAggregatesFilter<$PrismaModel> | $Enums.AwardCategory
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAwardCategoryFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAwardCategoryFilter<$PrismaModel>
 }
 
 

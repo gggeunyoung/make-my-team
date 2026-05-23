@@ -1,3 +1,4 @@
+import { processPastAwardsAllTeams } from "@/lib/award-calculation";
 import { prisma } from "@/lib/prisma";
 
 function isAuthorized(req: Request) {
@@ -23,6 +24,8 @@ export async function GET(req: Request) {
       },
     },
   });
+
+  await processPastAwardsAllTeams(prisma);
 
   return Response.json({
     success: true,

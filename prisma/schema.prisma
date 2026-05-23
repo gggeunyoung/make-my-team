@@ -44,6 +44,7 @@ model Team {
   playerStats Player_Stat[]
   duoStats    Duo_Stat[]
   tournaments Tournament[]
+  awards      Award[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -84,6 +85,7 @@ model Player {
   playerStats Player_Stat[]
   duoStatsA   Duo_Stat[] @relation("DuoStatA")
   duoStatsB   Duo_Stat[] @relation("DuoStatB")
+  awards      Award[]
   isActive  Boolean      @default(true)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
@@ -194,6 +196,22 @@ model Duo_Stat {
   @@unique([playerAId, playerBId, teamId])
 }
 
+model Award {
+  id         String        @id @default(cuid())
+  playerId   String
+  player     Player        @relation(fields: [playerId], references: [id])
+  teamId     String
+  team       Team          @relation(fields: [teamId], references: [id])
+  period     AwardPeriod
+  subPeriod  String
+  category   AwardCategory
+  rank       Int
+  statValue  Float
+  createdAt  DateTime      @default(now())
+
+  @@unique([teamId, period, subPeriod, category, rank])
+}
+
 enum SportType {
   FUTSAL
   SOCCER
@@ -249,4 +267,24 @@ enum TournamentResult {
   THIRD
   SEMIFINAL
   GROUP_STAGE
+}
+
+enum AwardPeriod {
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}
+
+enum AwardCategory {
+  ATTACK_RANKING
+  DEFENSE_RANKING
+  ATTACK_COMBO
+  TOP_SCORER
+  TOP_ASSIST
+  ATTACK_POINT
+  STRONG_VS_TOP
+  STRONG_VS_LOW
+  ATTENDANCE
+  BEST_PLAYER
 }

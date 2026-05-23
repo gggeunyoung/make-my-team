@@ -223,6 +223,7 @@ export type TeamWhereInput = {
   playerStats?: Prisma.Player_StatListRelationFilter
   duoStats?: Prisma.Duo_StatListRelationFilter
   tournaments?: Prisma.TournamentListRelationFilter
+  awards?: Prisma.AwardListRelationFilter
 }
 
 export type TeamOrderByWithRelationInput = {
@@ -241,6 +242,7 @@ export type TeamOrderByWithRelationInput = {
   playerStats?: Prisma.Player_StatOrderByRelationAggregateInput
   duoStats?: Prisma.Duo_StatOrderByRelationAggregateInput
   tournaments?: Prisma.TournamentOrderByRelationAggregateInput
+  awards?: Prisma.AwardOrderByRelationAggregateInput
 }
 
 export type TeamWhereUniqueInput = Prisma.AtLeast<{
@@ -262,6 +264,7 @@ export type TeamWhereUniqueInput = Prisma.AtLeast<{
   playerStats?: Prisma.Player_StatListRelationFilter
   duoStats?: Prisma.Duo_StatListRelationFilter
   tournaments?: Prisma.TournamentListRelationFilter
+  awards?: Prisma.AwardListRelationFilter
 }, "id" | "access_code">
 
 export type TeamOrderByWithAggregationInput = {
@@ -312,6 +315,7 @@ export type TeamCreateInput = {
   playerStats?: Prisma.Player_StatCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateInput = {
@@ -330,6 +334,7 @@ export type TeamUncheckedCreateInput = {
   playerStats?: Prisma.Player_StatUncheckedCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatUncheckedCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentUncheckedCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUpdateInput = {
@@ -348,6 +353,7 @@ export type TeamUpdateInput = {
   playerStats?: Prisma.Player_StatUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateInput = {
@@ -366,6 +372,7 @@ export type TeamUncheckedUpdateInput = {
   playerStats?: Prisma.Player_StatUncheckedUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUncheckedUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUncheckedUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateManyInput = {
@@ -540,6 +547,20 @@ export type TeamUpdateOneRequiredWithoutDuoStatsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TeamUpdateToOneWithWhereWithoutDuoStatsInput, Prisma.TeamUpdateWithoutDuoStatsInput>, Prisma.TeamUncheckedUpdateWithoutDuoStatsInput>
 }
 
+export type TeamCreateNestedOneWithoutAwardsInput = {
+  create?: Prisma.XOR<Prisma.TeamCreateWithoutAwardsInput, Prisma.TeamUncheckedCreateWithoutAwardsInput>
+  connectOrCreate?: Prisma.TeamCreateOrConnectWithoutAwardsInput
+  connect?: Prisma.TeamWhereUniqueInput
+}
+
+export type TeamUpdateOneRequiredWithoutAwardsNestedInput = {
+  create?: Prisma.XOR<Prisma.TeamCreateWithoutAwardsInput, Prisma.TeamUncheckedCreateWithoutAwardsInput>
+  connectOrCreate?: Prisma.TeamCreateOrConnectWithoutAwardsInput
+  upsert?: Prisma.TeamUpsertWithoutAwardsInput
+  connect?: Prisma.TeamWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TeamUpdateToOneWithWhereWithoutAwardsInput, Prisma.TeamUpdateWithoutAwardsInput>, Prisma.TeamUncheckedUpdateWithoutAwardsInput>
+}
+
 export type TeamCreateWithoutTournamentsInput = {
   id?: string
   name: string
@@ -555,6 +576,7 @@ export type TeamCreateWithoutTournamentsInput = {
   matches?: Prisma.MatchCreateNestedManyWithoutTeamInput
   playerStats?: Prisma.Player_StatCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutTournamentsInput = {
@@ -572,6 +594,7 @@ export type TeamUncheckedCreateWithoutTournamentsInput = {
   matches?: Prisma.MatchUncheckedCreateNestedManyWithoutTeamInput
   playerStats?: Prisma.Player_StatUncheckedCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatUncheckedCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutTournamentsInput = {
@@ -605,6 +628,7 @@ export type TeamUpdateWithoutTournamentsInput = {
   matches?: Prisma.MatchUpdateManyWithoutTeamNestedInput
   playerStats?: Prisma.Player_StatUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutTournamentsInput = {
@@ -622,6 +646,7 @@ export type TeamUncheckedUpdateWithoutTournamentsInput = {
   matches?: Prisma.MatchUncheckedUpdateManyWithoutTeamNestedInput
   playerStats?: Prisma.Player_StatUncheckedUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUncheckedUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateWithoutPlayersInput = {
@@ -639,6 +664,7 @@ export type TeamCreateWithoutPlayersInput = {
   playerStats?: Prisma.Player_StatCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutPlayersInput = {
@@ -656,6 +682,7 @@ export type TeamUncheckedCreateWithoutPlayersInput = {
   playerStats?: Prisma.Player_StatUncheckedCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatUncheckedCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentUncheckedCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutPlayersInput = {
@@ -689,6 +716,7 @@ export type TeamUpdateWithoutPlayersInput = {
   playerStats?: Prisma.Player_StatUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutPlayersInput = {
@@ -706,6 +734,7 @@ export type TeamUncheckedUpdateWithoutPlayersInput = {
   playerStats?: Prisma.Player_StatUncheckedUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUncheckedUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUncheckedUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateWithoutMatchesInput = {
@@ -723,6 +752,7 @@ export type TeamCreateWithoutMatchesInput = {
   playerStats?: Prisma.Player_StatCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutMatchesInput = {
@@ -740,6 +770,7 @@ export type TeamUncheckedCreateWithoutMatchesInput = {
   playerStats?: Prisma.Player_StatUncheckedCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatUncheckedCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentUncheckedCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutMatchesInput = {
@@ -773,6 +804,7 @@ export type TeamUpdateWithoutMatchesInput = {
   playerStats?: Prisma.Player_StatUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutMatchesInput = {
@@ -790,6 +822,7 @@ export type TeamUncheckedUpdateWithoutMatchesInput = {
   playerStats?: Prisma.Player_StatUncheckedUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUncheckedUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUncheckedUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateWithoutPlayerStatsInput = {
@@ -807,6 +840,7 @@ export type TeamCreateWithoutPlayerStatsInput = {
   matches?: Prisma.MatchCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutPlayerStatsInput = {
@@ -824,6 +858,7 @@ export type TeamUncheckedCreateWithoutPlayerStatsInput = {
   matches?: Prisma.MatchUncheckedCreateNestedManyWithoutTeamInput
   duoStats?: Prisma.Duo_StatUncheckedCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentUncheckedCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutPlayerStatsInput = {
@@ -857,6 +892,7 @@ export type TeamUpdateWithoutPlayerStatsInput = {
   matches?: Prisma.MatchUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutPlayerStatsInput = {
@@ -874,6 +910,7 @@ export type TeamUncheckedUpdateWithoutPlayerStatsInput = {
   matches?: Prisma.MatchUncheckedUpdateManyWithoutTeamNestedInput
   duoStats?: Prisma.Duo_StatUncheckedUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUncheckedUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamCreateWithoutDuoStatsInput = {
@@ -891,6 +928,7 @@ export type TeamCreateWithoutDuoStatsInput = {
   matches?: Prisma.MatchCreateNestedManyWithoutTeamInput
   playerStats?: Prisma.Player_StatCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardCreateNestedManyWithoutTeamInput
 }
 
 export type TeamUncheckedCreateWithoutDuoStatsInput = {
@@ -908,6 +946,7 @@ export type TeamUncheckedCreateWithoutDuoStatsInput = {
   matches?: Prisma.MatchUncheckedCreateNestedManyWithoutTeamInput
   playerStats?: Prisma.Player_StatUncheckedCreateNestedManyWithoutTeamInput
   tournaments?: Prisma.TournamentUncheckedCreateNestedManyWithoutTeamInput
+  awards?: Prisma.AwardUncheckedCreateNestedManyWithoutTeamInput
 }
 
 export type TeamCreateOrConnectWithoutDuoStatsInput = {
@@ -941,6 +980,7 @@ export type TeamUpdateWithoutDuoStatsInput = {
   matches?: Prisma.MatchUpdateManyWithoutTeamNestedInput
   playerStats?: Prisma.Player_StatUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUpdateManyWithoutTeamNestedInput
 }
 
 export type TeamUncheckedUpdateWithoutDuoStatsInput = {
@@ -958,6 +998,95 @@ export type TeamUncheckedUpdateWithoutDuoStatsInput = {
   matches?: Prisma.MatchUncheckedUpdateManyWithoutTeamNestedInput
   playerStats?: Prisma.Player_StatUncheckedUpdateManyWithoutTeamNestedInput
   tournaments?: Prisma.TournamentUncheckedUpdateManyWithoutTeamNestedInput
+  awards?: Prisma.AwardUncheckedUpdateManyWithoutTeamNestedInput
+}
+
+export type TeamCreateWithoutAwardsInput = {
+  id?: string
+  name: string
+  sport_type: $Enums.SportType
+  logo?: string | null
+  color?: string | null
+  access_code: string
+  operator: string
+  admins?: Prisma.TeamCreateadminsInput | string[]
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  players?: Prisma.PlayerCreateNestedManyWithoutTeamInput
+  matches?: Prisma.MatchCreateNestedManyWithoutTeamInput
+  playerStats?: Prisma.Player_StatCreateNestedManyWithoutTeamInput
+  duoStats?: Prisma.Duo_StatCreateNestedManyWithoutTeamInput
+  tournaments?: Prisma.TournamentCreateNestedManyWithoutTeamInput
+}
+
+export type TeamUncheckedCreateWithoutAwardsInput = {
+  id?: string
+  name: string
+  sport_type: $Enums.SportType
+  logo?: string | null
+  color?: string | null
+  access_code: string
+  operator: string
+  admins?: Prisma.TeamCreateadminsInput | string[]
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  players?: Prisma.PlayerUncheckedCreateNestedManyWithoutTeamInput
+  matches?: Prisma.MatchUncheckedCreateNestedManyWithoutTeamInput
+  playerStats?: Prisma.Player_StatUncheckedCreateNestedManyWithoutTeamInput
+  duoStats?: Prisma.Duo_StatUncheckedCreateNestedManyWithoutTeamInput
+  tournaments?: Prisma.TournamentUncheckedCreateNestedManyWithoutTeamInput
+}
+
+export type TeamCreateOrConnectWithoutAwardsInput = {
+  where: Prisma.TeamWhereUniqueInput
+  create: Prisma.XOR<Prisma.TeamCreateWithoutAwardsInput, Prisma.TeamUncheckedCreateWithoutAwardsInput>
+}
+
+export type TeamUpsertWithoutAwardsInput = {
+  update: Prisma.XOR<Prisma.TeamUpdateWithoutAwardsInput, Prisma.TeamUncheckedUpdateWithoutAwardsInput>
+  create: Prisma.XOR<Prisma.TeamCreateWithoutAwardsInput, Prisma.TeamUncheckedCreateWithoutAwardsInput>
+  where?: Prisma.TeamWhereInput
+}
+
+export type TeamUpdateToOneWithWhereWithoutAwardsInput = {
+  where?: Prisma.TeamWhereInput
+  data: Prisma.XOR<Prisma.TeamUpdateWithoutAwardsInput, Prisma.TeamUncheckedUpdateWithoutAwardsInput>
+}
+
+export type TeamUpdateWithoutAwardsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  sport_type?: Prisma.EnumSportTypeFieldUpdateOperationsInput | $Enums.SportType
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  access_code?: Prisma.StringFieldUpdateOperationsInput | string
+  operator?: Prisma.StringFieldUpdateOperationsInput | string
+  admins?: Prisma.TeamUpdateadminsInput | string[]
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  players?: Prisma.PlayerUpdateManyWithoutTeamNestedInput
+  matches?: Prisma.MatchUpdateManyWithoutTeamNestedInput
+  playerStats?: Prisma.Player_StatUpdateManyWithoutTeamNestedInput
+  duoStats?: Prisma.Duo_StatUpdateManyWithoutTeamNestedInput
+  tournaments?: Prisma.TournamentUpdateManyWithoutTeamNestedInput
+}
+
+export type TeamUncheckedUpdateWithoutAwardsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  sport_type?: Prisma.EnumSportTypeFieldUpdateOperationsInput | $Enums.SportType
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  access_code?: Prisma.StringFieldUpdateOperationsInput | string
+  operator?: Prisma.StringFieldUpdateOperationsInput | string
+  admins?: Prisma.TeamUpdateadminsInput | string[]
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  players?: Prisma.PlayerUncheckedUpdateManyWithoutTeamNestedInput
+  matches?: Prisma.MatchUncheckedUpdateManyWithoutTeamNestedInput
+  playerStats?: Prisma.Player_StatUncheckedUpdateManyWithoutTeamNestedInput
+  duoStats?: Prisma.Duo_StatUncheckedUpdateManyWithoutTeamNestedInput
+  tournaments?: Prisma.TournamentUncheckedUpdateManyWithoutTeamNestedInput
 }
 
 
@@ -971,6 +1100,7 @@ export type TeamCountOutputType = {
   playerStats: number
   duoStats: number
   tournaments: number
+  awards: number
 }
 
 export type TeamCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -979,6 +1109,7 @@ export type TeamCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   playerStats?: boolean | TeamCountOutputTypeCountPlayerStatsArgs
   duoStats?: boolean | TeamCountOutputTypeCountDuoStatsArgs
   tournaments?: boolean | TeamCountOutputTypeCountTournamentsArgs
+  awards?: boolean | TeamCountOutputTypeCountAwardsArgs
 }
 
 /**
@@ -1026,6 +1157,13 @@ export type TeamCountOutputTypeCountTournamentsArgs<ExtArgs extends runtime.Type
   where?: Prisma.TournamentWhereInput
 }
 
+/**
+ * TeamCountOutputType without action
+ */
+export type TeamCountOutputTypeCountAwardsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AwardWhereInput
+}
+
 
 export type TeamSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1043,6 +1181,7 @@ export type TeamSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   playerStats?: boolean | Prisma.Team$playerStatsArgs<ExtArgs>
   duoStats?: boolean | Prisma.Team$duoStatsArgs<ExtArgs>
   tournaments?: boolean | Prisma.Team$tournamentsArgs<ExtArgs>
+  awards?: boolean | Prisma.Team$awardsArgs<ExtArgs>
   _count?: boolean | Prisma.TeamCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["team"]>
 
@@ -1092,6 +1231,7 @@ export type TeamInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   playerStats?: boolean | Prisma.Team$playerStatsArgs<ExtArgs>
   duoStats?: boolean | Prisma.Team$duoStatsArgs<ExtArgs>
   tournaments?: boolean | Prisma.Team$tournamentsArgs<ExtArgs>
+  awards?: boolean | Prisma.Team$awardsArgs<ExtArgs>
   _count?: boolean | Prisma.TeamCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TeamIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1105,6 +1245,7 @@ export type $TeamPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     playerStats: Prisma.$Player_StatPayload<ExtArgs>[]
     duoStats: Prisma.$Duo_StatPayload<ExtArgs>[]
     tournaments: Prisma.$TournamentPayload<ExtArgs>[]
+    awards: Prisma.$AwardPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1516,6 +1657,7 @@ export interface Prisma__TeamClient<T, Null = never, ExtArgs extends runtime.Typ
   playerStats<T extends Prisma.Team$playerStatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$playerStatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Player_StatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   duoStats<T extends Prisma.Team$duoStatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$duoStatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Duo_StatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tournaments<T extends Prisma.Team$tournamentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$tournamentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TournamentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  awards<T extends Prisma.Team$awardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Team$awardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AwardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2065,6 +2207,30 @@ export type Team$tournamentsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.TournamentScalarFieldEnum | Prisma.TournamentScalarFieldEnum[]
+}
+
+/**
+ * Team.awards
+ */
+export type Team$awardsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Award
+   */
+  select?: Prisma.AwardSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Award
+   */
+  omit?: Prisma.AwardOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AwardInclude<ExtArgs> | null
+  where?: Prisma.AwardWhereInput
+  orderBy?: Prisma.AwardOrderByWithRelationInput | Prisma.AwardOrderByWithRelationInput[]
+  cursor?: Prisma.AwardWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AwardScalarFieldEnum | Prisma.AwardScalarFieldEnum[]
 }
 
 /**

@@ -62,3 +62,8 @@ export type Player_Stat = Prisma.Player_StatModel
  * 
  */
 export type Duo_Stat = Prisma.Duo_StatModel
+/**
+ * Model Award
+ * 
+ */
+export type Award = Prisma.AwardModel
