@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TeamAwardTab } from "@/components/team-award-tab";
 import { TeamMatchesTab } from "@/components/team-matches-tab";
 import { TeamPlayersTab } from "@/components/team-players-tab";
 import { TeamStatsTab } from "@/components/team-stats-tab";
@@ -42,7 +43,8 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
     if (activeTab === "MATCHES") return <TeamMatchesTab teamId={teamId} teamColor={teamColor} />;
     if (activeTab === "STATS") return <TeamStatsTab teamId={teamId} teamColor={teamColor} />;
     if (activeTab === "TOURNAMENT") return <TeamTournamentTab teamId={teamId} teamColor={teamColor} />;
-    return <Placeholder title="Award" />;
+    if (activeTab === "AWARD") return <TeamAwardTab teamId={teamId} teamColor={teamColor} />;
+    return null;
   })();
 
   return (
