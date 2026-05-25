@@ -305,7 +305,7 @@ export async function POST(req: Request) {
     });
 
     return match;
-  });
+  }, { timeout: 15000 });
 
   return Response.json({ matchId: created.id });
 }
