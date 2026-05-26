@@ -12,7 +12,14 @@ type Props = {
   onCancel: () => void;
 };
 
-function getCroppedCanvas(image: HTMLImageElement, crop: PixelCrop): string {
+const MAX_BYTES = 1_000_000;
+
+function dataUrlByteSize(dataUrl: string): number {
+  const base64 = dataUrl.split(",")[1] ?? "";
+  return Math.ceil((base64.length * 3) / 4);
+}
+
+function getCroppedDataUrl(image: HTMLImageElement, crop: PixelCrop): string {
   const canvas = document.createElement("canvas");
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
@@ -30,7 +37,16 @@ function getCroppedCanvas(image: HTMLImageElement, crop: PixelCrop): string {
     canvas.width,
     canvas.height,
   );
-  return canvas.toDataURL("image/jpeg", 0.92);
+
+  let quality = 0.7;
+  let result = canvas.toDataURL("image/jpeg", quality);
+
+  while (dataUrlByteSize(result) > MAX_BYTES && quality > 0.1) {
+    quality -= 0.1;
+    result = canvas.toDataURL("image/jpeg", quality);
+  }
+
+  return result;
 }
 
 export function PlayerPhotoCropModal({ imageSrc, onConfirm, onCancel }: Props) {
@@ -56,7 +72,7 @@ export function PlayerPhotoCropModal({ imageSrc, onConfirm, onCancel }: Props) {
 
   const handleConfirm = () => {
     if (!imgRef.current || !completedCrop) return;
-    const dataUrl = getCroppedCanvas(imgRef.current, completedCrop);
+    const dataUrl = getCroppedDataUrl(imgRef.current, completedCrop);
     onConfirm(dataUrl);
   };
 
