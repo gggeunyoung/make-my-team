@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import { persistMatchDerivedStats } from "@/lib/match-derived-stats";
 import { prisma } from "@/lib/prisma";
 
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -153,18 +152,12 @@ export async function POST(req: Request, context: RouteContext) {
     return Response.json({ message: "출석 선수는 대회 참여 선수 목록 안에서만 선택할 수 있습니다." }, { status: 400 });
   }
 
-  const [team, teamMatches] = await Promise.all([
-    prisma.team.findUnique({
-      where: { id: teamId },
-      include: {
-        players: { where: { isActive: true }, select: { id: true, name: true, style: true, createdAt: true } },
-      },
-    }),
-    prisma.match.findMany({
-      where: { teamId },
-      select: { date: true, attendees: true },
-    }),
-  ]);
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    include: {
+      players: { where: { isActive: true }, select: { id: true } },
+    },
+  });
   if (!team) {
     return Response.json({ message: "팀을 찾을 수 없습니다." }, { status: 404 });
   }
@@ -319,52 +312,8 @@ export async function POST(req: Request, context: RouteContext) {
       }
     }
 
-    const gamesWithGoals = await tx.game.findMany({
-      where: { matchId: match.id },
-      orderBy: { createdAt: "asc" },
-      include: {
-        goal_events: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
-      },
-    });
-
-    await persistMatchDerivedStats(tx, {
-      matchId: match.id,
-      teamId,
-      attendees,
-      players: team.players,
-      teamMatches,
-      sportType: team.sport_type,
-      match: {
-        is_tournament: match.is_tournament,
-        opponent_level: match.opponent_level,
-        date: match.date,
-        stage: match.stage ?? null,
-        match_format_futsal: match.match_format_futsal ?? null,
-        is_pso: match.is_pso,
-        pso_result: match.pso_result,
-      },
-      games: gamesWithGoals.map((g) => ({
-        score_us: g.score_us,
-        score_them: g.score_them,
-        result: g.result,
-        players_all: g.players_all,
-        players_fw: g.players_fw,
-        players_mf: g.players_mf,
-        players_df: g.players_df,
-        players_gk: g.players_gk,
-        goal_events: g.goal_events.map((e) => ({
-          id: e.id,
-          createdAt: e.createdAt,
-          scorer_id: e.scorer_id,
-          scorer_type: e.scorer_type,
-          assister_id: e.assister_id,
-          assister_type: e.assister_type,
-        })),
-      })),
-    });
-
     return match;
   });
 
-  return Response.json({ matchId: created.id });
+  return Response.json({ success: true, matchId: created.id, teamId });
 }

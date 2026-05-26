@@ -425,9 +425,17 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = (await res.json()) as { message?: string };
+      const data = (await res.json()) as { matchId?: string; teamId?: string; message?: string };
       if (!res.ok) {
         throw new Error(data.message ?? "매치 저장에 실패했습니다.");
+      }
+
+      if (data.matchId && data.teamId) {
+        fetch(`/api/match/${data.matchId}/calculate-stats`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teamId: data.teamId }),
+        }).catch(() => {});
       }
 
       resetForm();
