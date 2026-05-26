@@ -410,41 +410,37 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
     setPlayerMessage("");
 
     try {
-      const nextPlayerForms: PlayerFormItem[] = [];
+      type SaveTask = {
+        type: "deactivate" | "create" | "update" | "skip";
+        item: PlayerFormItem;
+        promise?: Promise<Response>;
+      };
 
-      for (const item of playerForms) {
+      const tasks: SaveTask[] = playerForms.map((item) => {
         const name = item.name.trim();
         const position = initialTeam.sportType === "SOCCER" ? item.position : [];
 
         if (item.removed) {
           if (item.playerId) {
-            const deactivateRes = await fetch(`/api/player/${item.playerId}/deactivate`, { method: "PUT" });
-            const deactivateData = (await deactivateRes.json()) as { message?: string };
-            if (!deactivateRes.ok) {
-              throw new Error(deactivateData.message ?? "선수 비활성화에 실패했습니다.");
-            }
+            return {
+              type: "deactivate",
+              item,
+              promise: fetch(`/api/player/${item.playerId}/deactivate`, { method: "PUT" }),
+            };
           }
-          continue;
+          return { type: "deactivate", item };
         }
 
         if (!item.playerId) {
-          const createRes = await fetch("/api/player/create", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              teamId,
-              name,
-              photo: item.photo,
-              style: item.style,
-              position,
+          return {
+            type: "create",
+            item,
+            promise: fetch("/api/player/create", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ teamId, name, photo: item.photo, style: item.style, position }),
             }),
-          });
-          const createData = (await createRes.json()) as { player?: Player; message?: string };
-          if (!createRes.ok || !createData.player) {
-            throw new Error(createData.message ?? "선수 추가에 실패했습니다.");
-          }
-          nextPlayerForms.push(makePlayerFormItem(createData.player));
-          continue;
+          };
         }
 
         const original = item.original;
@@ -456,35 +452,64 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
           !samePositions(original.position, position);
 
         if (!isChanged) {
-          nextPlayerForms.push({
-            ...item,
-            name,
-            position,
-            errorMessage: "",
-          });
+          return { type: "skip", item };
+        }
+
+        return {
+          type: "update",
+          item,
+          promise: fetch(`/api/player/${item.playerId}/update`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, photo: item.photo, style: item.style, position }),
+          }),
+        };
+      });
+
+      const results = await Promise.allSettled(
+        tasks.map(async (task) => {
+          if (!task.promise) return { task, data: null };
+          const res = await task.promise;
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message ?? "저장에 실패했습니다.");
+          return { task, data };
+        }),
+      );
+
+      const errors: string[] = [];
+      const nextPlayerForms: PlayerFormItem[] = [];
+
+      for (const result of results) {
+        if (result.status === "rejected") {
+          errors.push(result.reason instanceof Error ? result.reason.message : "저장에 실패했습니다.");
           continue;
         }
-
-        const updateRes = await fetch(`/api/player/${item.playerId}/update`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            photo: item.photo,
-            style: item.style,
-            position,
-          }),
-        });
-        const updateData = (await updateRes.json()) as { player?: Player; message?: string };
-        if (!updateRes.ok || !updateData.player) {
-          throw new Error(updateData.message ?? "선수 수정에 실패했습니다.");
+        const { task, data } = result.value;
+        if (task.type === "deactivate") continue;
+        if (task.type === "skip") {
+          nextPlayerForms.push({
+            ...task.item,
+            name: task.item.name.trim(),
+            position: initialTeam.sportType === "SOCCER" ? task.item.position : [],
+            errorMessage: "",
+          });
+        } else if (task.type === "create" || task.type === "update") {
+          const player = (data as { player?: Player })?.player;
+          if (player) {
+            nextPlayerForms.push(makePlayerFormItem(player));
+          }
         }
-        nextPlayerForms.push(makePlayerFormItem(updateData.player));
       }
 
-      setPlayerForms(sortPlayerFormsNewest(nextPlayerForms));
-      setPlayerIsError(false);
-      setPlayerMessage("저장 완료!");
+      if (errors.length > 0) {
+        setPlayerForms(sortPlayerFormsNewest(nextPlayerForms));
+        setPlayerIsError(true);
+        setPlayerMessage(errors[0]);
+      } else {
+        setPlayerForms(sortPlayerFormsNewest(nextPlayerForms));
+        setPlayerIsError(false);
+        setPlayerMessage("저장 완료!");
+      }
       router.refresh();
     } catch (error) {
       setPlayerIsError(true);

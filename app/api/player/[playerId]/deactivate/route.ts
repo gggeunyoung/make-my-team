@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 
 type RouteContext = {
   params: Promise<{ playerId: string }>;
@@ -29,9 +28,6 @@ export async function PUT(_: Request, context: RouteContext) {
     where: { id: playerId },
     data: { isActive: false },
   });
-
-  revalidatePath("/team/[teamId]", "page");
-  revalidatePath("/team/[teamId]/manager", "page");
 
   return Response.json({
     player: {

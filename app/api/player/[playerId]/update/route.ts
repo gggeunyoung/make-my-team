@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { uploadPlayerPhotoToSupabase } from "@/lib/player-server";
 import { isPlayerStyle, normalizePlayerName, parsePlayerPositions } from "@/lib/player";
-import { revalidatePath } from "next/cache";
 
 type RouteContext = {
   params: Promise<{ playerId: string }>;
@@ -91,9 +90,6 @@ export async function PUT(req: Request, context: RouteContext) {
       position: existingPlayer.team.sport_type === "SOCCER" ? positions : [],
     },
   });
-
-  revalidatePath("/team/[teamId]", "page");
-  revalidatePath("/team/[teamId]/manager", "page");
 
   return Response.json({
     player: {
