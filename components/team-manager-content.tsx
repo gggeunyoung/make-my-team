@@ -7,6 +7,7 @@ import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
 import { MatchManagerTab } from "@/components/match-manager-tab";
 import { TournamentManagerTab } from "@/components/tournament-manager-tab";
+import { PlayerPhotoCropModal } from "@/components/player-photo-crop-modal";
 
 type ManagerTab = "MATCH" | "PLAYER" | "TOURNAMENT" | "TEAM";
 type SportType = "FUTSAL" | "SOCCER";
@@ -153,6 +154,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
   const [playerMessage, setPlayerMessage] = useState("");
   const [playerIsError, setPlayerIsError] = useState(false);
   const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
+  const [cropState, setCropState] = useState<{ clientId: string; imageSrc: string } | null>(null);
 
   const units = useMemo(() => calculateTeamNameUnits(name), [name]);
   const progress = Math.min((units / 30) * 100, 100);
@@ -330,9 +332,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
       reader.readAsDataURL(file);
     });
 
-    onChangePlayerField(clientId, { photo: dataUrl });
-    setPlayerIsError(false);
-    setPlayerMessage("");
+    setCropState({ clientId, imageSrc: dataUrl });
   };
 
   const onTogglePlayerPosition = (clientId: string, position: PositionValue) => {
@@ -876,6 +876,19 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
 
         <div>{content}</div>
       </div>
+
+      {cropState ? (
+        <PlayerPhotoCropModal
+          imageSrc={cropState.imageSrc}
+          onConfirm={(croppedDataUrl) => {
+            onChangePlayerField(cropState.clientId, { photo: croppedDataUrl });
+            setCropState(null);
+            setPlayerIsError(false);
+            setPlayerMessage("");
+          }}
+          onCancel={() => setCropState(null)}
+        />
+      ) : null}
     </main>
   );
 }
