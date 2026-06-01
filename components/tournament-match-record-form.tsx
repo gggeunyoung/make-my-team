@@ -44,10 +44,10 @@ type TournamentMatchRecordFormProps = {
   onSaved: () => void;
 };
 
-const OPPONENT_LEVEL_FORM_OPTIONS: Array<{ value: "HIGH" | "MID" | "LOW"; label: string }> = [
+const OPPONENT_LEVEL_FORM_OPTIONS: Array<{ value: "TOP" | "HIGH" | "MID"; label: string }> = [
+  { value: "TOP", label: "최상" },
   { value: "HIGH", label: "상" },
   { value: "MID", label: "중" },
-  { value: "LOW", label: "하" },
 ];
 
 function todayIso() {

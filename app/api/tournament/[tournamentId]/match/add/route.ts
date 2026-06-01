@@ -38,7 +38,7 @@ type Body = {
   psoResult?: "WIN" | "LOSS" | null;
 };
 
-const OPPONENT_LEVELS = new Set<OpponentLevel>(["TOP", "HIGH", "MID", "LOW"]);
+const TOURNAMENT_OPPONENT_LEVELS = new Set<OpponentLevel>(["TOP", "HIGH", "MID"]);
 const RECORD_TYPES = new Set<RecordType>(["PLAYER", "MERCENARY", "OWN_GOAL", "NONE"]);
 const STAGES = new Set<TournamentStage>(["PRELIMINARY", "MAIN"]);
 const FUTSAL_MATCH_FORMATS = new Set<MatchFormatFutsal>(["FIVE_VS_FIVE", "SIX_VS_SIX"]);
@@ -121,7 +121,7 @@ export async function POST(req: Request, context: RouteContext) {
   if (!opponentName) {
     return Response.json({ message: "상대팀 이름은 필수입니다." }, { status: 400 });
   }
-  if (!opponentLevel || !OPPONENT_LEVELS.has(opponentLevel)) {
+  if (!opponentLevel || !TOURNAMENT_OPPONENT_LEVELS.has(opponentLevel)) {
     return Response.json({ message: "상대팀 수준을 선택해주세요." }, { status: 400 });
   }
   if (!dateString) {
