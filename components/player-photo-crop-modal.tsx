@@ -26,6 +26,8 @@ function getCroppedDataUrl(image: HTMLImageElement, crop: PixelCrop): string {
   canvas.width = Math.round(crop.width * scaleX);
   canvas.height = Math.round(crop.height * scaleY);
   const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(
     image,
     crop.x * scaleX,

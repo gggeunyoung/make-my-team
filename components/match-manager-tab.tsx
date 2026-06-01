@@ -146,11 +146,39 @@ function PlayerNameSuggestInput({
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const suggestions = useMemo(() => {
     const q = value.trim();
     if (!q) return [];
     return attendeePlayers.filter((p) => p.name.includes(q));
   }, [value, attendeePlayers]);
+
+  const selectSuggestion = (player: AttendeeOption) => {
+    onCommit(player.name, player.id);
+    setOpen(false);
+    setActiveIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!open || disabled || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const index = activeIndex >= 0 ? activeIndex : 0;
+      const selected = suggestions[index];
+      if (selected) selectSuggestion(selected);
+    }
+  };
 
   return (
     <div className="relative">
@@ -158,10 +186,17 @@ function PlayerNameSuggestInput({
         value={value}
         disabled={disabled}
         placeholder={placeholder}
-        onFocus={() => setOpen(true)}
-        onBlur={() => {
-          window.setTimeout(() => setOpen(false), 120);
+        onFocus={() => {
+          setOpen(true);
+          setActiveIndex(suggestions.length > 0 ? 0 : -1);
         }}
+        onBlur={() => {
+          window.setTimeout(() => {
+            setOpen(false);
+            setActiveIndex(-1);
+          }, 120);
+        }}
+        onKeyDown={handleKeyDown}
         onChange={(e) => {
           const text = e.target.value;
           const resolved =
@@ -169,22 +204,23 @@ function PlayerNameSuggestInput({
               ? attendeePlayers.find((p) => p.name === text.trim())!.id
               : null;
           onCommit(text, resolved);
+          setActiveIndex(0);
         }}
         className="h-9 w-full rounded border border-zinc-300 px-2 text-sm disabled:bg-zinc-100"
         autoComplete="off"
       />
       {open && !disabled && suggestions.length > 0 ? (
         <ul className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border border-zinc-200 bg-white py-1 text-sm shadow-md">
-          {suggestions.map((p) => (
+          {suggestions.map((p, index) => (
             <li key={p.id}>
               <button
                 type="button"
-                className="w-full px-2 py-1.5 text-left hover:bg-zinc-100"
+                className={`w-full px-2 py-1.5 text-left ${
+                  index === activeIndex ? "bg-zinc-100" : "hover:bg-zinc-100"
+                }`}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onCommit(p.name, p.id);
-                  setOpen(false);
-                }}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => selectSuggestion(p)}
               >
                 {p.name}
               </button>
@@ -354,7 +390,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   const validateBeforeSubmit = () => {
     if (!opponentName.trim()) return "상대팀 이름을 입력해주세요.";
     if (!matchDate) return "경기 날짜를 선택해주세요.";
-    if (sportType === "FUTSAL" && !matchFormatFutsal) return "매치 포맷을 선택해주세요.";
+    if (sportType === "FUTSAL" && !matchFormatFutsal) return "매치 유형을 선택해주세요.";
     if (attendees.length < 1) return "출석 선수는 최소 1명 이상 선택해주세요.";
     if (games.length < 1) return "경기 시트를 1개 이상 추가해주세요.";
 
@@ -512,7 +548,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                   <div className="space-y-0.5 text-xs text-zinc-600">
                     <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
                     <p>상대팀 수준: {levelLabel(match.opponent_level)}</p>
-                    {sportType === "FUTSAL" ? <p>매치 포맷: {futsalFormatLabel(match.match_format_futsal)}</p> : null}
+                    {sportType === "FUTSAL" ? <p>매치 유형: {futsalFormatLabel(match.match_format_futsal)}</p> : null}
                     <p>
                       스코어: {match.total_score_us} : {match.total_score_them}
                     </p>
@@ -615,7 +651,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
             </label>
             {sportType === "FUTSAL" ? (
               <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700">
-                <span>매치 포맷</span>
+                <span>매치 유형</span>
                 <select
                   value={matchFormatFutsal}
                   onChange={(e) => setMatchFormatFutsal(e.target.value as MatchFormatFutsal)}

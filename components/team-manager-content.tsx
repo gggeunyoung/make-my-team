@@ -659,11 +659,11 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
               <h2 className="text-lg font-semibold text-zinc-900">선수관리</h2>
               <button
                 type="button"
+                aria-label="선수관리 안내"
                 onClick={() => setShowPlayerInfoModal(true)}
-                className="text-sm text-zinc-500"
-                aria-label="선수관리 안내 열기"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-xs font-semibold text-zinc-600 hover:bg-zinc-100"
               >
-                ℹ️
+                ?
               </button>
             </div>
             <button
@@ -708,29 +708,37 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
                   <div className="space-y-3">
                     <div>
                       <label className="mb-1 block text-xs font-medium text-zinc-600">선수 사진</label>
-                      {item.photo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.photo} alt="선수 사진 미리보기" className="mb-2 h-36 w-28 rounded-lg object-cover" />
-                      ) : (
-                        <div className="mb-2 flex h-36 w-28 items-center justify-center rounded-lg bg-zinc-200 text-xs text-zinc-500">
-                          No Photo
-                        </div>
-                      )}
+                      <div className="flex items-start gap-2">
+                        <label
+                          htmlFor={`player-photo-${item.clientId}`}
+                          className="block shrink-0 cursor-pointer"
+                        >
+                          {item.photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.photo} alt="선수 사진 미리보기" className="h-36 w-28 rounded-lg object-cover" />
+                          ) : (
+                            <div className="flex h-36 w-28 items-center justify-center rounded-lg bg-zinc-200 text-xs text-zinc-500">
+                              No Photo
+                            </div>
+                          )}
+                        </label>
+                        {item.photo ? (
+                          <button
+                            type="button"
+                            onClick={() => onChangePlayerField(item.clientId, { photo: null })}
+                            className="shrink-0 rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
+                          >
+                            사진 제거
+                          </button>
+                        ) : null}
+                      </div>
                       <input
+                        id={`player-photo-${item.clientId}`}
                         type="file"
                         accept="image/*"
                         onChange={(e) => void onPlayerPhotoFileChange(item.clientId, e.target.files?.[0])}
-                        className="block w-full text-xs text-zinc-700"
+                        className="hidden"
                       />
-                      {item.photo ? (
-                        <button
-                          type="button"
-                          onClick={() => onChangePlayerField(item.clientId, { photo: null })}
-                          className="mt-2 rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
-                        >
-                          사진 제거
-                        </button>
-                      ) : null}
                     </div>
 
                     <div>
