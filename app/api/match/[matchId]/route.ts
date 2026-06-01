@@ -25,9 +25,10 @@ export async function DELETE(_: Request, context: RouteContext) {
     return Response.json({ message: "접근 권한이 없습니다." }, { status: 403 });
   }
 
-  await prisma.match.delete({
-    where: { id: match.id },
-  });
+  await prisma.$transaction([
+    prisma.player_Stat.deleteMany({ where: { matchId: match.id } }),
+    prisma.match.delete({ where: { id: match.id } }),
+  ]);
 
   return Response.json({ ok: true });
 }
