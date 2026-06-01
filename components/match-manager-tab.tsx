@@ -714,16 +714,16 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
 
               <div className="mb-3 grid gap-3 md:grid-cols-2">
                 <input
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="numeric"
                   value={game.scoreUs}
                   onChange={(e) => updateGame(game.id, { scoreUs: e.target.value })}
                   placeholder="우리팀 득점"
                   className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
                 />
                 <input
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="numeric"
                   value={game.scoreThem}
                   onChange={(e) => updateGame(game.id, { scoreThem: e.target.value })}
                   placeholder="상대팀 득점"
