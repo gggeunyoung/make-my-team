@@ -1,6 +1,7 @@
 import { getCurrentQuarterInfo } from "@/lib/player-period";
 import { prisma } from "@/lib/prisma";
 import {
+  buildFirstAttendanceDateByPlayer,
   buildTopRankings,
   overallAttendanceRate,
   periodAttendancePercent,
@@ -128,17 +129,26 @@ export async function GET(req: Request) {
     ...aggByPlayer.get(player.id)!,
   }));
 
+  const firstAttendanceDateByPlayer = buildFirstAttendanceDateByPlayer(allTeamMatches);
   const overallRateByPlayer = new Map(
     players.map((player) => [
       player.id,
-      overallAttendanceRate(player.id, player.createdAt, allTeamMatches),
+      overallAttendanceRate(
+        player.id,
+        firstAttendanceDateByPlayer.get(player.id) ?? null,
+        allTeamMatches,
+      ),
     ]),
   );
 
   const periodAttendanceByPlayer = new Map(
     players.map((player) => [
       player.id,
-      periodAttendancePercent(player.id, player.createdAt, quarterMatches),
+      periodAttendancePercent(
+        player.id,
+        firstAttendanceDateByPlayer.get(player.id) ?? null,
+        quarterMatches,
+      ),
     ]),
   );
 

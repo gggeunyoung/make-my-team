@@ -9,6 +9,7 @@ import {
   getYearRange,
 } from "@/lib/player-period";
 import {
+  buildFirstAttendanceDateByPlayer,
   compareRankingTiebreak,
   overallAttendanceRate,
   periodAttendancePercent,
@@ -345,10 +346,15 @@ export async function calculateAwardsForPeriod(
   const awards: AwardDraft[] = [];
   const teamMatchesForAttendance: TeamMatchForAttendance[] = allTeamMatches;
   const periodMatchesForAttendance: TeamMatchForAttendance[] = periodMatches;
+  const firstAttendanceDateByPlayer = buildFirstAttendanceDateByPlayer(teamMatchesForAttendance);
   const overallRateByPlayer = new Map(
     players.map((player) => [
       player.id,
-      overallAttendanceRate(player.id, player.createdAt, teamMatchesForAttendance),
+      overallAttendanceRate(
+        player.id,
+        firstAttendanceDateByPlayer.get(player.id) ?? null,
+        teamMatchesForAttendance,
+      ),
     ]),
   );
 
@@ -563,7 +569,11 @@ export async function calculateAwardsForPeriod(
         buildAwardRankings(
           activePlayers,
           (player) =>
-            periodAttendancePercent(player.id, player.createdAt, periodMatchesForAttendance),
+            periodAttendancePercent(
+              player.id,
+              firstAttendanceDateByPlayer.get(player.id) ?? null,
+              periodMatchesForAttendance,
+            ),
           overallRateByPlayer,
         ),
       ),

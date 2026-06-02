@@ -7,15 +7,31 @@ export type TeamMatchForAttendance = {
   attendees: string[];
 };
 
+export function buildFirstAttendanceDateByPlayer(
+  teamMatches: TeamMatchForAttendance[],
+): Map<string, Date> {
+  const firstDateByPlayer = new Map<string, Date>();
+  for (const match of teamMatches) {
+    for (const playerId of match.attendees) {
+      const prev = firstDateByPlayer.get(playerId);
+      if (!prev || match.date < prev) {
+        firstDateByPlayer.set(playerId, match.date);
+      }
+    }
+  }
+  return firstDateByPlayer;
+}
+
 export function overallAttendanceRate(
   playerId: string,
-  playerCreatedAt: Date,
+  firstAttendanceDate: Date | null,
   teamMatches: TeamMatchForAttendance[],
 ): number {
+  if (!firstAttendanceDate) return 0;
   let total = 0;
   let attended = 0;
   for (const m of teamMatches) {
-    if (m.date < playerCreatedAt) continue;
+    if (m.date < firstAttendanceDate) continue;
     total += 1;
     if (m.attendees.includes(playerId)) attended += 1;
   }
@@ -24,13 +40,14 @@ export function overallAttendanceRate(
 
 export function periodAttendancePercent(
   playerId: string,
-  playerCreatedAt: Date,
+  firstAttendanceDate: Date | null,
   periodMatches: TeamMatchForAttendance[],
 ): number {
+  if (!firstAttendanceDate) return 0;
   let total = 0;
   let attended = 0;
   for (const m of periodMatches) {
-    if (m.date < playerCreatedAt) continue;
+    if (m.date < firstAttendanceDate) continue;
     total += 1;
     if (m.attendees.includes(playerId)) attended += 1;
   }

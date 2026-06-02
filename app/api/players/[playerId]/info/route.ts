@@ -1,5 +1,6 @@
 import { getCurrentQuarterInfo } from "@/lib/player-period";
 import { prisma } from "@/lib/prisma";
+import { buildFirstAttendanceDateByPlayer, periodAttendancePercent } from "@/lib/stats-utils";
 
 type RouteContext = {
   params: Promise<{ playerId: string }>;
@@ -26,7 +27,6 @@ export async function GET(req: Request, context: RouteContext) {
         photo: true,
         style: true,
         position: true,
-        createdAt: true,
       },
     }),
   ]);
@@ -39,10 +39,7 @@ export async function GET(req: Request, context: RouteContext) {
   }
 
   const quarterInfo = getCurrentQuarterInfo();
-  const attendanceFrom =
-    player.createdAt > quarterInfo.range.start ? player.createdAt : quarterInfo.range.start;
-
-  const [momMatches, quarterMatches, awards] = await Promise.all([
+  const [momMatches, quarterMatches, allTeamMatches, awards] = await Promise.all([
     prisma.match.findMany({
       where: { teamId, mom: playerId },
       orderBy: { date: "desc" },
@@ -56,11 +53,15 @@ export async function GET(req: Request, context: RouteContext) {
       where: {
         teamId,
         date: {
-          gte: attendanceFrom,
+          gte: quarterInfo.range.start,
           lte: quarterInfo.range.end,
         },
       },
       select: { attendees: true },
+    }),
+    prisma.match.findMany({
+      where: { teamId },
+      select: { date: true, attendees: true },
     }),
     prisma.award.findMany({
       where: { playerId, teamId, rank: 1 },
@@ -74,17 +75,16 @@ export async function GET(req: Request, context: RouteContext) {
       orderBy: { subPeriod: "desc" },
     }),
   ]);
-
-  const totalQuarterMatches = quarterMatches.length;
-  const attendedQuarterMatches = quarterMatches.filter((m) => m.attendees.includes(playerId)).length;
-  const attendanceRate =
-    totalQuarterMatches === 0 ? 0 : Math.round((attendedQuarterMatches / totalQuarterMatches) * 100);
-
-  const { createdAt: _playerCreatedAt, ...playerResponse } = player;
+  const firstAttendanceDateByPlayer = buildFirstAttendanceDateByPlayer(allTeamMatches);
+  const attendanceRate = periodAttendancePercent(
+    playerId,
+    firstAttendanceDateByPlayer.get(playerId) ?? null,
+    quarterMatches,
+  );
 
   return Response.json({
     sportType: team.sport_type,
-    player: playerResponse,
+    player,
     momMatches: momMatches.map((m) => ({
       id: m.id,
       opponentName: m.opponent_name,

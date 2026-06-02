@@ -2,6 +2,7 @@ import type { OpponentLevel } from "@/app/generated/prisma/enums";
 import { parseSubPeriodRange, type PeriodType, PERIOD_TYPES } from "@/lib/player-period";
 import { prisma } from "@/lib/prisma";
 import {
+  buildFirstAttendanceDateByPlayer,
   buildTopRankings,
   overallAttendanceRate,
   periodAttendancePercent,
@@ -132,12 +133,27 @@ export async function GET(req: Request) {
     return { ...p, ...agg };
   });
 
+  const firstAttendanceDateByPlayer = buildFirstAttendanceDateByPlayer(allTeamMatches);
   const overallRateByPlayer = new Map(
-    players.map((p) => [p.id, overallAttendanceRate(p.id, p.createdAt, allTeamMatches)]),
+    players.map((p) => [
+      p.id,
+      overallAttendanceRate(
+        p.id,
+        firstAttendanceDateByPlayer.get(p.id) ?? null,
+        allTeamMatches,
+      ),
+    ]),
   );
 
   const periodAttendanceByPlayer = new Map(
-    players.map((p) => [p.id, periodAttendancePercent(p.id, p.createdAt, periodMatches)]),
+    players.map((p) => [
+      p.id,
+      periodAttendancePercent(
+        p.id,
+        firstAttendanceDateByPlayer.get(p.id) ?? null,
+        periodMatches,
+      ),
+    ]),
   );
 
   const hasPeriodMatches = playerStats.length > 0;
