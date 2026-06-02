@@ -57,7 +57,7 @@ export async function GET(req: Request, context: RouteContext) {
           lte: quarterInfo.range.end,
         },
       },
-      select: { attendees: true },
+      select: { date: true, attendees: true },
     }),
     prisma.match.findMany({
       where: { teamId },
