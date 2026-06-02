@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -147,6 +147,7 @@ function PlayerNameSuggestInput({
 }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const ignoreNextChangeRef = useRef(false);
   const suggestions = useMemo(() => {
     const q = value.trim();
     if (!q) return [];
@@ -176,7 +177,10 @@ function PlayerNameSuggestInput({
       e.preventDefault();
       const index = activeIndex >= 0 ? activeIndex : 0;
       const selected = suggestions[index];
-      if (selected) selectSuggestion(selected);
+      if (selected) {
+        ignoreNextChangeRef.current = true;
+        selectSuggestion(selected);
+      }
     }
   };
 
@@ -198,6 +202,10 @@ function PlayerNameSuggestInput({
         }}
         onKeyDown={handleKeyDown}
         onChange={(e) => {
+          if (ignoreNextChangeRef.current) {
+            ignoreNextChangeRef.current = false;
+            return;
+          }
           const text = e.target.value;
           const resolved =
             text.trim() && attendeePlayers.some((p) => p.name === text.trim())
