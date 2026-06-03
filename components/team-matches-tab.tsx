@@ -106,6 +106,35 @@ function gameResultClass(result: MatchResult) {
   return "text-red-600 font-semibold";
 }
 
+function sortStatEntries(entries: StatEntry[]) {
+  return [...entries].sort((a, b) => {
+    if (b.goals !== a.goals) return b.goals - a.goals;
+    return b.assists - a.assists;
+  });
+}
+
+function formatShareDate(iso: string) {
+  const d = new Date(iso);
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  return `${d.getMonth() + 1}월${d.getDate()}일(${weekdays[d.getDay()]})`;
+}
+
+function buildShareMessage(match: MatchDetailResponse["match"], statEntries: StatEntry[]) {
+  const statLines = sortStatEntries(statEntries)
+    .filter((s) => s.goals > 0 || s.assists > 0)
+    .map((s) => `${s.playerName} ${s.goals}골 ${s.assists}도움`);
+
+  return [
+    `${formatShareDate(match.date)} 매칭결과`,
+    `상대팀 : ${match.opponentName}`,
+    `수준 : ${opponentLevelLabel(match.opponentLevel)}`,
+    `최종스코어 : ${match.totalScoreUs}대${match.totalScoreThem}`,
+    `종합승무패 : ${match.countWin}승 ${match.countDraw}무 ${match.countLoss}패`,
+    "----------------",
+    ...statLines,
+  ].join("\n");
+}
+
 function Toast({ message }: { message: string }) {
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">
@@ -134,6 +163,33 @@ export function TeamMatchesTab({
     if (!q) return matches;
     return matches.filter((m) => m.opponentName.includes(q));
   }, [matches, searchQuery]);
+
+  const sortedStatEntries = useMemo(
+    () => (detail ? sortStatEntries(detail.statEntries) : []),
+    [detail],
+  );
+
+  const handleShare = async () => {
+    if (!detail?.match) return;
+
+    const message = buildShareMessage(detail.match, detail.statEntries);
+
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await navigator.share({ text: message, url: window.location.href });
+        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(message);
+      setToastMessage("복사됐습니다");
+    } catch {
+      setToastMessage("복사에 실패했습니다");
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -236,7 +292,7 @@ export function TeamMatchesTab({
                 {m.countWin}승 {m.countDraw}무 {m.countLoss}패 · {m.totalScoreUs} : {m.totalScoreThem}
               </p>
               <p className="mt-2 text-xl font-bold" style={{ color: accent?.textColor }}>
-                최종 {finalResult}
+                {finalResult}
               </p>
             </div>
 
@@ -282,11 +338,11 @@ export function TeamMatchesTab({
 
             <div className="rounded-xl border border-zinc-200 bg-white p-6">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">스탯 모음</h3>
-              {detail.statEntries.length === 0 ? (
+              {sortedStatEntries.length === 0 ? (
                 <p className="text-sm text-zinc-500">기록된 골·도움이 없습니다</p>
               ) : (
                 <ul className="space-y-2">
-                  {detail.statEntries.map((s) => (
+                  {sortedStatEntries.map((s) => (
                     <li
                       key={s.playerId}
                       className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-2.5 text-sm"
@@ -304,7 +360,7 @@ export function TeamMatchesTab({
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={() => setToastMessage("준비 중입니다")}
+                onClick={() => void handleShare()}
                 className="rounded-lg border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
               >
                 공유하기
@@ -319,7 +375,7 @@ export function TeamMatchesTab({
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="mb-6">
+      <div className="mb-6 flex justify-center">
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
