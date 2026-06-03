@@ -79,7 +79,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
             ) : null}
             <button type="button" onClick={() => setActiveTab("HOME")} className="flex items-center gap-3">
               {teamLogo ? (
-                <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10" rounded="full" />
+                <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10" rounded="lg" />
               ) : (
                 <div className="h-10 w-10 rounded-full bg-white/60" />
               )}
@@ -95,9 +95,8 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                    active ? "bg-white text-zinc-900" : "text-white/90 hover:bg-white/20"
-                  }`}
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${active ? "bg-white text-zinc-900" : "text-white/90 hover:bg-white/20"
+                    }`}
                 >
                   {tab.label}
                 </button>

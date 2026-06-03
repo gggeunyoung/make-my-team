@@ -175,7 +175,7 @@ function PlayerSearchInput({
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-md">
+    <div className="relative w-full">
       <input
         value={value}
         placeholder="선수 이름 검색"
@@ -218,10 +218,27 @@ function PlayerSearchInput({
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string | number }) {
+function StatBox({
+  label,
+  value,
+  twoLineLabel,
+}: {
+  label: string;
+  value: string | number;
+  twoLineLabel?: boolean;
+}) {
   return (
     <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
-      <p className="text-xs text-zinc-500">{label}</p>
+      <div className="flex min-h-[2.5rem] flex-col items-center justify-center">
+        {twoLineLabel ? (
+          <>
+            <p className="text-xs leading-tight text-zinc-500">경기당</p>
+            <p className="text-xs leading-tight text-zinc-500">공격포인트</p>
+          </>
+        ) : (
+          <p className="text-xs text-zinc-500">{label}</p>
+        )}
+      </div>
       <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
     </div>
   );
@@ -389,18 +406,15 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="mb-6 flex justify-center">
-        <PlayerSearchInput
-          players={players}
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSelectByName={selectPlayerByName}
-        />
-      </div>
-
       <div className="flex min-h-[640px] gap-4">
-        <aside className="w-44 shrink-0 rounded-xl border border-zinc-200 bg-white">
-          <ul className="max-h-[720px] overflow-y-auto py-2">
+        <aside className="flex w-44 shrink-0 flex-col gap-2">
+          <PlayerSearchInput
+            players={players}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSelectByName={selectPlayerByName}
+          />
+          <ul className="max-h-[720px] overflow-y-auto rounded-xl border border-zinc-200 bg-white py-2">
             {players.map((player) => {
               const selected = player.id === selectedPlayerId;
               return (
@@ -428,29 +442,29 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">선수 정보를 불러오는 중...</div>
           ) : (
             <div className="rounded-xl border border-zinc-200 bg-white p-6">
-              <div className="flex gap-6">
+              <div className="flex gap-4">
                 {info.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={info.photo} alt={info.name} className="h-28 w-24 shrink-0 rounded-lg object-cover" />
                 ) : (
                   <DefaultPlayerPhoto name={info.name} />
                 )}
-                <div className="min-w-0 flex-1 space-y-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-3">
                   <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                    <div>
+                  <div className="flex min-w-0 items-stretch gap-4 text-sm">
+                    <div className="shrink-0">
                       <span className="text-zinc-500">성향</span>
                       <p className="font-medium text-zinc-900">{playerStyleLabel(info.style)}</p>
                     </div>
                     {showPosition ? (
-                      <div>
+                      <div className="shrink-0">
                         <span className="text-zinc-500">포지션</span>
                         <p className="font-medium text-zinc-900">{positionLabels(info.position)}</p>
                       </div>
                     ) : null}
-                    <div>
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-zinc-500">수상 이력</span>
-                      <ul className="mt-1 max-h-[132px] space-y-2 overflow-y-auto pr-1 text-sm">
+                      <ul className="mt-1 max-h-[132px] flex-1 space-y-2 overflow-y-auto pr-1">
                         {(playerInfo?.awards ?? []).length === 0 ? (
                           <li className="text-zinc-400">수상 이력이 없습니다</li>
                         ) : (
@@ -468,27 +482,27 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         )}
                       </ul>
                     </div>
-                    <div>
-                      <span className="text-zinc-500">출석률</span>
-                      <p className="text-xl font-semibold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</p>
-                      <p className="text-xs text-zinc-500">{playerInfo?.quarterLabel}</p>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-zinc-500">MOM 받은 횟수</span>
+                      <ul className="mt-1 max-h-[132px] flex-1 space-y-2 overflow-y-auto pr-1">
+                        {(playerInfo?.momMatches.length ?? 0) === 0 ? (
+                          <li className="text-zinc-400">없음</li>
+                        ) : (
+                          playerInfo?.momMatches.map((m) => (
+                            <li key={m.id} className="rounded border border-zinc-100 bg-zinc-50 px-2 py-1.5">
+                              <p className="font-medium text-zinc-800">VS {m.opponentName}</p>
+                              <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                            </li>
+                          ))
+                        )}
+                      </ul>
                     </div>
                   </div>
-                </div>
-                <div className="w-52 shrink-0">
-                  <p className="mb-2 text-sm font-medium text-zinc-700">MOM 받은 횟수</p>
-                  <ul className="max-h-[132px] space-y-2 overflow-y-auto pr-1 text-sm">
-                    {(playerInfo?.momMatches.length ?? 0) === 0 ? (
-                      <li className="text-zinc-400">없음</li>
-                    ) : (
-                      playerInfo?.momMatches.map((m) => (
-                        <li key={m.id} className="rounded border border-zinc-100 bg-zinc-50 px-2 py-1.5">
-                          <p className="font-medium text-zinc-800">VS {m.opponentName}</p>
-                          <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
-                        </li>
-                      ))
-                    )}
-                  </ul>
+                  <div>
+                    <span className="text-sm text-zinc-500">출석률</span>
+                    <p className="text-xl font-semibold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</p>
+                    <p className="text-xs text-zinc-500">{playerInfo?.quarterLabel}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -546,14 +560,14 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             ) : (
               <>
                 <div className="mb-6 grid grid-cols-4 gap-2 sm:grid-cols-8">
-                  <StatBox label="경기수" value={summary?.matchCount ?? 0} />
+                  <StatBox label="진행한 매치" value={summary?.matchCount ?? 0} />
                   <StatBox label="골" value={summary?.goals ?? 0} />
                   <StatBox label="도움" value={summary?.assists ?? 0} />
                   <StatBox label="공격포인트" value={summary?.attackPoints ?? 0} />
                   <StatBox label="MOM횟수" value={summary?.momCount ?? 0} />
                   <StatBox label="경기당 골" value={summary?.goalsPerMatch ?? 0} />
                   <StatBox label="경기당 도움" value={summary?.assistsPerMatch ?? 0} />
-                  <StatBox label="경기당 공격포인트" value={summary?.attackPointsPerMatch ?? 0} />
+                  <StatBox label="경기당 공격포인트" twoLineLabel value={summary?.attackPointsPerMatch ?? 0} />
                 </div>
 
                 <div className="space-y-3">
@@ -585,7 +599,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                               <p className="text-zinc-600">
                                 {card.countWin}승 {card.countDraw}무 {card.countLoss}패
                               </p>
-                              <p className="font-medium text-zinc-900">최종 {finalResult}</p>
+                              <p className="font-medium text-zinc-900">{finalResult}</p>
                             </div>
                           </div>
                           <p className="mt-2 text-sm text-zinc-700">
