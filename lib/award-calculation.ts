@@ -653,23 +653,29 @@ export async function processPastAwardsAllTeams(prisma: PrismaClient): Promise<v
   });
 
   for (const team of teams) {
-    await prisma.$transaction(async (tx) => {
-      for (const period of AWARD_PERIODS) {
-        const subPeriods = await getPastSubPeriods(period, team.id, tx);
+    for (const period of AWARD_PERIODS) {
+      const subPeriods = await getPastSubPeriods(period, team.id, prisma);
 
-        for (const subPeriod of subPeriods) {
-          if (await hasSavedAwards(tx, team.id, period, subPeriod)) {
+      for (const subPeriod of subPeriods) {
+        try {
+          if (await hasSavedAwards(prisma, team.id, period, subPeriod)) {
             continue;
           }
 
-          const awards = await calculateAwardsForPeriod(tx, team.id, period, subPeriod);
-          if (awards.length === 0) {
-            continue;
-          }
-
-          await saveAwards(tx, awards);
+          await prisma.$transaction(
+            async (tx) => {
+              const awards = await calculateAwardsForPeriod(tx, team.id, period, subPeriod);
+              if (awards.length === 0) {
+                return;
+              }
+              await saveAwards(tx, awards);
+            },
+            { timeout: 9000 },
+          );
+        } catch (error) {
+          console.error("Award 저장 실패:", team.id, period, subPeriod, error);
         }
       }
-    });
+    }
   }
 }
