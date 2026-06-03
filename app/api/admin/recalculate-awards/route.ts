@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import {
   calculateAwardsForPeriod,
   getPastSubPeriods,
+  getPeriodDateRange,
   saveAwards,
 } from "@/lib/award-calculation";
 import { prisma } from "@/lib/prisma";
@@ -73,6 +74,14 @@ export async function GET(req: Request) {
     return Response.json({ message: "유효하지 않은 기간 타입입니다." }, { status: 400 });
   }
 
+  const subPeriodParam = searchParams.get("subPeriod")?.trim() ?? "";
+  if (subPeriodParam && !periodParam) {
+    return Response.json({ message: "기간 타입이 필요합니다." }, { status: 400 });
+  }
+  if (subPeriodParam && !getPeriodDateRange(periodParam as AwardPeriod, subPeriodParam)) {
+    return Response.json({ message: "유효하지 않은 subPeriod입니다." }, { status: 400 });
+  }
+
   const team = await prisma.team.findUnique({
     where: { id: teamId },
     select: { id: true },
@@ -84,7 +93,7 @@ export async function GET(req: Request) {
   let processedCount = 0;
 
   for (const period of periodsToProcess) {
-    const subPeriods = await getPastSubPeriods(period, teamId, prisma);
+    const subPeriods = subPeriodParam ? [subPeriodParam] : await getPastSubPeriods(period, teamId, prisma);
 
     for (const subPeriod of subPeriods) {
       try {
