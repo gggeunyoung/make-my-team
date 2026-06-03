@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { AwardCategory } from "@/app/generated/prisma/enums";
+import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
+import { getPeriodDateRange } from "@/lib/award-calculation";
 import {
-  formatHalfLabel,
-  formatMonthLabel,
-  formatQuarterLabel,
-  formatYearLabel,
-  getHalfFromDate,
-  getQuarterFromDate,
   periodTypeLabel,
   type PeriodOption,
   type PeriodType,
@@ -109,45 +104,19 @@ const QUARTERLY_PLUS_CATEGORIES: AwardCategory[] = [
   "ATTENDANCE",
 ];
 
-function getCurrentSubPeriodOption(period: PeriodType, now = new Date()): PeriodOption {
-  const year = now.getFullYear();
-
-  if (period === "MONTHLY") {
-    const month = now.getMonth() + 1;
-    return {
-      value: `${year}-${String(month).padStart(2, "0")}`,
-      label: formatMonthLabel(year, month),
-    };
-  }
-
-  if (period === "QUARTERLY") {
-    const quarter = getQuarterFromDate(now);
-    return {
-      value: `${year}-Q${quarter}`,
-      label: formatQuarterLabel(year, quarter),
-    };
-  }
-
-  if (period === "SEMIANNUAL") {
-    const half = getHalfFromDate(now);
-    return {
-      value: `${year}-H${half}`,
-      label: formatHalfLabel(year, half),
-    };
-  }
-
-  return {
-    value: String(year),
-    label: formatYearLabel(year),
-  };
+function toAwardPeriod(period: PeriodType): AwardPeriod {
+  return period === "YEARLY" ? "ANNUAL" : period;
 }
 
-function mergeSubPeriodOptions(period: PeriodType, options: PeriodOption[]): PeriodOption[] {
-  const current = getCurrentSubPeriodOption(period);
-  if (options.some((option) => option.value === current.value)) {
-    return options;
-  }
-  return [current, ...options];
+function filterCompletedSubPeriodOptions(period: PeriodType, options: PeriodOption[]): PeriodOption[] {
+  const now = new Date();
+  const awardPeriod = toAwardPeriod(period);
+
+  return options.filter((option) => {
+    const range = getPeriodDateRange(awardPeriod, option.value);
+    if (!range) return false;
+    return range.end <= now;
+  });
 }
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
@@ -448,7 +417,7 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
 
   useEffect(() => {
     if (!periods) return;
-    const options = mergeSubPeriodOptions(period, periods[period] ?? []);
+    const options = filterCompletedSubPeriodOptions(period, periods[period] ?? []);
     if (options.length === 0) {
       setSubPeriod("");
       return;
@@ -494,7 +463,7 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
   }, [teamId, period, subPeriod]);
 
   const subPeriodOptions = useMemo(
-    () => mergeSubPeriodOptions(period, periods?.[period] ?? []),
+    () => filterCompletedSubPeriodOptions(period, periods?.[period] ?? []),
     [period, periods],
   );
 
@@ -528,7 +497,7 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
           className="h-9 rounded-lg border border-zinc-300 bg-white px-2 text-sm"
         >
           {subPeriodOptions.length === 0 ? (
-            <option value="">기간 없음</option>
+            <option value="">경기 데이터가 없습니다</option>
           ) : (
             subPeriodOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -540,12 +509,16 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
       </div>
 
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
-        <AwardTabContent
-          data={awardsData}
-          loading={loadingAwards || loadingPeriods}
-          period={period}
-          accentColor={accentColor}
-        />
+        {!loadingPeriods && subPeriodOptions.length === 0 ? (
+          <p className="text-center text-sm text-zinc-400">경기 데이터가 없습니다</p>
+        ) : (
+          <AwardTabContent
+            data={awardsData}
+            loading={loadingAwards || loadingPeriods}
+            period={period}
+            accentColor={accentColor}
+          />
+        )}
       </div>
     </section>
   );
