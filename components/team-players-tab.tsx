@@ -232,7 +232,7 @@ function StatBox({
       <div className="flex min-h-[2.5rem] flex-col items-center justify-center">
         {twoLineLabel ? (
           <>
-            <p className="text-xs leading-tight text-zinc-500">경기당</p>
+            <p className="text-xs leading-tight text-zinc-500">매치당</p>
             <p className="text-xs leading-tight text-zinc-500">공격포인트</p>
           </>
         ) : (
@@ -251,19 +251,46 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
   const [sportType, setSportType] = useState<SportType>("FUTSAL");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [playerInfo, setPlayerInfo] = useState<PlayerInfoResponse | null>(null);
+  const [playerInfoEntry, setPlayerInfoEntry] = useState<{
+    playerId: string;
+    data: PlayerInfoResponse;
+  } | null>(null);
+  const playerInfo =
+    selectedPlayerId && playerInfoEntry?.playerId === selectedPlayerId
+      ? playerInfoEntry.data
+      : null;
   const [periods, setPeriods] = useState<PeriodsResponse["periods"] | null>(null);
   const [period, setPeriod] = useState<PeriodType>("MONTHLY");
-  const [subPeriod, setSubPeriod] = useState("");
+  const [selectedSubPeriod, setSelectedSubPeriod] = useState("");
   const [opponentLevel, setOpponentLevel] = useState<"ALL" | OpponentLevelValue>("ALL");
-  const [summary, setSummary] = useState<StatsSummary | null>(null);
-  const [matchCards, setMatchCards] = useState<MatchCardItem[]>([]);
+  const [statsEntry, setStatsEntry] = useState<{
+    key: string;
+    summary: StatsSummary;
+    matchCards: MatchCardItem[];
+  } | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const subPeriodOptions = periods?.[period] ?? [];
+
+  const subPeriod = useMemo(() => {
+    if (!periods) return "";
+    const options = periods[period];
+    if (options.length === 0) return "";
+    if (selectedSubPeriod && options.some((o) => o.value === selectedSubPeriod)) {
+      return selectedSubPeriod;
+    }
+    return options[0].value;
+  }, [period, periods, selectedSubPeriod]);
+
+  const statsCacheKey = useMemo(() => {
+    if (!selectedPlayerId || !subPeriod) return null;
+    return `${selectedPlayerId}:${teamId}:${period}:${subPeriod}:${opponentLevel}`;
+  }, [selectedPlayerId, teamId, period, subPeriod, opponentLevel]);
+  const summary = statsEntry?.key === statsCacheKey ? statsEntry.summary : null;
+  const matchCards = statsEntry?.key === statsCacheKey ? statsEntry.matchCards : [];
 
   const selectPlayer = useCallback((playerId: string) => {
     setSelectedPlayerId(playerId);
@@ -302,8 +329,6 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
       if (periodsRes.ok) {
         const periodsData = (await periodsRes.json()) as PeriodsResponse;
         setPeriods(periodsData.periods);
-        const firstMonth = periodsData.periods.MONTHLY[0]?.value ?? "";
-        setSubPeriod(firstMonth);
       }
       setLoadingList(false);
     };
@@ -311,46 +336,37 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
   }, [teamId]);
 
   useEffect(() => {
-    if (!periods) return;
-    const options = periods[period];
-    if (options.length === 0) {
-      setSubPeriod("");
-      return;
-    }
-    if (!options.some((o) => o.value === subPeriod)) {
-      setSubPeriod(options[0].value);
-    }
-  }, [period, periods, subPeriod]);
+    if (!selectedPlayerId) return;
 
-  useEffect(() => {
-    if (!selectedPlayerId) {
-      setPlayerInfo(null);
-      return;
-    }
+    let cancelled = false;
     const loadInfo = async () => {
       setLoadingInfo(true);
       const res = await fetch(
         `/api/players/${encodeURIComponent(selectedPlayerId)}/info?teamId=${encodeURIComponent(teamId)}`,
         { cache: "no-store" },
       );
+      if (cancelled) return;
       if (!res.ok) {
-        setPlayerInfo(null);
+        setPlayerInfoEntry(null);
         setLoadingInfo(false);
         return;
       }
       const data = (await res.json()) as PlayerInfoResponse;
-      setPlayerInfo(data);
+      if (cancelled) return;
+      setPlayerInfoEntry({ playerId: selectedPlayerId, data });
       setLoadingInfo(false);
     };
     void loadInfo();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedPlayerId, teamId]);
 
   useEffect(() => {
-    if (!selectedPlayerId || !subPeriod) {
-      setSummary(null);
-      setMatchCards([]);
-      return;
-    }
+    if (!statsCacheKey || !selectedPlayerId) return;
+
+    const playerId = selectedPlayerId;
+    let cancelled = false;
     const loadStats = async () => {
       setLoadingStats(true);
       const params = new URLSearchParams({
@@ -360,22 +376,29 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
         opponentLevel,
       });
       const res = await fetch(
-        `/api/players/${encodeURIComponent(selectedPlayerId)}/stats?${params.toString()}`,
+        `/api/players/${encodeURIComponent(playerId)}/stats?${params.toString()}`,
         { cache: "no-store" },
       );
+      if (cancelled) return;
       if (!res.ok) {
-        setSummary(null);
-        setMatchCards([]);
+        setStatsEntry(null);
         setLoadingStats(false);
         return;
       }
       const data = (await res.json()) as { summary: StatsSummary; matchCards: MatchCardItem[] };
-      setSummary(data.summary);
-      setMatchCards(data.matchCards);
+      if (cancelled) return;
+      setStatsEntry({
+        key: statsCacheKey,
+        summary: data.summary,
+        matchCards: data.matchCards,
+      });
       setLoadingStats(false);
     };
     void loadStats();
-  }, [selectedPlayerId, teamId, period, subPeriod, opponentLevel]);
+    return () => {
+      cancelled = true;
+    };
+  }, [statsCacheKey, selectedPlayerId, teamId, period, subPeriod, opponentLevel]);
 
   if (loadingList) {
     return (
@@ -526,9 +549,8 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                     key={p}
                     type="button"
                     onClick={() => setPeriod(p)}
-                    className={`rounded-md px-3 py-1.5 text-sm ${
-                      period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
-                    }`}
+                    className={`rounded-md px-3 py-1.5 text-sm ${period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                      }`}
                   >
                     {periodTypeLabel(p)}
                   </button>
@@ -536,7 +558,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
               </div>
               <select
                 value={subPeriod}
-                onChange={(e) => setSubPeriod(e.target.value)}
+                onChange={(e) => setSelectedSubPeriod(e.target.value)}
                 disabled={subPeriodOptions.length === 0}
                 className="h-9 rounded-lg border border-zinc-300 px-2 text-sm"
               >
@@ -573,9 +595,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                   <StatBox label="도움" value={summary?.assists ?? 0} />
                   <StatBox label="공격포인트" value={summary?.attackPoints ?? 0} />
                   <StatBox label="MOM횟수" value={summary?.momCount ?? 0} />
-                  <StatBox label="경기당 골" value={summary?.goalsPerMatch ?? 0} />
-                  <StatBox label="경기당 도움" value={summary?.assistsPerMatch ?? 0} />
-                  <StatBox label="경기당 공격포인트" twoLineLabel value={summary?.attackPointsPerMatch ?? 0} />
+                  <StatBox label="매치당 골" value={summary?.goalsPerMatch ?? 0} />
+                  <StatBox label="매치당 도움" value={summary?.assistsPerMatch ?? 0} />
+                  <StatBox label="매치당 공격포인트" twoLineLabel value={summary?.attackPointsPerMatch ?? 0} />
                 </div>
 
                 <div className="space-y-3">
