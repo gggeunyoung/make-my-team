@@ -1,6 +1,15 @@
+import type { AwardPeriod } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
+import {
+  calculateAwardsForPeriod,
+  getPeriodDateRange,
+  getSubPeriodLabel,
+  saveAwards,
+} from "@/lib/award-calculation";
 import { persistMatchDerivedStats } from "@/lib/match-derived-stats";
 import { prisma } from "@/lib/prisma";
+
+const AWARD_PERIODS: AwardPeriod[] = ["MONTHLY", "QUARTERLY", "SEMIANNUAL", "ANNUAL"];
 
 export const maxDuration = 10;
 
@@ -104,6 +113,28 @@ export async function POST(req: Request, context: RouteContext) {
     },
     { timeout: 9000 },
   );
+
+  const now = new Date();
+  for (const period of AWARD_PERIODS) {
+    const subPeriod = getSubPeriodLabel(period, match.date);
+    const range = getPeriodDateRange(period, subPeriod);
+    if (!range || range.end > now) {
+      continue;
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.award.deleteMany({
+          where: { teamId, period, subPeriod },
+        });
+        const awards = await calculateAwardsForPeriod(tx, teamId, period, subPeriod);
+        if (awards.length > 0) {
+          await saveAwards(tx, awards);
+        }
+      },
+      { timeout: 9000 },
+    );
+  }
 
   return Response.json({ success: true });
 }
