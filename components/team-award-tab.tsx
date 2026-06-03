@@ -203,7 +203,10 @@ function RankSlot({
   isFirstPlace: boolean;
 }) {
   const styles = medalStyles(rank);
-  const hideStatValue = category === "ATTACK_RANKING" || category === "DEFENSE_RANKING";
+  const hideStatValue =
+    category === "ATTACK_RANKING" ||
+    category === "DEFENSE_RANKING" ||
+    category === "BEST_PLAYER";
 
   if (entries.length === 0) {
     return (
@@ -220,19 +223,14 @@ function RankSlot({
 
   return (
     <div
-      className={`rounded-xl border border-white/10 bg-white/5 px-3 py-4 ${styles.ring} ${
-        isFirstPlace ? "min-h-[180px] shadow-[0_0_30px_rgba(251,191,36,0.15)]" : "min-h-[140px]"
-      } ${hideStatValue ? "flex flex-col justify-center" : ""}`}
+      className={`rounded-xl border border-white/10 bg-white/5 px-3 py-4 ${styles.ring} ${isFirstPlace ? "min-h-[180px] shadow-[0_0_30px_rgba(251,191,36,0.15)]" : "min-h-[140px]"
+        } ${hideStatValue ? "flex flex-col justify-center" : ""}`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}>
           {styles.label}
         </span>
-        {isFirstPlace ? (
-          <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-200">
-            MVP
-          </span>
-        ) : null}
+
       </div>
 
       <div className={`mt-3 space-y-3 ${hideStatValue ? "flex flex-col justify-center" : ""}`}>
@@ -482,9 +480,8 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
               key={p}
               type="button"
               onClick={() => setPeriod(p)}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
-              }`}
+              className={`rounded-md px-3 py-1.5 text-sm ${period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                }`}
             >
               {periodTypeLabel(p)}
             </button>
