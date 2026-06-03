@@ -602,30 +602,12 @@ export async function calculateAwardsForPeriod(
 export async function saveAwards(tx: Tx, awards: AwardDraft[]): Promise<void> {
   for (const award of awards) {
     if (award.category === "ATTACK_COMBO") {
-      const existing = await tx.award.findFirst({
-        where: {
-          teamId: award.teamId,
-          period: award.period,
-          subPeriod: award.subPeriod,
-          category: award.category,
-          rank: award.rank,
-          playerId: award.playerId,
+      await tx.award.create({
+        data: {
+          id: newAwardId(),
+          ...award,
         },
       });
-
-      if (existing) {
-        await tx.award.update({
-          where: { id: existing.id },
-          data: { statValue: award.statValue },
-        });
-      } else {
-        await tx.award.create({
-          data: {
-            id: newAwardId(),
-            ...award,
-          },
-        });
-      }
       continue;
     }
 
