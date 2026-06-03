@@ -56,9 +56,21 @@ export async function GET(req: Request) {
     return Response.json({ message: "접근 권한이 없습니다." }, { status: 403 });
   }
 
-  const teamId = new URL(req.url).searchParams.get("teamId")?.trim() ?? "";
+  const searchParams = new URL(req.url).searchParams;
+  const teamId = searchParams.get("teamId")?.trim() ?? "";
   if (!teamId) {
     return Response.json({ message: "팀 정보가 필요합니다." }, { status: 400 });
+  }
+
+  const periodParam = searchParams.get("period")?.trim() ?? "";
+  const periodsToProcess: AwardPeriod[] = periodParam
+    ? (AWARD_PERIODS.includes(periodParam as AwardPeriod)
+        ? [periodParam as AwardPeriod]
+        : [])
+    : AWARD_PERIODS;
+
+  if (periodParam && periodsToProcess.length === 0) {
+    return Response.json({ message: "유효하지 않은 기간 타입입니다." }, { status: 400 });
   }
 
   const team = await prisma.team.findUnique({
@@ -71,7 +83,7 @@ export async function GET(req: Request) {
 
   let processedCount = 0;
 
-  for (const period of AWARD_PERIODS) {
+  for (const period of periodsToProcess) {
     const subPeriods = await getPastSubPeriods(period, teamId, prisma);
 
     for (const subPeriod of subPeriods) {
