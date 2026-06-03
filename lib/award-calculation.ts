@@ -613,12 +613,13 @@ export async function saveAwards(tx: Tx, awards: AwardDraft[]): Promise<void> {
 
     await tx.award.upsert({
       where: {
-        teamId_period_subPeriod_category_rank: {
+        teamId_period_subPeriod_category_rank_playerId: {
           teamId: award.teamId,
           period: award.period,
           subPeriod: award.subPeriod,
           category: award.category,
           rank: award.rank,
+          playerId: award.playerId,
         },
       },
       create: {

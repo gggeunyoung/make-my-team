@@ -272,7 +272,7 @@ export type AwardOrderByWithRelationInput = {
 
 export type AwardWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  teamId_period_subPeriod_category_rank?: Prisma.AwardTeamIdPeriodSubPeriodCategoryRankCompoundUniqueInput
+  teamId_period_subPeriod_category_rank_playerId?: Prisma.AwardTeamIdPeriodSubPeriodCategoryRankPlayerIdCompoundUniqueInput
   AND?: Prisma.AwardWhereInput | Prisma.AwardWhereInput[]
   OR?: Prisma.AwardWhereInput[]
   NOT?: Prisma.AwardWhereInput | Prisma.AwardWhereInput[]
@@ -286,7 +286,7 @@ export type AwardWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Award"> | Date | string
   player?: Prisma.XOR<Prisma.PlayerScalarRelationFilter, Prisma.PlayerWhereInput>
   team?: Prisma.XOR<Prisma.TeamScalarRelationFilter, Prisma.TeamWhereInput>
-}, "id" | "teamId_period_subPeriod_category_rank">
+}, "id" | "teamId_period_subPeriod_category_rank_playerId">
 
 export type AwardOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -412,12 +412,13 @@ export type AwardOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type AwardTeamIdPeriodSubPeriodCategoryRankCompoundUniqueInput = {
+export type AwardTeamIdPeriodSubPeriodCategoryRankPlayerIdCompoundUniqueInput = {
   teamId: string
   period: $Enums.AwardPeriod
   subPeriod: string
   category: $Enums.AwardCategory
   rank: number
+  playerId: string
 }
 
 export type AwardCountOrderByAggregateInput = {

@@ -209,7 +209,7 @@ model Award {
   statValue  Float
   createdAt  DateTime      @default(now())
 
-  @@unique([teamId, period, subPeriod, category, rank])
+  @@unique([teamId, period, subPeriod, category, rank, playerId])
 }
 
 enum SportType {
