@@ -110,8 +110,8 @@ export async function GET(req: Request) {
           { timeout: 9000 },
         );
         processedCount += 1;
-      } catch {
-        // 실패해도 다음 기간 계속 진행
+      } catch (error) {
+        console.error("Award 저장 실패:", period, subPeriod, error);
       }
     }
   }
