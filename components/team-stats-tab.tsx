@@ -218,9 +218,20 @@ function resultTextClass(result: "WIN" | "DRAW" | "LOSS") {
 }
 
 function formatRankingValue(key: string, value: number) {
-  if (key === "attendanceRate") return `${value}%`;
   if (key === "attack" || key === "defense") return value.toFixed(2);
-  if (key.endsWith("PerMatch")) return value.toFixed(2);
+  if (key === "goals" || key === "goalsPerMatch") {
+    const n = key === "goalsPerMatch" ? value.toFixed(2) : String(value);
+    return `${n}골`;
+  }
+  if (key === "assists" || key === "assistsPerMatch") {
+    const n = key === "assistsPerMatch" ? value.toFixed(2) : String(value);
+    return `${n}도움`;
+  }
+  if (key === "attackPoints" || key === "attackPointsPerMatch") {
+    const n = key === "attackPointsPerMatch" ? value.toFixed(2) : String(value);
+    return `${n}P`;
+  }
+  if (key === "attendanceRate") return `${value}%`;
   return String(value);
 }
 
@@ -382,14 +393,18 @@ function PlayerStatsContent({
                           ) : (
                             <DefaultPlayerPhoto name={item.name} size="sm" />
                           )}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                            {!hideValue ? (
-                              <p className="text-xs font-semibold text-zinc-600">
+                          {hideValue ? (
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                            </div>
+                          ) : (
+                            <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                              <p className="shrink-0 text-xs font-semibold text-zinc-600">
                                 {formatRankingValue(cat.key, item.value)}
                               </p>
-                            ) : null}
-                          </div>
+                            </div>
+                          )}
                         </li>
                       );
                     })}

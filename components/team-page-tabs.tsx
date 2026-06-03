@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TeamAwardTab } from "@/components/team-award-tab";
+import { TeamLogo } from "@/components/team-logo";
 import { TeamHomeTab } from "@/components/team-home-tab";
 import { TeamMatchesTab } from "@/components/team-matches-tab";
 import { TeamPlayersTab } from "@/components/team-players-tab";
@@ -78,8 +79,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
             ) : null}
             <button type="button" onClick={() => setActiveTab("HOME")} className="flex items-center gap-3">
               {teamLogo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 rounded-full object-cover" />
+                <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10" rounded="full" />
               ) : (
                 <div className="h-10 w-10 rounded-full bg-white/60" />
               )}

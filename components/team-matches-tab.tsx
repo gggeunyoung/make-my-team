@@ -90,10 +90,9 @@ function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "md" |
   );
 }
 
-function resultAccent(result: MatchResult, teamColor: string | null) {
+function resultAccent(result: MatchResult, _teamColor: string | null) {
   if (result === "WIN") {
-    const color = teamColor ?? "#3f3f46";
-    return { borderColor: color, backgroundColor: `${color}14`, textColor: color };
+    return { borderColor: "#a7f3d0", backgroundColor: "#ecfdf5", textColor: "#059669" };
   }
   if (result === "DRAW") {
     return { borderColor: "#d4d4d8", backgroundColor: "#fafafa", textColor: "#52525b" };

@@ -64,16 +64,26 @@ function DefaultPlayerPhoto({ name, size = "sm" }: { name: string; size?: "sm" |
 }
 
 function formatRankingValue(key: string, value: number) {
-  if (key === "attendanceRate") return `${value}%`;
   if (key === "attack" || key === "defense") return value.toFixed(2);
-  if (key.endsWith("PerMatch")) return value.toFixed(2);
+  if (key === "goals" || key === "goalsPerMatch") {
+    const n = key === "goalsPerMatch" ? value.toFixed(2) : String(value);
+    return `${n}골`;
+  }
+  if (key === "assists" || key === "assistsPerMatch") {
+    const n = key === "assistsPerMatch" ? value.toFixed(2) : String(value);
+    return `${n}도움`;
+  }
+  if (key === "attackPoints" || key === "attackPointsPerMatch") {
+    const n = key === "attackPointsPerMatch" ? value.toFixed(2) : String(value);
+    return `${n}P`;
+  }
+  if (key === "attendanceRate") return `${value}%`;
   return String(value);
 }
 
-function resultAccent(result: MatchResult, teamColor: string | null) {
+function resultAccent(result: MatchResult, _teamColor: string | null) {
   if (result === "WIN") {
-    const color = teamColor ?? "#3f3f46";
-    return { borderColor: color, backgroundColor: `${color}14`, textColor: color };
+    return { borderColor: "#a7f3d0", backgroundColor: "#ecfdf5", textColor: "#059669" };
   }
   if (result === "DRAW") {
     return { borderColor: "#d4d4d8", backgroundColor: "#fafafa", textColor: "#52525b" };
@@ -172,14 +182,18 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                           ) : (
                             <DefaultPlayerPhoto name={item.name} size="sm" />
                           )}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                            {!hideValue ? (
-                              <p className="text-xs font-semibold text-zinc-600">
+                          {hideValue ? (
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                            </div>
+                          ) : (
+                            <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                              <p className="shrink-0 text-xs font-semibold text-zinc-600">
                                 {formatRankingValue(cat.key, item.value)}
                               </p>
-                            ) : null}
-                          </div>
+                            </div>
+                          )}
                         </li>
                       );
                     })}

@@ -8,6 +8,7 @@ import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type Pos
 import { MatchManagerTab } from "@/components/match-manager-tab";
 import { TournamentManagerTab } from "@/components/tournament-manager-tab";
 import { PlayerPhotoCropModal } from "@/components/player-photo-crop-modal";
+import { TeamLogo } from "@/components/team-logo";
 
 type ManagerTab = "MATCH" | "PLAYER" | "TOURNAMENT" | "TEAM";
 type SportType = "FUTSAL" | "SOCCER";
@@ -535,11 +536,10 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
                     type="button"
                     onClick={() => !logoUploading && fileInputRef.current?.click()}
                     disabled={logoUploading}
-                    className="block h-28 w-28 overflow-hidden rounded-xl disabled:opacity-60"
+                    className="block disabled:opacity-60"
                     aria-label="팀 로고 업로드"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={logo} alt="업로드된 팀 로고 미리보기" className="h-28 w-28 rounded-xl object-cover" />
+                    <TeamLogo src={logo} alt="업로드된 팀 로고 미리보기" className="h-28 w-28" rounded="xl" />
                   </button>
                 ) : logo ? (
                   <button

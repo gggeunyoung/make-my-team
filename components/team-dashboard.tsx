@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { TeamLogo } from "@/components/team-logo";
 import { calculateTeamNameUnits } from "@/lib/team";
 
 type Team = {
@@ -138,8 +139,7 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {team.logo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={team.logo} alt={`${team.name} 로고`} className="h-12 w-12 rounded-full object-cover" />
+                        <TeamLogo src={team.logo} alt={`${team.name} 로고`} className="h-12 w-12" rounded="full" />
                       ) : (
                         <div
                           className="h-12 w-12 rounded-full"
@@ -323,14 +323,14 @@ function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; onCreate
                   type="button"
                   onClick={() => !logoUploading && fileInputRef.current?.click()}
                   disabled={logoUploading}
-                  className="block h-28 w-28 overflow-hidden rounded-xl disabled:opacity-60"
+                  className="block disabled:opacity-60"
                   aria-label="팀 로고 업로드"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <TeamLogo
                     src={logoPublicUrl}
                     alt="업로드된 팀 로고 미리보기"
-                    className="h-28 w-28 rounded-xl object-cover"
+                    className="h-28 w-28"
+                    rounded="xl"
                   />
                 </button>
               ) : logoPublicUrl ? (
