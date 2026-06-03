@@ -406,7 +406,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="flex min-h-[640px] gap-4">
+      <div className="flex gap-4">
         <aside className="flex w-44 shrink-0 flex-col gap-2">
           <PlayerSearchInput
             players={players}
@@ -414,7 +414,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             onChange={setSearchQuery}
             onSelectByName={selectPlayerByName}
           />
-          <ul className="max-h-[720px] overflow-y-auto rounded-xl border border-zinc-200 bg-white py-2">
+          <ul className="rounded-xl border border-zinc-200 bg-white py-2">
             {players.map((player) => {
               const selected = player.id === selectedPlayerId;
               return (
@@ -449,29 +449,42 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 ) : (
                   <DefaultPlayerPhoto name={info.name} />
                 )}
-                <div className="flex min-w-0 flex-1 flex-col gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-4">
                   <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
-                  <div className="flex min-w-0 items-stretch gap-4 text-sm">
-                    <div className="shrink-0">
-                      <span className="text-zinc-500">성향</span>
-                      <p className="font-medium text-zinc-900">{playerStyleLabel(info.style)}</p>
-                    </div>
-                    {showPosition ? (
-                      <div className="shrink-0">
-                        <span className="text-zinc-500">포지션</span>
-                        <p className="font-medium text-zinc-900">{positionLabels(info.position)}</p>
+                  <div className="flex min-w-0 items-stretch gap-5">
+                    <div className="flex w-36 shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 sm:w-44">
+                      <div>
+                        <span className="text-sm font-medium text-zinc-500">성향</span>
+                        <p className="mt-1 text-base font-semibold text-zinc-900">
+                          {playerStyleLabel(info.style)}
+                        </p>
                       </div>
-                    ) : null}
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-zinc-500">수상 이력</span>
-                      <ul className="mt-1 max-h-[132px] flex-1 space-y-2 overflow-y-auto pr-1">
+                      {sportType === "SOCCER" && showPosition ? (
+                        <div>
+                          <span className="text-sm font-medium text-zinc-500">포지션</span>
+                          <p className="mt-1 text-base font-semibold text-zinc-900">
+                            {positionLabels(info.position)}
+                          </p>
+                        </div>
+                      ) : null}
+                      <div>
+                        <span className="text-sm font-medium text-zinc-500">출석률</span>
+                        <p className="mt-1 text-2xl font-bold text-zinc-900">
+                          {playerInfo?.attendanceRate ?? 0}%
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
+                      </div>
+                    </div>
+                    <div className="flex min-w-0 flex-[1.2] flex-col">
+                      <span className="text-sm font-medium text-zinc-600">수상 이력</span>
+                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
                         {(playerInfo?.awards ?? []).length === 0 ? (
-                          <li className="text-zinc-400">수상 이력이 없습니다</li>
+                          <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
                         ) : (
                           playerInfo?.awards.map((award) => (
                             <li
                               key={`${award.period}-${award.subPeriod}-${award.category}`}
-                              className="rounded border border-zinc-100 bg-zinc-50 px-2 py-1.5"
+                              className="rounded border border-zinc-100 bg-white px-3 py-2"
                             >
                               <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
                               <p className="text-xs text-zinc-500">
@@ -483,13 +496,13 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                       </ul>
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-zinc-500">MOM 받은 횟수</span>
-                      <ul className="mt-1 max-h-[132px] flex-1 space-y-2 overflow-y-auto pr-1">
+                      <span className="text-sm font-medium text-zinc-600">MOM 받은 횟수</span>
+                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
                         {(playerInfo?.momMatches.length ?? 0) === 0 ? (
-                          <li className="text-zinc-400">없음</li>
+                          <li className="px-1 py-2 text-zinc-400">없음</li>
                         ) : (
                           playerInfo?.momMatches.map((m) => (
-                            <li key={m.id} className="rounded border border-zinc-100 bg-zinc-50 px-2 py-1.5">
+                            <li key={m.id} className="rounded border border-zinc-100 bg-white px-3 py-2">
                               <p className="font-medium text-zinc-800">VS {m.opponentName}</p>
                               <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
                             </li>
@@ -497,11 +510,6 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         )}
                       </ul>
                     </div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-zinc-500">출석률</span>
-                    <p className="text-xl font-semibold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</p>
-                    <p className="text-xs text-zinc-500">{playerInfo?.quarterLabel}</p>
                   </div>
                 </div>
               </div>
