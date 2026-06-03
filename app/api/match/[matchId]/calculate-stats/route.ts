@@ -122,18 +122,22 @@ export async function POST(req: Request, context: RouteContext) {
       continue;
     }
 
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.award.deleteMany({
-          where: { teamId, period, subPeriod },
-        });
-        const awards = await calculateAwardsForPeriod(tx, teamId, period, subPeriod);
-        if (awards.length > 0) {
-          await saveAwards(tx, awards);
-        }
-      },
-      { timeout: 9000 },
-    );
+    try {
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.award.deleteMany({
+            where: { teamId, period, subPeriod },
+          });
+          const awards = await calculateAwardsForPeriod(tx, teamId, period, subPeriod);
+          if (awards.length > 0) {
+            await saveAwards(tx, awards);
+          }
+        },
+        { timeout: 9000 },
+      );
+    } catch (error) {
+      console.error("Award 저장 실패:", period, subPeriod, error);
+    }
   }
 
   return Response.json({ success: true });
