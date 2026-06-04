@@ -162,6 +162,14 @@ function buildShareMessage(match: MatchDetailResponse["match"], statEntries: Sta
   ].join("\n");
 }
 
+function Toast({ message }: { message: string }) {
+  return (
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">
+      {message}
+    </div>
+  );
+}
+
 export function TeamMatchesTab({
   teamId,
   teamColor,
@@ -175,6 +183,7 @@ export function TeamMatchesTab({
   const [detail, setDetail] = useState<MatchDetailResponse | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filteredMatches = useMemo(() => {
     const q = searchQuery.trim();
@@ -187,20 +196,29 @@ export function TeamMatchesTab({
     [detail],
   );
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!detail?.match || !window.Kakao?.isInitialized()) return;
 
-    const message = buildShareMessage(detail.match, detail.statEntries);
+    const shareMessage = buildShareMessage(detail.match, detail.statEntries);
     const url = window.location.href;
 
-    window.Kakao.Share.sendDefault({
-      objectType: "text",
-      text: message,
-      link: {
-        mobileWebUrl: url,
-        webUrl: url,
-      },
-    });
+    try {
+      window.Kakao.Share.sendDefault({
+        objectType: "text",
+        text: shareMessage,
+        link: {
+          mobileWebUrl: url,
+          webUrl: url,
+        },
+      });
+    } catch {
+      try {
+        await navigator.clipboard.writeText(shareMessage);
+        setToastMessage("메세지가 복사됐어요! 카카오톡에 붙여넣기 해주세요");
+      } catch {
+        // ignore clipboard failure
+      }
+    }
   };
 
   useEffect(() => {
@@ -245,6 +263,12 @@ export function TeamMatchesTab({
     };
     void loadDetail();
   }, [view, selectedMatchId, teamId]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
 
   const openDetail = (matchId: string) => {
     setSelectedMatchId(matchId);
@@ -371,7 +395,7 @@ export function TeamMatchesTab({
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={handleShare}
+                onClick={() => void handleShare()}
                 className="rounded-lg border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
               >
                 카카오 공유하기
@@ -379,6 +403,7 @@ export function TeamMatchesTab({
             </div>
           </div>
         )}
+        {toastMessage ? <Toast message={toastMessage} /> : null}
       </section>
     );
   }
