@@ -291,7 +291,9 @@ function AwardCardHeader({
 }) {
   return (
     <header
-      className="border-b border-white/10 px-4 py-4"
+      className={`border-b border-white/10 px-4 py-4 ${
+        variant === "default" ? "min-h-[112px]" : ""
+      }`}
       style={
         variant === "podium"
           ? { background: `linear-gradient(135deg, ${accentColor}66 0%, rgba(251,191,36,0.18) 100%)` }
@@ -308,25 +310,21 @@ function PodiumSlot({
   rank,
   entry,
   avatarSize,
-  liftClass,
   pedestalHeightClass,
   pedestalColorClass,
 }: {
   rank: 1 | 2 | 3;
   entry: AwardRankEntry | undefined;
   avatarSize: "md" | "lg" | "xl";
-  liftClass: string;
   pedestalHeightClass: string;
   pedestalColorClass: string;
 }) {
   const styles = medalStyles(rank);
 
   return (
-    <div className={`flex min-w-0 flex-1 flex-col items-center ${liftClass}`}>
-      <div className="relative flex w-full flex-col items-center px-1 pt-8">
-        <span
-          className={`absolute left-1 top-0 rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}
-        >
+    <div className="flex min-w-0 flex-1 flex-col items-center justify-end">
+      <div className="flex w-full flex-col items-center px-1">
+        <span className={`mb-2 rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}>
           {styles.label}
         </span>
         {entry ? (
@@ -335,11 +333,11 @@ function PodiumSlot({
             <p className="mt-2 line-clamp-2 text-center text-sm font-semibold text-white">{entry.playerName}</p>
           </>
         ) : (
-          <p className="mt-8 text-center text-sm text-zinc-500">수상자 없음</p>
+          <p className="mb-2 text-center text-sm text-zinc-500">수상자 없음</p>
         )}
       </div>
       <div
-        className={`mt-3 w-full rounded-t-md border border-white/10 ${pedestalHeightClass} ${pedestalColorClass}`}
+        className={`mt-3 w-full shrink-0 rounded-t-md border border-white/10 ${pedestalHeightClass} ${pedestalColorClass}`}
       />
     </div>
   );
@@ -364,12 +362,11 @@ function BestPlayerPodiumCard({
         variant="podium"
       />
 
-      <div className="flex items-end justify-center gap-2 px-3 pb-4 pt-2 sm:gap-4 sm:px-6">
+      <div className="flex min-h-[280px] items-end justify-center gap-2 px-3 pb-4 pt-4 sm:gap-4 sm:px-6">
         <PodiumSlot
           rank={2}
           entry={ranksByNumber.get(2)?.[0]}
           avatarSize="md"
-          liftClass="translate-y-2"
           pedestalHeightClass="h-16"
           pedestalColorClass="bg-gradient-to-t from-zinc-500 via-zinc-300 to-zinc-200"
         />
@@ -377,7 +374,6 @@ function BestPlayerPodiumCard({
           rank={1}
           entry={ranksByNumber.get(1)?.[0]}
           avatarSize="xl"
-          liftClass="-translate-y-4 sm:-translate-y-6"
           pedestalHeightClass="h-24"
           pedestalColorClass="bg-gradient-to-t from-amber-700 via-yellow-400 to-amber-200"
         />
@@ -385,7 +381,6 @@ function BestPlayerPodiumCard({
           rank={3}
           entry={ranksByNumber.get(3)?.[0]}
           avatarSize="md"
-          liftClass="translate-y-3"
           pedestalHeightClass="h-12"
           pedestalColorClass="bg-gradient-to-t from-orange-800 via-amber-700 to-orange-300"
         />
