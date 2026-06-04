@@ -155,20 +155,6 @@ function PlayerAvatar({
   return <DefaultPlayerPhoto name={name} size={size} />;
 }
 
-function formatStatValue(category: AwardCategory, value: number) {
-  if (category === "ATTENDANCE") return `${value}%`;
-  if (
-    category === "ATTACK_RANKING" ||
-    category === "DEFENSE_RANKING" ||
-    category === "BEST_PLAYER" ||
-    category === "STRONG_VS_TOP" ||
-    category === "STRONG_VS_LOW"
-  ) {
-    return value.toFixed(2);
-  }
-  return String(value);
-}
-
 function medalStyles(rank: 1 | 2 | 3) {
   if (rank === 1) {
     return {
@@ -191,81 +177,121 @@ function medalStyles(rank: 1 | 2 | 3) {
   };
 }
 
+function shouldShowStatValue(category: AwardCategory) {
+  return !(
+    category === "ATTACK_RANKING" ||
+    category === "DEFENSE_RANKING" ||
+    category === "BEST_PLAYER" ||
+    category === "STRONG_VS_TOP" ||
+    category === "STRONG_VS_LOW"
+  );
+}
+
+function formatStatValue(category: AwardCategory, value: number) {
+  if (category === "TOP_SCORER" || category === "ATTACK_COMBO") return `${value}골`;
+  if (category === "TOP_ASSIST") return `${value}도움`;
+  if (category === "ATTACK_POINT") return `${value}P`;
+  if (category === "ATTENDANCE") return `${value}%`;
+  return String(value);
+}
+
+function groupEntriesByRank(entries: AwardRankEntry[]) {
+  const map = new Map<number, AwardRankEntry[]>();
+  for (const entry of entries) {
+    const list = map.get(entry.rank) ?? [];
+    list.push(entry);
+    map.set(entry.rank, list);
+  }
+  return map;
+}
+
+function RankBadge({ rank }: { rank: 1 | 2 | 3 }) {
+  const styles = medalStyles(rank);
+  return (
+    <span
+      className={`absolute left-3 top-3 rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}
+    >
+      {styles.label}
+    </span>
+  );
+}
+
+function SinglePlayerRankContent({
+  entry,
+  category,
+}: {
+  entry: AwardRankEntry;
+  category: AwardCategory;
+}) {
+  const showValue = shouldShowStatValue(category);
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <PlayerAvatar name={entry.playerName} photo={entry.playerPhoto} size="md" />
+      <p className="mt-2 text-sm font-semibold text-white">{entry.playerName}</p>
+      {showValue ? (
+        <p className="mt-1 text-xs font-medium text-amber-200/90">
+          {formatStatValue(category, entry.statValue)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ComboRankContent({
+  entries,
+  statValue,
+}: {
+  entries: AwardRankEntry[];
+  statValue: number;
+}) {
+  const [playerA, playerB] = entries;
+  const comboLabel =
+    playerA && playerB
+      ? `${playerA.playerName} & ${playerB.playerName} 조합`
+      : playerA
+        ? `${playerA.playerName} 조합`
+        : "수상자 없음";
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="flex items-center justify-center gap-2">
+        {playerA ? <PlayerAvatar name={playerA.playerName} photo={playerA.playerPhoto} size="md" /> : null}
+        {playerB ? <PlayerAvatar name={playerB.playerName} photo={playerB.playerPhoto} size="md" /> : null}
+      </div>
+      <p className="mt-2 text-sm font-semibold text-white">{comboLabel}</p>
+      {entries.length > 0 ? (
+        <p className="mt-1 text-xs font-medium text-amber-200/90">{formatStatValue("ATTACK_COMBO", statValue)}</p>
+      ) : null}
+    </div>
+  );
+}
+
 function RankSlot({
   rank,
   entries,
   category,
-  isFirstPlace,
 }: {
   rank: 1 | 2 | 3;
   entries: AwardRankEntry[];
   category: AwardCategory;
-  isFirstPlace: boolean;
 }) {
   const styles = medalStyles(rank);
-  const hideStatValue =
-    category === "ATTACK_RANKING" ||
-    category === "DEFENSE_RANKING" ||
-    category === "BEST_PLAYER";
-
-  if (entries.length === 0) {
-    return (
-      <div
-        className={`rounded-xl border border-dashed border-white/10 bg-white/5 px-3 py-4 text-center ${isFirstPlace ? "min-h-[180px]" : "min-h-[140px]"}`}
-      >
-        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}>
-          {styles.label}
-        </span>
-        <p className="mt-3 text-sm text-zinc-500">수상자 없음</p>
-      </div>
-    );
-  }
+  const isCombo = category === "ATTACK_COMBO";
+  const statValue = entries[0]?.statValue ?? 0;
 
   return (
     <div
-      className={`rounded-xl border border-white/10 bg-white/5 px-3 py-4 ${styles.ring} ${isFirstPlace ? "min-h-[180px] shadow-[0_0_30px_rgba(251,191,36,0.15)]" : "min-h-[140px]"
-        } ${hideStatValue ? "flex flex-col justify-center" : ""}`}
+      className={`relative flex min-h-[132px] flex-1 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 pb-4 pt-10 ${styles.ring}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}>
-          {styles.label}
-        </span>
-
-      </div>
-
-      <div className={`mt-3 space-y-3 ${hideStatValue ? "flex flex-col justify-center" : ""}`}>
-        {entries.map((entry) =>
-          hideStatValue ? (
-            <div
-              key={`${entry.rank}-${entry.playerId}`}
-              className="flex items-center justify-center gap-3"
-            >
-              <PlayerAvatar
-                name={entry.playerName}
-                photo={entry.playerPhoto}
-                size={isFirstPlace ? "lg" : rank === 2 ? "md" : "sm"}
-              />
-              <p className={`font-semibold text-white ${isFirstPlace ? "text-base" : "text-sm"}`}>
-                {entry.playerName}
-              </p>
-            </div>
-          ) : (
-            <div key={`${entry.rank}-${entry.playerId}`} className="flex flex-col items-center text-center">
-              <PlayerAvatar
-                name={entry.playerName}
-                photo={entry.playerPhoto}
-                size={isFirstPlace ? "lg" : rank === 2 ? "md" : "sm"}
-              />
-              <p className={`mt-2 font-semibold text-white ${isFirstPlace ? "text-base" : "text-sm"}`}>
-                {entry.playerName}
-              </p>
-              <p className={`mt-0.5 font-medium text-amber-200/90 ${isFirstPlace ? "text-sm" : "text-xs"}`}>
-                {formatStatValue(category, entry.statValue)}
-              </p>
-            </div>
-          ),
-        )}
-      </div>
+      <RankBadge rank={rank} />
+      {entries.length === 0 ? (
+        <p className="text-sm text-zinc-500">수상자 없음</p>
+      ) : isCombo ? (
+        <ComboRankContent entries={entries} statValue={statValue} />
+      ) : (
+        <SinglePlayerRankContent entry={entries[0]!} category={category} />
+      )}
     </div>
   );
 }
@@ -274,56 +300,41 @@ function AwardCategoryCard({
   category,
   ranks,
   accentColor,
+  featured = false,
 }: {
   category: AwardCategory;
   ranks: AwardRankEntry[];
   accentColor: string;
+  featured?: boolean;
 }) {
   const info = AWARD_INFO[category];
-  const ranksByNumber = useMemo(() => {
-    const map = new Map<number, AwardRankEntry[]>();
-    for (const entry of ranks) {
-      const list = map.get(entry.rank) ?? [];
-      list.push(entry);
-      map.set(entry.rank, list);
-    }
-    return map;
-  }, [ranks]);
+  const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
 
   return (
     <article
-      className="flex w-[320px] shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-xl"
-      style={{ boxShadow: `0 20px 40px -20px ${accentColor}55` }}
+      className={`flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-xl ${
+        featured
+          ? "border-amber-400/40 shadow-[0_24px_48px_-24px_rgba(251,191,36,0.45)] sm:min-h-[560px]"
+          : "border-white/10"
+      }`}
+      style={{ boxShadow: featured ? undefined : `0 20px 40px -20px ${accentColor}55` }}
     >
       <header
-        className="border-b border-white/10 px-4 py-4"
-        style={{ background: `linear-gradient(135deg, ${accentColor}33 0%, transparent 100%)` }}
+        className={`border-b border-white/10 px-4 py-4 ${featured ? "bg-amber-500/10" : ""}`}
+        style={
+          featured
+            ? { background: `linear-gradient(135deg, ${accentColor}55 0%, rgba(251,191,36,0.12) 100%)` }
+            : { background: `linear-gradient(135deg, ${accentColor}33 0%, transparent 100%)` }
+        }
       >
-        <h3 className="text-lg font-bold text-white">{info.name}</h3>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-400">{info.description}</p>
+        <h3 className="text-base font-bold text-white">{info.name}</h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{info.description}</p>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <RankSlot
-          rank={1}
-          entries={ranksByNumber.get(1) ?? []}
-          category={category}
-          isFirstPlace
-        />
-        <div className="grid grid-cols-2 gap-3">
-          <RankSlot
-            rank={2}
-            entries={ranksByNumber.get(2) ?? []}
-            category={category}
-            isFirstPlace={false}
-          />
-          <RankSlot
-            rank={3}
-            entries={ranksByNumber.get(3) ?? []}
-            category={category}
-            isFirstPlace={false}
-          />
-        </div>
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <RankSlot rank={1} entries={ranksByNumber.get(1) ?? []} category={category} />
+        <RankSlot rank={2} entries={ranksByNumber.get(2) ?? []} category={category} />
+        <RankSlot rank={3} entries={ranksByNumber.get(3) ?? []} category={category} />
       </div>
     </article>
   );
@@ -364,17 +375,26 @@ function AwardTabContent({
       : [...ALWAYS_CATEGORIES, ...QUARTERLY_PLUS_CATEGORIES];
 
   const awardsByCategory = new Map(data.awards.map((award) => [award.category, award.ranks]));
+  const gridCategories = categories.filter((category) => category !== "BEST_PLAYER");
 
   return (
-    <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-4">
-      {categories.map((category) => (
-        <AwardCategoryCard
-          key={category}
-          category={category}
-          ranks={awardsByCategory.get(category) ?? []}
-          accentColor={accentColor}
-        />
-      ))}
+    <div className="space-y-4">
+      <AwardCategoryCard
+        category="BEST_PLAYER"
+        ranks={awardsByCategory.get("BEST_PLAYER") ?? []}
+        accentColor={accentColor}
+        featured
+      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {gridCategories.map((category) => (
+          <AwardCategoryCard
+            key={category}
+            category={category}
+            ranks={awardsByCategory.get(category) ?? []}
+            accentColor={accentColor}
+          />
+        ))}
+      </div>
     </div>
   );
 }

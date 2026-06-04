@@ -236,14 +236,16 @@ function TournamentListScreen({
   }
 
   return (
-    <div className="space-y-4">
-      <input
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="대회 검색"
-        className="h-10 w-full max-w-md rounded-lg border border-zinc-300 bg-white px-3 text-sm shadow-sm"
-        autoComplete="off"
-      />
+    <div className="mx-auto w-full max-w-2xl space-y-4">
+      <div className="flex justify-center">
+        <input
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="대회 검색"
+          className="h-10 w-full max-w-md rounded-lg border border-zinc-300 bg-white px-3 text-sm shadow-sm"
+          autoComplete="off"
+        />
+      </div>
 
       {filtered.length === 0 ? (
         <p className="rounded-lg border border-dashed border-zinc-200 py-12 text-center text-sm text-zinc-500">
