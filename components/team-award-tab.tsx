@@ -48,12 +48,11 @@ const AWARD_INFO: Record<
     description: "공격, 수비에서 종합적으로 가장 좋은 모습을 보여준 선수",
   },
   ATTACK_RANKING: {
-    name: "공격수 랭킹",
-    description:
-      "강한 팀에 넣은 한골과 약한 팀에 넣은 한골은 그 값어치가 다르다. 상대팀 수준별, 골, 도움에 대한 가중치를 달리하여 평가한 공격 점수",
+    name: "공격 랭킹",
+    description: "상대팀 수준별, 골, 도움에 대한 가중치를 달리하여 평가한 종합 공격 점수",
   },
   DEFENSE_RANKING: {
-    name: "수비수 랭킹",
+    name: "수비 랭킹",
     description: "상대팀 수준별, 경기결과, 실점에 대한 가중치를 달리하여 평가한 종합 수비 점수",
   },
   ATTACK_COMBO: {
@@ -119,10 +118,16 @@ function filterCompletedSubPeriodOptions(period: PeriodType, options: PeriodOpti
   });
 }
 
-function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" | "xl" }) {
   const initial = name.trim().charAt(0) || "?";
   const cls =
-    size === "lg" ? "h-20 w-20 text-2xl" : size === "sm" ? "h-10 w-10 text-sm" : "h-14 w-14 text-lg";
+    size === "xl"
+      ? "h-24 w-24 text-2xl"
+      : size === "lg"
+        ? "h-20 w-20 text-2xl"
+        : size === "sm"
+          ? "h-10 w-10 text-sm"
+          : "h-14 w-14 text-lg";
 
   return (
     <div
@@ -140,10 +145,16 @@ function PlayerAvatar({
 }: {
   name: string;
   photo: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }) {
   const cls =
-    size === "lg" ? "h-20 w-20" : size === "sm" ? "h-10 w-10" : "h-14 w-14";
+    size === "xl"
+      ? "h-24 w-24"
+      : size === "lg"
+        ? "h-20 w-20"
+        : size === "sm"
+          ? "h-10 w-10"
+          : "h-14 w-14";
 
   if (photo) {
     return (
@@ -267,6 +278,122 @@ function ComboRankContent({
   );
 }
 
+function AwardCardHeader({
+  name,
+  description,
+  accentColor,
+  variant = "default",
+}: {
+  name: string;
+  description: string;
+  accentColor: string;
+  variant?: "default" | "podium";
+}) {
+  return (
+    <header
+      className="border-b border-white/10 px-4 py-4"
+      style={
+        variant === "podium"
+          ? { background: `linear-gradient(135deg, ${accentColor}66 0%, rgba(251,191,36,0.18) 100%)` }
+          : { background: `linear-gradient(135deg, ${accentColor}33 0%, transparent 100%)` }
+      }
+    >
+      <h3 className="text-base font-bold text-white">{name}</h3>
+      <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{description}</p>
+    </header>
+  );
+}
+
+function PodiumSlot({
+  rank,
+  entry,
+  avatarSize,
+  liftClass,
+  pedestalHeightClass,
+  pedestalColorClass,
+}: {
+  rank: 1 | 2 | 3;
+  entry: AwardRankEntry | undefined;
+  avatarSize: "md" | "lg" | "xl";
+  liftClass: string;
+  pedestalHeightClass: string;
+  pedestalColorClass: string;
+}) {
+  const styles = medalStyles(rank);
+
+  return (
+    <div className={`flex min-w-0 flex-1 flex-col items-center ${liftClass}`}>
+      <div className="relative flex w-full flex-col items-center px-1 pt-8">
+        <span
+          className={`absolute left-1 top-0 rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}
+        >
+          {styles.label}
+        </span>
+        {entry ? (
+          <>
+            <PlayerAvatar name={entry.playerName} photo={entry.playerPhoto} size={avatarSize} />
+            <p className="mt-2 line-clamp-2 text-center text-sm font-semibold text-white">{entry.playerName}</p>
+          </>
+        ) : (
+          <p className="mt-8 text-center text-sm text-zinc-500">수상자 없음</p>
+        )}
+      </div>
+      <div
+        className={`mt-3 w-full rounded-t-md border border-white/10 ${pedestalHeightClass} ${pedestalColorClass}`}
+      />
+    </div>
+  );
+}
+
+function BestPlayerPodiumCard({
+  ranks,
+  accentColor,
+}: {
+  ranks: AwardRankEntry[];
+  accentColor: string;
+}) {
+  const info = AWARD_INFO.BEST_PLAYER;
+  const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-950 via-zinc-900 to-amber-900/70 shadow-[0_24px_48px_-24px_rgba(251,191,36,0.45)]">
+      <AwardCardHeader
+        name={info.name}
+        description={info.description}
+        accentColor={accentColor}
+        variant="podium"
+      />
+
+      <div className="flex items-end justify-center gap-2 px-3 pb-4 pt-2 sm:gap-4 sm:px-6">
+        <PodiumSlot
+          rank={2}
+          entry={ranksByNumber.get(2)?.[0]}
+          avatarSize="md"
+          liftClass="translate-y-2"
+          pedestalHeightClass="h-16"
+          pedestalColorClass="bg-gradient-to-t from-zinc-500 via-zinc-300 to-zinc-200"
+        />
+        <PodiumSlot
+          rank={1}
+          entry={ranksByNumber.get(1)?.[0]}
+          avatarSize="xl"
+          liftClass="-translate-y-4 sm:-translate-y-6"
+          pedestalHeightClass="h-24"
+          pedestalColorClass="bg-gradient-to-t from-amber-700 via-yellow-400 to-amber-200"
+        />
+        <PodiumSlot
+          rank={3}
+          entry={ranksByNumber.get(3)?.[0]}
+          avatarSize="md"
+          liftClass="translate-y-3"
+          pedestalHeightClass="h-12"
+          pedestalColorClass="bg-gradient-to-t from-orange-800 via-amber-700 to-orange-300"
+        />
+      </div>
+    </article>
+  );
+}
+
 function RankSlot({
   rank,
   entries,
@@ -300,36 +427,25 @@ function AwardCategoryCard({
   category,
   ranks,
   accentColor,
-  featured = false,
 }: {
   category: AwardCategory;
   ranks: AwardRankEntry[];
   accentColor: string;
-  featured?: boolean;
 }) {
-  const info = AWARD_INFO[category];
   const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
+
+  if (category === "BEST_PLAYER") {
+    return <BestPlayerPodiumCard ranks={ranks} accentColor={accentColor} />;
+  }
+
+  const info = AWARD_INFO[category];
 
   return (
     <article
-      className={`flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-xl ${
-        featured
-          ? "border-amber-400/40 shadow-[0_24px_48px_-24px_rgba(251,191,36,0.45)] sm:min-h-[560px]"
-          : "border-white/10"
-      }`}
-      style={{ boxShadow: featured ? undefined : `0 20px 40px -20px ${accentColor}55` }}
+      className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-xl"
+      style={{ boxShadow: `0 20px 40px -20px ${accentColor}55` }}
     >
-      <header
-        className={`border-b border-white/10 px-4 py-4 ${featured ? "bg-amber-500/10" : ""}`}
-        style={
-          featured
-            ? { background: `linear-gradient(135deg, ${accentColor}55 0%, rgba(251,191,36,0.12) 100%)` }
-            : { background: `linear-gradient(135deg, ${accentColor}33 0%, transparent 100%)` }
-        }
-      >
-        <h3 className="text-base font-bold text-white">{info.name}</h3>
-        <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{info.description}</p>
-      </header>
+      <AwardCardHeader name={info.name} description={info.description} accentColor={accentColor} />
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <RankSlot rank={1} entries={ranksByNumber.get(1) ?? []} category={category} />
@@ -383,7 +499,6 @@ function AwardTabContent({
         category="BEST_PLAYER"
         ranks={awardsByCategory.get("BEST_PLAYER") ?? []}
         accentColor={accentColor}
-        featured
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {gridCategories.map((category) => (
