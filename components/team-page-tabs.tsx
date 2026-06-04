@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TeamAwardTab } from "@/components/team-award-tab";
 import { TeamLogo } from "@/components/team-logo";
 import { TeamHomeTab } from "@/components/team-home-tab";
@@ -28,9 +29,45 @@ const tabs: Array<{ key: TeamTab; label: string }> = [
   { key: "AWARD", label: "Award" },
 ];
 
+const TAB_URL_NAMES: Record<TeamTab, string> = {
+  HOME: "home",
+  PLAYERS: "players",
+  MATCHES: "matches",
+  STATS: "stats",
+  TOURNAMENT: "tournament",
+  AWARD: "award",
+};
+
+const URL_NAME_TO_TAB = Object.fromEntries(
+  Object.entries(TAB_URL_NAMES).map(([tab, name]) => [name, tab as TeamTab]),
+) as Record<string, TeamTab>;
+
+function parseTabFromUrl(tabParam: string | null): TeamTab {
+  if (!tabParam) return "HOME";
+  return URL_NAME_TO_TAB[tabParam.toLowerCase()] ?? "HOME";
+}
+
 export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage }: TeamPageTabsProps) {
-  const [activeTab, setActiveTab] = useState<TeamTab>("HOME");
-  const [matchesOpenMatchId, setMatchesOpenMatchId] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tabParam = searchParams.get("tab");
+  const matchIdParam = searchParams.get("matchId");
+  const urlMatchId = matchIdParam?.trim() || null;
+  const activeTab = urlMatchId ? "MATCHES" : parseTabFromUrl(tabParam);
+
+  const replaceUrl = useCallback(
+    (tab: TeamTab, matchId?: string | null) => {
+      const params = new URLSearchParams();
+      params.set("tab", TAB_URL_NAMES[tab]);
+      if (tab === "MATCHES" && matchId) {
+        params.set("matchId", matchId);
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
+  );
 
   const tabContent = (() => {
     if (activeTab === "HOME")
@@ -38,10 +75,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
         <TeamHomeTab
           teamId={teamId}
           teamColor={teamColor}
-          onMatchClick={(matchId) => {
-            setMatchesOpenMatchId(matchId);
-            setActiveTab("MATCHES");
-          }}
+          onMatchClick={(matchId) => replaceUrl("MATCHES", matchId)}
         />
       );
     if (activeTab === "PLAYERS") return <TeamPlayersTab teamId={teamId} teamColor={teamColor} />;
@@ -50,8 +84,9 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
         <TeamMatchesTab
           teamId={teamId}
           teamColor={teamColor}
-          openMatchId={matchesOpenMatchId}
-          onOpenMatchIdConsumed={() => setMatchesOpenMatchId(null)}
+          openMatchId={urlMatchId}
+          onMatchOpen={(matchId) => replaceUrl("MATCHES", matchId)}
+          onMatchBack={() => replaceUrl("MATCHES")}
         />
       );
     if (activeTab === "STATS") return <TeamStatsTab teamId={teamId} teamColor={teamColor} />;
@@ -77,7 +112,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
                 ←
               </Link>
             ) : null}
-            <button type="button" onClick={() => setActiveTab("HOME")} className="flex items-center gap-3">
+            <button type="button" onClick={() => replaceUrl("HOME")} className="flex items-center gap-3">
               {teamLogo ? (
                 <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10" rounded="lg" />
               ) : (
@@ -94,7 +129,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => replaceUrl(tab.key)}
                   className={`rounded-md px-3 py-2 text-sm font-medium transition ${active ? "bg-white text-zinc-900" : "text-white/90 hover:bg-white/20"
                     }`}
                 >

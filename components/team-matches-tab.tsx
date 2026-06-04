@@ -73,7 +73,8 @@ type TeamMatchesTabProps = {
   teamId: string;
   teamColor: string | null;
   openMatchId?: string | null;
-  onOpenMatchIdConsumed?: () => void;
+  onMatchOpen?: (matchId: string) => void;
+  onMatchBack?: () => void;
 };
 
 declare global {
@@ -174,7 +175,8 @@ export function TeamMatchesTab({
   teamId,
   teamColor,
   openMatchId = null,
-  onOpenMatchIdConsumed,
+  onMatchOpen,
+  onMatchBack,
 }: TeamMatchesTabProps) {
   const [view, setView] = useState<"LIST" | "DETAIL">("LIST");
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -237,11 +239,15 @@ export function TeamMatchesTab({
   }, [teamId]);
 
   useEffect(() => {
-    if (!openMatchId) return;
-    setSelectedMatchId(openMatchId);
-    setView("DETAIL");
-    onOpenMatchIdConsumed?.();
-  }, [openMatchId, onOpenMatchIdConsumed]);
+    if (openMatchId) {
+      setSelectedMatchId(openMatchId);
+      setView("DETAIL");
+      return;
+    }
+    setView("LIST");
+    setSelectedMatchId(null);
+    setDetail(null);
+  }, [openMatchId]);
 
   useEffect(() => {
     if (view !== "DETAIL" || !selectedMatchId) {
@@ -271,14 +277,11 @@ export function TeamMatchesTab({
   }, [toastMessage]);
 
   const openDetail = (matchId: string) => {
-    setSelectedMatchId(matchId);
-    setView("DETAIL");
+    onMatchOpen?.(matchId);
   };
 
   const backToList = () => {
-    setView("LIST");
-    setSelectedMatchId(null);
-    setDetail(null);
+    onMatchBack?.();
   };
 
   if (view === "DETAIL") {

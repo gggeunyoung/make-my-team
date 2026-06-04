@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { TeamPageTabs } from "@/components/team-page-tabs";
@@ -24,12 +25,22 @@ export default async function TeamPage({ params }: TeamPageProps) {
   const canManage = Boolean(email && team.admins.includes(email));
 
   return (
-    <TeamPageTabs
-      teamId={team.id}
-      teamName={team.name}
-      teamLogo={team.logo}
-      teamColor={team.color}
-      canManage={canManage}
-    />
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-zinc-50 px-4 py-10">
+          <div className="mx-auto max-w-6xl rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">
+            팀 페이지를 불러오는 중...
+          </div>
+        </main>
+      }
+    >
+      <TeamPageTabs
+        teamId={team.id}
+        teamName={team.name}
+        teamLogo={team.logo}
+        teamColor={team.color}
+        canManage={canManage}
+      />
+    </Suspense>
   );
 }
