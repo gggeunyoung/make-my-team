@@ -147,7 +147,7 @@ function psoResultAccentClass(result: PsoResult) {
   return "text-zinc-500";
 }
 
-function TournamentListScreen({
+function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initial = name.trim().charAt(0) || "?";
   const cls =
     size === "sm"
