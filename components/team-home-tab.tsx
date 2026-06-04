@@ -63,6 +63,10 @@ function DefaultPlayerPhoto({ name, size = "sm" }: { name: string; size?: "sm" |
   );
 }
 
+function formatRankingTitle(title: string) {
+  return title.replace(/경기당/g, "매치당");
+}
+
 function formatRankingValue(key: string, value: number) {
   if (key === "attack" || key === "defense") return value.toFixed(2);
   if (key === "goals" || key === "goalsPerMatch") {
@@ -156,7 +160,7 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                 key={cat.key}
                 className="w-56 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 p-4"
               >
-                <p className="mb-3 text-sm font-semibold text-zinc-900">{cat.title}</p>
+                <p className="mb-3 text-sm font-semibold text-zinc-900">{formatRankingTitle(cat.title)}</p>
                 {cat.items.length === 0 ? (
                   <p className="text-xs text-zinc-400">데이터 없음</p>
                 ) : (

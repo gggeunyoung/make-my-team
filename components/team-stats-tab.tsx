@@ -98,6 +98,7 @@ const OPPONENT_FILTER_OPTIONS: Array<{ value: "ALL" | OpponentLevelValue; label:
 const PERIOD_TAB_ORDER: PeriodType[] = ["MONTHLY", "QUARTERLY", "SEMIANNUAL", "YEARLY"];
 
 type TableSortKey =
+  | "matchCount"
   | "goals"
   | "assists"
   | "attackPoints"
@@ -107,6 +108,7 @@ type TableSortKey =
   | "attendanceRate";
 
 const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
+  { key: "matchCount", label: "진행한 매치" },
   { key: "goals", label: "골" },
   { key: "assists", label: "도움" },
   { key: "attackPoints", label: "공격포인트" },
@@ -463,6 +465,7 @@ function PlayerStatsContent({
                         <span className="font-medium text-zinc-900">{row.name}</span>
                       </div>
                     </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.matchCount}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.goals}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.assists}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.attackPoints}</td>
