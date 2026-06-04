@@ -1,5 +1,6 @@
 "use client";
 
+import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
 import {
   formatMatchDate,
@@ -75,6 +76,32 @@ type TeamMatchesTabProps = {
   onOpenMatchIdConsumed?: () => void;
 };
 
+declare global {
+  interface Window {
+    Kakao?: {
+      init: (key: string) => void;
+      isInitialized: () => boolean;
+      Share: {
+        sendDefault: (options: {
+          objectType: "text";
+          text: string;
+          link: {
+            mobileWebUrl: string;
+            webUrl: string;
+          };
+        }) => void;
+      };
+    };
+  }
+}
+
+const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? "";
+
+function initKakaoSdk() {
+  if (!window.Kakao || !KAKAO_JS_KEY || window.Kakao.isInitialized()) return;
+  window.Kakao.init(KAKAO_JS_KEY);
+}
+
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "md" | "sm" }) {
   const initial = name.trim().charAt(0) || "?";
   const cls =
@@ -135,14 +162,6 @@ function buildShareMessage(match: MatchDetailResponse["match"], statEntries: Sta
   ].join("\n");
 }
 
-function Toast({ message }: { message: string }) {
-  return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">
-      {message}
-    </div>
-  );
-}
-
 export function TeamMatchesTab({
   teamId,
   teamColor,
@@ -156,7 +175,6 @@ export function TeamMatchesTab({
   const [detail, setDetail] = useState<MatchDetailResponse | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filteredMatches = useMemo(() => {
     const q = searchQuery.trim();
@@ -169,26 +187,20 @@ export function TeamMatchesTab({
     [detail],
   );
 
-  const handleShare = async () => {
-    if (!detail?.match) return;
+  const handleShare = () => {
+    if (!detail?.match || !window.Kakao?.isInitialized()) return;
 
     const message = buildShareMessage(detail.match, detail.statEntries);
+    const url = window.location.href;
 
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      try {
-        await navigator.share({ text: message, url: window.location.href });
-        return;
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return;
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(message);
-      setToastMessage("복사됐습니다");
-    } catch {
-      setToastMessage("복사에 실패했습니다");
-    }
+    window.Kakao.Share.sendDefault({
+      objectType: "text",
+      text: message,
+      link: {
+        mobileWebUrl: url,
+        webUrl: url,
+      },
+    });
   };
 
   useEffect(() => {
@@ -234,12 +246,6 @@ export function TeamMatchesTab({
     void loadDetail();
   }, [view, selectedMatchId, teamId]);
 
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = window.setTimeout(() => setToastMessage(null), 2000);
-    return () => window.clearTimeout(timer);
-  }, [toastMessage]);
-
   const openDetail = (matchId: string) => {
     setSelectedMatchId(matchId);
     setView("DETAIL");
@@ -264,6 +270,11 @@ export function TeamMatchesTab({
 
     return (
       <section className="mx-auto w-full max-w-6xl px-4 py-6">
+        <Script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+          strategy="lazyOnload"
+          onLoad={initKakaoSdk}
+        />
         <button
           type="button"
           onClick={backToList}
@@ -360,15 +371,14 @@ export function TeamMatchesTab({
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={() => void handleShare()}
+                onClick={handleShare}
                 className="rounded-lg border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
               >
-                공유하기
+                카카오 공유하기
               </button>
             </div>
           </div>
         )}
-        {toastMessage ? <Toast message={toastMessage} /> : null}
       </section>
     );
   }
@@ -429,7 +439,6 @@ export function TeamMatchesTab({
           })}
         </ul>
       )}
-      {toastMessage ? <Toast message={toastMessage} /> : null}
     </section>
   );
 }
