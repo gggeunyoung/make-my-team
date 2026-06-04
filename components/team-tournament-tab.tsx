@@ -147,15 +147,7 @@ function psoResultAccentClass(result: PsoResult) {
   return "text-zinc-500";
 }
 
-function DefaultTournamentImage() {
-  return (
-    <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-sm font-medium text-zinc-500">
-      대회
-    </div>
-  );
-}
-
-function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+function TournamentListScreen({
   const initial = name.trim().charAt(0) || "?";
   const cls =
     size === "sm"
@@ -258,32 +250,32 @@ function TournamentListScreen({
           진행한 대회가 없습니다
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <ul className="space-y-4">
           {filtered.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelect(item.id)}
-              className="flex gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-zinc-300 hover:bg-white"
-            >
-              <DefaultTournamentImage />
-              <div className="min-w-0 flex-1">
-                <p className="text-lg font-bold" style={{ color: accent }}>
-                  {tournamentResultLabel(item.tournamentResult)}
-                </p>
-                <p className="mt-1 truncate text-sm font-medium text-zinc-900">
-                  {item.tournamentName?.trim() || "(이름 없음)"}
-                </p>
-                <p className="mt-1 text-xs text-zinc-600">
-                  {formatTournamentPeriod(item.startDate, item.finishDate)}
-                </p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  MVP {item.mvpName ?? "-"}
-                </p>
-              </div>
-            </button>
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(item.id)}
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-zinc-300 hover:bg-white"
+              >
+                <div className="min-w-0">
+                  <p className="text-lg font-bold" style={{ color: accent }}>
+                    {tournamentResultLabel(item.tournamentResult)}
+                  </p>
+                  <p className="mt-1 truncate text-sm font-medium text-zinc-900">
+                    {item.tournamentName?.trim() || "(이름 없음)"}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-600">
+                    {formatTournamentPeriod(item.startDate, item.finishDate)}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    MVP {item.mvpName ?? "-"}
+                  </p>
+                </div>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
@@ -338,9 +330,9 @@ function TournamentDetailScreen({
           <StatBox label="승률" value={`${summary.winRate}%`} />
           <StatBox label="득점" value={summary.goalsScored} />
           <StatBox label="실점" value={summary.goalsConceded} />
-          <StatBox label="총합 승" value={summary.winMatches} />
-          <StatBox label="총합 무" value={summary.drawMatches} />
-          <StatBox label="총합 패" value={summary.lossMatches} />
+          <StatBox label="승" value={summary.winMatches} />
+          <StatBox label="무" value={summary.drawMatches} />
+          <StatBox label="패" value={summary.lossMatches} />
         </div>
       </section>
 
