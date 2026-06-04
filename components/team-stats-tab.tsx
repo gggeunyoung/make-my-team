@@ -110,9 +110,9 @@ const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "goals", label: "골" },
   { key: "assists", label: "도움" },
   { key: "attackPoints", label: "공격포인트" },
-  { key: "goalsPerMatch", label: "경기당 골" },
-  { key: "assistsPerMatch", label: "경기당 도움" },
-  { key: "attackPointsPerMatch", label: "경기당 공격포인트" },
+  { key: "goalsPerMatch", label: "매치당 골" },
+  { key: "assistsPerMatch", label: "매치당 도움" },
+  { key: "attackPointsPerMatch", label: "매치당 공격포인트" },
   { key: "attendanceRate", label: "출석률" },
 ];
 
@@ -253,9 +253,9 @@ function TeamStatsContent({
   return (
     <div className="space-y-8">
       <section>
-        <h3 className="mb-4 text-lg font-semibold text-zinc-900">경기 결과 종합</h3>
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900">매치 결과 종합</h3>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-          <StatBox label="경기수" value={summary?.matchCount ?? 0} />
+          <StatBox label="진행한 매치" value={summary?.matchCount ?? 0} />
           <StatBox label="승률" value={`${summary?.winRate ?? 0}%`} />
           <StatBox label="득점" value={summary?.goalsScored ?? 0} />
           <StatBox label="실점" value={summary?.goalsConceded ?? 0} />
@@ -274,7 +274,7 @@ function TeamStatsContent({
               <p className="mb-2 text-sm font-semibold text-zinc-800">{opponentLevelLabel(row.level)}</p>
               <dl className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-zinc-500">경기수</dt>
+                  <dt className="text-zinc-500">진행한 매치</dt>
                   <dd className="font-medium text-zinc-900">{row.matchCount}</dd>
                 </div>
                 <div className="flex justify-between">
@@ -292,7 +292,7 @@ function TeamStatsContent({
       </section>
 
       <section>
-        <h3 className="mb-4 text-lg font-semibold text-zinc-900">최근 경기 결과</h3>
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900">최근 매치 결과</h3>
         {recent.length === 0 ? (
           <p className="rounded-lg border border-dashed border-zinc-200 py-8 text-center text-sm text-zinc-500">
             해당 기간 진행한 매치가 없습니다

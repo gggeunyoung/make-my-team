@@ -99,7 +99,6 @@ const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? "";
 
 function initKakaoSdk() {
   if (!window.Kakao || !KAKAO_JS_KEY || window.Kakao.isInitialized()) return;
-  console.log('카카오 키:', process.env.NEXT_PUBLIC_KAKAO_JS_KEY);
   window.Kakao.init(KAKAO_JS_KEY);
 }
 

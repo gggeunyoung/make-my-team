@@ -58,9 +58,9 @@ export async function GET(req: Request) {
   const winMatches = matches.filter((m) => m.total_result === "WIN").length;
   const goalsScored = matches.reduce((sum, m) => sum + m.total_score_us, 0);
   const goalsConceded = matches.reduce((sum, m) => sum + m.total_score_them, 0);
-  const winTotal = matches.reduce((sum, m) => sum + m.count_win, 0);
-  const drawTotal = matches.reduce((sum, m) => sum + m.count_draw, 0);
-  const lossTotal = matches.reduce((sum, m) => sum + m.count_loss, 0);
+  const winTotal = matches.filter((m) => m.total_result === "WIN").length;
+  const drawTotal = matches.filter((m) => m.total_result === "DRAW").length;
+  const lossTotal = matches.filter((m) => m.total_result === "LOSS").length;
 
   const summary = {
     matchCount,
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
     const levelMatches = matches.filter((m) => m.opponent_level === level);
     const levelMatchCount = levelMatches.length;
     const levelWinMatches = levelMatches.filter((m) => m.total_result === "WIN").length;
-    const levelWinTotal = levelMatches.reduce((sum, m) => sum + m.count_win, 0);
+    const levelWinTotal = levelMatches.filter((m) => m.total_result === "WIN").length;
 
     return {
       level,
