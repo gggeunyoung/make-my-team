@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TeamAwardTab } from "@/components/team-award-tab";
@@ -29,6 +29,15 @@ const tabs: Array<{ key: TeamTab; label: string }> = [
   { key: "AWARD", label: "Award" },
 ];
 
+const ACTIVE_TAB_LABELS: Record<TeamTab, string> = {
+  HOME: "Home",
+  PLAYERS: "Players",
+  MATCHES: "Matches",
+  STATS: "Stats",
+  TOURNAMENT: "Tournament",
+  AWARD: "Award",
+};
+
 const TAB_URL_NAMES: Record<TeamTab, string> = {
   HOME: "home",
   PLAYERS: "players",
@@ -51,6 +60,8 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const tabParam = searchParams.get("tab");
   const matchIdParam = searchParams.get("matchId");
@@ -68,6 +79,27 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
     },
     [pathname, router],
   );
+
+  const selectTab = useCallback(
+    (tab: TeamTab, matchId?: string | null) => {
+      replaceUrl(tab, matchId);
+      setMobileMenuOpen(false);
+    },
+    [replaceUrl],
+  );
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
 
   const tabContent = (() => {
     if (activeTab === "HOME")
@@ -112,24 +144,24 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
                 ←
               </Link>
             ) : null}
-            <button type="button" onClick={() => replaceUrl("HOME")} className="flex items-center gap-3">
+            <button type="button" onClick={() => selectTab("HOME")} className="flex min-w-0 items-center gap-3">
               {teamLogo ? (
-                <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10" rounded="lg" />
+                <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 shrink-0" rounded="lg" />
               ) : (
-                <div className="h-10 w-10 rounded-full bg-white/60" />
+                <div className="h-10 w-10 shrink-0 rounded-full bg-white/60" />
               )}
-              <span className="text-lg font-semibold text-white">{teamName}</span>
+              <span className="truncate text-lg font-semibold text-white">{teamName}</span>
             </button>
           </div>
 
-          <nav className="flex items-center gap-2">
+          <nav className="hidden items-center gap-2 md:flex">
             {tabs.map((tab) => {
               const active = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => replaceUrl(tab.key)}
+                  onClick={() => selectTab(tab.key)}
                   className={`rounded-md px-3 py-2 text-sm font-medium transition ${active ? "bg-white text-zinc-900" : "text-white/90 hover:bg-white/20"
                     }`}
                 >
@@ -146,6 +178,50 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
               </Link>
             ) : null}
           </nav>
+
+          <div ref={mobileMenuRef} className="relative md:hidden">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white">{ACTIVE_TAB_LABELS[activeTab]}</span>
+              <button
+                type="button"
+                aria-label="메뉴 열기"
+                aria-expanded={mobileMenuOpen}
+                onClick={() => setMobileMenuOpen((open) => !open)}
+                className="rounded-md px-2 py-1 text-2xl leading-none text-white/90 transition hover:bg-white/20"
+              >
+                ≡
+              </button>
+            </div>
+
+            {mobileMenuOpen ? (
+              <div className="absolute right-0 top-full z-30 mt-1 min-w-[10rem] overflow-hidden rounded-lg border border-white/20 bg-zinc-900 py-1 shadow-lg">
+                {tabs.map((tab) => {
+                  const active = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => selectTab(tab.key)}
+                      className={`block w-full px-4 py-2.5 text-left text-sm font-medium transition ${
+                        active ? "bg-white/15 text-white" : "text-white/90 hover:bg-white/10"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+                {canManage ? (
+                  <Link
+                    href={`/team/${teamId}/manager`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-2.5 text-sm font-medium text-white/90 transition hover:bg-white/10"
+                  >
+                    Manager
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 
