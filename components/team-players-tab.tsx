@@ -429,8 +429,17 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <div className="mb-4 md:hidden">
+        <PlayerSearchInput
+          players={players}
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSelectByName={selectPlayerByName}
+        />
+      </div>
+
       <div className="flex gap-4">
-        <aside className="flex w-44 shrink-0 flex-col gap-2">
+        <aside className="hidden w-44 shrink-0 flex-col gap-2 md:flex">
           <PlayerSearchInput
             players={players}
             value={searchQuery}
@@ -465,7 +474,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">선수 정보를 불러오는 중...</div>
           ) : (
             <div className="rounded-xl border border-zinc-200 bg-white p-6">
-              <div className="flex gap-4">
+              <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
                 {info.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={info.photo} alt={info.name} className="h-28 w-24 shrink-0 rounded-lg object-cover" />
@@ -473,9 +482,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                   <DefaultPlayerPhoto name={info.name} />
                 )}
                 <div className="flex min-w-0 flex-1 flex-col gap-4">
-                  <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
-                  <div className="flex min-w-0 items-stretch gap-5">
-                    <div className="flex w-36 shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 sm:w-44">
+                  <h2 className="text-center text-2xl font-bold text-zinc-900 md:text-left">{info.name}</h2>
+                  <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-stretch">
+                    <div className="flex w-full shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 md:w-36 lg:w-44">
                       <div>
                         <span className="text-sm font-medium text-zinc-500">성향</span>
                         <p className="mt-1 text-base font-semibold text-zinc-900">
@@ -498,9 +507,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
                       </div>
                     </div>
-                    <div className="flex min-w-0 flex-[1.2] flex-col">
+                    <div className="flex min-w-0 flex-col md:flex-[1.2]">
                       <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                      <ul className="mt-2 min-h-[120px] max-h-[160px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
                         {(playerInfo?.awards ?? []).length === 0 ? (
                           <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
                         ) : (
@@ -518,9 +527,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         )}
                       </ul>
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex min-w-0 flex-col md:flex-1">
                       <span className="text-sm font-medium text-zinc-600">MOM 받은 횟수</span>
-                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                      <ul className="mt-2 min-h-[120px] max-h-[160px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
                         {(playerInfo?.momMatches.length ?? 0) === 0 ? (
                           <li className="px-1 py-2 text-zinc-400">없음</li>
                         ) : (
@@ -542,8 +551,8 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
           <div className="rounded-xl border border-zinc-200 bg-white p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">기간별 스탯</h3>
 
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <div className="flex rounded-lg border border-zinc-200 p-0.5">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+              <div className="flex w-full rounded-lg border border-zinc-200 p-0.5 md:w-auto">
                 {PERIOD_TAB_ORDER.map((p) => (
                   <button
                     key={p}
@@ -560,7 +569,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 value={subPeriod}
                 onChange={(e) => setSelectedSubPeriod(e.target.value)}
                 disabled={subPeriodOptions.length === 0}
-                className="h-9 rounded-lg border border-zinc-300 px-2 text-sm"
+                className="h-9 w-full rounded-lg border border-zinc-300 px-2 text-sm md:w-auto"
               >
                 {subPeriodOptions.length === 0 ? (
                   <option value="">기간 없음</option>
@@ -575,7 +584,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
               <select
                 value={opponentLevel}
                 onChange={(e) => setOpponentLevel(e.target.value as "ALL" | OpponentLevelValue)}
-                className="h-9 rounded-lg border border-zinc-300 px-2 text-sm"
+                className="h-9 w-full rounded-lg border border-zinc-300 px-2 text-sm md:w-auto"
               >
                 {OPPONENT_FILTER_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -589,7 +598,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
               <p className="text-sm text-zinc-500">스탯을 불러오는 중...</p>
             ) : (
               <>
-                <div className="mb-6 grid grid-cols-4 gap-2 sm:grid-cols-8">
+                <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-8">
                   <StatBox label="진행한 매치" value={summary?.matchCount ?? 0} />
                   <StatBox label="골" value={summary?.goals ?? 0} />
                   <StatBox label="도움" value={summary?.assists ?? 0} />
@@ -615,14 +624,14 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
 
                       return (
                         <article key={card.id} className="rounded-lg border border-zinc-200 p-4">
-                          <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                             <div>
                               <h4 className="font-semibold text-zinc-900">VS {card.opponentName}</h4>
                               <p className="text-xs text-zinc-500">
                                 {formatMatchDate(card.date)} · {opponentLevelLabel(card.opponentLevel)}
                               </p>
                             </div>
-                            <div className="text-right text-sm">
+                            <div className="text-sm md:text-right">
                               <p className="font-medium text-zinc-800">
                                 종합 {card.totalScoreUs} : {card.totalScoreThem}
                               </p>
