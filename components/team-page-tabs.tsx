@@ -130,31 +130,33 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   return (
     <main className="min-h-screen bg-zinc-50">
       <header
-        className="sticky top-0 z-20 border-b border-black/10 px-4 py-3"
+        className="sticky top-0 z-20 overflow-hidden border-b border-black/10 px-4 py-3"
         style={{ backgroundColor: teamColor ?? "#3f3f46" }}
       >
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {canManage ? (
-              <Link
-                href="/"
-                aria-label="대시보드로 이동"
-                className="rounded-md px-2 py-1 text-xl font-semibold text-white/90 transition hover:bg-white/20"
-              >
-                ←
-              </Link>
-            ) : null}
-            <button type="button" onClick={() => selectTab("HOME")} className="flex min-w-0 items-center gap-3">
-              {teamLogo ? (
-                <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 shrink-0" rounded="lg" />
-              ) : (
-                <div className="h-10 w-10 shrink-0 rounded-full bg-white/60" />
-              )}
-              <span className="truncate text-lg font-semibold text-white">{teamName}</span>
-            </button>
-          </div>
+        <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-hidden md:gap-4">
+          {canManage ? (
+            <Link
+              href="/"
+              aria-label="대시보드로 이동"
+              className="shrink-0 rounded-md px-2 py-1 text-xl font-semibold text-white/90 transition hover:bg-white/20"
+            >
+              ←
+            </Link>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => selectTab("HOME")}
+            className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden md:gap-3"
+          >
+            {teamLogo ? (
+              <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 shrink-0" rounded="lg" />
+            ) : (
+              <div className="h-10 w-10 shrink-0 rounded-full bg-white/60" />
+            )}
+            <span className="min-w-0 truncate text-lg font-semibold text-white">{teamName}</span>
+          </button>
 
-          <nav className="hidden items-center gap-2 md:flex">
+          <nav className="hidden shrink-0 items-center gap-2 md:flex">
             {tabs.map((tab) => {
               const active = activeTab === tab.key;
               return (
@@ -179,7 +181,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
             ) : null}
           </nav>
 
-          <div ref={mobileMenuRef} className="relative md:hidden">
+          <div ref={mobileMenuRef} className="relative shrink-0 md:hidden">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-white">{ACTIVE_TAB_LABELS[activeTab]}</span>
               <button

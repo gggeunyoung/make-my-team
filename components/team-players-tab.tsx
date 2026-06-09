@@ -143,7 +143,7 @@ const PERIOD_TAB_ORDER: PeriodType[] = ["MONTHLY", "QUARTERLY", "SEMIANNUAL", "Y
 function DefaultPlayerPhoto({ name }: { name: string }) {
   const initial = name.trim().charAt(0) || "?";
   return (
-    <div className="flex h-28 w-24 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-3xl font-semibold text-zinc-500">
+    <div className="flex h-20 w-16 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-2xl font-semibold text-zinc-500 md:h-28 md:w-24 md:text-3xl">
       {initial}
     </div>
   );
@@ -228,7 +228,7 @@ function StatBox({
   twoLineLabel?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5 text-center md:px-3 md:py-2">
       <div className="flex min-h-[2.5rem] flex-col items-center justify-center">
         {twoLineLabel ? (
           <>
@@ -428,7 +428,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
   const showPosition = sportType === "SOCCER" && info && info.position.length > 0;
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-6">
+    <section className="mx-auto w-full max-w-6xl px-4 py-3 md:py-6">
       <div className="mb-4 md:hidden">
         <PlayerSearchInput
           players={players}
@@ -469,22 +469,22 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
           </ul>
         </aside>
 
-        <div className="min-w-0 flex-1 space-y-6">
+        <div className="min-w-0 flex-1 space-y-4 md:space-y-6">
           {loadingInfo || !info ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">선수 정보를 불러오는 중...</div>
           ) : (
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 md:p-6">
               <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
                 {info.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={info.photo} alt={info.name} className="h-28 w-24 shrink-0 rounded-lg object-cover" />
+                  <img src={info.photo} alt={info.name} className="h-20 w-16 shrink-0 rounded-lg object-cover md:h-28 md:w-24" />
                 ) : (
                   <DefaultPlayerPhoto name={info.name} />
                 )}
                 <div className="flex min-w-0 flex-1 flex-col gap-4">
                   <h2 className="text-center text-2xl font-bold text-zinc-900 md:text-left">{info.name}</h2>
-                  <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-stretch">
-                    <div className="flex w-full shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 md:w-36 lg:w-44">
+                  <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-stretch md:gap-5">
+                    <div className="flex w-fit shrink-0 flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3 md:w-36 md:gap-4 md:px-4 md:py-4 lg:w-44">
                       <div>
                         <span className="text-sm font-medium text-zinc-500">성향</span>
                         <p className="mt-1 text-base font-semibold text-zinc-900">
@@ -509,7 +509,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                     </div>
                     <div className="flex min-w-0 flex-col md:flex-[1.2]">
                       <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                      <ul className="mt-2 min-h-[120px] max-h-[160px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
+                      <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
                         {(playerInfo?.awards ?? []).length === 0 ? (
                           <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
                         ) : (
@@ -529,7 +529,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                     </div>
                     <div className="flex min-w-0 flex-col md:flex-1">
                       <span className="text-sm font-medium text-zinc-600">MOM 받은 횟수</span>
-                      <ul className="mt-2 min-h-[120px] max-h-[160px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
+                      <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
                         {(playerInfo?.momMatches.length ?? 0) === 0 ? (
                           <li className="px-1 py-2 text-zinc-400">없음</li>
                         ) : (
@@ -548,7 +548,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             </div>
           )}
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-6">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 md:p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">기간별 스탯</h3>
 
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
@@ -598,7 +598,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
               <p className="text-sm text-zinc-500">스탯을 불러오는 중...</p>
             ) : (
               <>
-                <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-8">
+                <div className="mb-6 grid grid-cols-2 gap-1.5 md:grid-cols-8 md:gap-2">
                   <StatBox label="진행한 매치" value={summary?.matchCount ?? 0} />
                   <StatBox label="골" value={summary?.goals ?? 0} />
                   <StatBox label="도움" value={summary?.assists ?? 0} />
