@@ -61,7 +61,9 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<{ top: number; right: number } | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   const tabParam = searchParams.get("tab");
   const matchIdParam = searchParams.get("matchId");
@@ -87,6 +89,19 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
     },
     [replaceUrl],
   );
+
+  const handleMobileMenuToggle = () => {
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+      return;
+    }
+    const button = mobileMenuButtonRef.current;
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      setDropdownStyle({ top: rect.bottom + 4, right: 16 });
+    }
+    setMobileMenuOpen(true);
+  };
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -133,7 +148,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
         className="sticky top-0 z-20 overflow-x-hidden border-b border-black/10 px-4 py-3"
         style={{ backgroundColor: teamColor ?? "#3f3f46" }}
       >
-        <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-hidden md:gap-4">
+        <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 md:gap-4">
           {canManage ? (
             <Link
               href="/"
@@ -181,22 +196,26 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
             ) : null}
           </nav>
 
-          <div ref={mobileMenuRef} className="relative shrink-0 md:hidden">
+          <div ref={mobileMenuRef} className="shrink-0 md:hidden">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-white">{ACTIVE_TAB_LABELS[activeTab]}</span>
               <button
+                ref={mobileMenuButtonRef}
                 type="button"
                 aria-label="메뉴 열기"
                 aria-expanded={mobileMenuOpen}
-                onClick={() => setMobileMenuOpen((open) => !open)}
+                onClick={handleMobileMenuToggle}
                 className="rounded-md px-2 py-1 text-2xl leading-none text-white/90 transition hover:bg-white/20"
               >
                 ≡
               </button>
             </div>
 
-            {mobileMenuOpen ? (
-              <div className="absolute right-0 top-full z-30 mt-1 min-w-[10rem] overflow-hidden rounded-lg border border-white/20 bg-zinc-900 py-1 shadow-lg">
+            {mobileMenuOpen && dropdownStyle ? (
+              <div
+                className="fixed z-30 min-w-[10rem] overflow-hidden rounded-lg border border-white/20 bg-zinc-900 py-1 shadow-lg"
+                style={{ top: dropdownStyle.top, right: dropdownStyle.right }}
+              >
                 {tabs.map((tab) => {
                   const active = activeTab === tab.key;
                   return (
