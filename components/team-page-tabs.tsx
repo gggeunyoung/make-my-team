@@ -130,10 +130,10 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   return (
     <main className="min-h-screen bg-zinc-50">
       <header
-        className="sticky top-0 z-20 overflow-hidden border-b border-black/10 px-4 py-3"
+        className="sticky top-0 z-20 overflow-x-hidden border-b border-black/10 px-4 py-3"
         style={{ backgroundColor: teamColor ?? "#3f3f46" }}
       >
-        <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-hidden md:gap-4">
+        <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-hidden md:gap-4">
           {canManage ? (
             <Link
               href="/"
