@@ -474,17 +474,94 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">선수 정보를 불러오는 중...</div>
           ) : (
             <div className="rounded-xl border border-zinc-200 bg-white p-4 md:p-6">
-              <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
+              <div className="flex items-stretch gap-3 md:hidden">
+                <div className="flex w-20 shrink-0 flex-col">
+                  <div className="flex flex-1 overflow-hidden rounded-lg bg-zinc-200">
+                    {info.photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={info.photo} alt={info.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-500">
+                        {info.name.trim().charAt(0) || "?"}
+                      </div>
+                    )}
+                  </div>
+                  <h2 className="mt-2 text-center text-base font-bold text-zinc-900">{info.name}</h2>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3">
+                  <div>
+                    <span className="text-sm font-medium text-zinc-500">성향</span>
+                    <p className="mt-1 text-base font-semibold text-zinc-900">
+                      {playerStyleLabel(info.style)}
+                    </p>
+                  </div>
+                  {sportType === "SOCCER" && showPosition ? (
+                    <div>
+                      <span className="text-sm font-medium text-zinc-500">포지션</span>
+                      <p className="mt-1 text-base font-semibold text-zinc-900">
+                        {positionLabels(info.position)}
+                      </p>
+                    </div>
+                  ) : null}
+                  <div>
+                    <span className="text-sm font-medium text-zinc-500">출석률</span>
+                    <p className="mt-1 text-2xl font-bold text-zinc-900">
+                      {playerInfo?.attendanceRate ?? 0}%
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-4 md:hidden">
+                <div className="flex min-w-0 flex-col">
+                  <span className="text-sm font-medium text-zinc-600">수상 이력</span>
+                  <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                    {(playerInfo?.awards ?? []).length === 0 ? (
+                      <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
+                    ) : (
+                      playerInfo?.awards.map((award) => (
+                        <li
+                          key={`${award.period}-${award.subPeriod}-${award.category}`}
+                          className="rounded border border-zinc-100 bg-white px-3 py-2"
+                        >
+                          <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
+                          <p className="text-xs text-zinc-500">
+                            {formatAwardPeriodLabel(award.period, award.subPeriod)} · 1위
+                          </p>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+                <div className="flex min-w-0 flex-col">
+                  <span className="text-sm font-medium text-zinc-600">MOM 받은 경기</span>
+                  <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                    {(playerInfo?.momMatches.length ?? 0) === 0 ? (
+                      <li className="px-1 py-2 text-zinc-400">없음</li>
+                    ) : (
+                      playerInfo?.momMatches.map((m) => (
+                        <li key={m.id} className="rounded border border-zinc-100 bg-white px-3 py-2">
+                          <p className="font-medium text-zinc-800">VS {m.opponentName}</p>
+                          <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="hidden md:flex md:gap-4 md:items-start">
                 {info.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={info.photo} alt={info.name} className="h-20 w-16 shrink-0 rounded-lg object-cover md:h-28 md:w-24" />
+                  <img src={info.photo} alt={info.name} className="h-28 w-24 shrink-0 rounded-lg object-cover" />
                 ) : (
                   <DefaultPlayerPhoto name={info.name} />
                 )}
                 <div className="flex min-w-0 flex-1 flex-col gap-4">
-                  <h2 className="text-center text-2xl font-bold text-zinc-900 md:text-left">{info.name}</h2>
-                  <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-stretch md:gap-5">
-                    <div className="flex w-fit shrink-0 flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3 md:w-36 md:gap-4 md:px-4 md:py-4 lg:w-44">
+                  <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
+                  <div className="flex min-w-0 items-stretch gap-5">
+                    <div className="flex w-36 shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 lg:w-44">
                       <div>
                         <span className="text-sm font-medium text-zinc-500">성향</span>
                         <p className="mt-1 text-base font-semibold text-zinc-900">
@@ -507,9 +584,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
                       </div>
                     </div>
-                    <div className="flex min-w-0 flex-col md:flex-[1.2]">
+                    <div className="flex min-w-0 flex-[1.2] flex-col">
                       <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                      <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
+                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
                         {(playerInfo?.awards ?? []).length === 0 ? (
                           <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
                         ) : (
@@ -527,9 +604,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         )}
                       </ul>
                     </div>
-                    <div className="flex min-w-0 flex-col md:flex-1">
-                      <span className="text-sm font-medium text-zinc-600">MOM 받은 횟수</span>
-                      <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm md:min-h-[200px] md:max-h-[260px]">
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-sm font-medium text-zinc-600">MOM 받은 경기</span>
+                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
                         {(playerInfo?.momMatches.length ?? 0) === 0 ? (
                           <li className="px-1 py-2 text-zinc-400">없음</li>
                         ) : (
