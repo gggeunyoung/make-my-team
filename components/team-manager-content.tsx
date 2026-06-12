@@ -2,7 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useCallback, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
 import { MatchManagerTab } from "@/components/match-manager-tab";
@@ -25,6 +25,19 @@ const TAB_TO_SECTION: Record<ManagerTab, string> = {
   TOURNAMENT: "tournament",
   TEAM: "team",
 };
+
+const TOURNAMENT_DRAFT_KEY_PREFIX = "tournament-match-form-draft:";
+
+function findTournamentDraftId(): string | null {
+  if (typeof window === "undefined") return null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(TOURNAMENT_DRAFT_KEY_PREFIX)) {
+      return key.slice(TOURNAMENT_DRAFT_KEY_PREFIX.length);
+    }
+  }
+  return null;
+}
 type SportType = "FUTSAL" | "SOCCER";
 type Player = {
   id: string;
@@ -162,6 +175,34 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
     },
     [pathname, router],
   );
+
+  const draftRedirectDoneRef = useRef(false);
+
+  useEffect(() => {
+    if (draftRedirectDoneRef.current) return;
+    draftRedirectDoneRef.current = true;
+
+    if (searchParams.get("action")) return;
+
+    const matchDraftKey = `match-form-draft:${teamId}`;
+    if (localStorage.getItem(matchDraftKey)) {
+      const params = new URLSearchParams();
+      params.set("section", "match");
+      params.set("action", "create");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      return;
+    }
+
+    const tournamentId = findTournamentDraftId();
+    if (tournamentId) {
+      const params = new URLSearchParams();
+      params.set("section", "tournament");
+      params.set("tournamentId", tournamentId);
+      params.set("action", "create-match");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [teamId, pathname, router, searchParams]);
+
   const [name, setName] = useState(initialTeam.name);
   const [logo, setLogo] = useState<string | null>(initialTeam.logo);
   const [logoPreviewIsImage, setLogoPreviewIsImage] = useState(() => {

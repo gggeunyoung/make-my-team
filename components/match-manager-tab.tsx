@@ -711,10 +711,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         <h2 className="text-lg font-semibold text-zinc-900">매치 기록</h2>
         <button
           type="button"
-          onClick={() => {
-            resetForm();
-            goToList();
-          }}
+          onClick={goToList}
           className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700"
         >
           목록으로
