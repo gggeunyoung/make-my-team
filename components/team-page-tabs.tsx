@@ -56,6 +56,19 @@ function parseTabFromUrl(tabParam: string | null): TeamTab {
   return URL_NAME_TO_TAB[tabParam.toLowerCase()] ?? "HOME";
 }
 
+const TOURNAMENT_DRAFT_KEY_PREFIX = "tournament-match-form-draft:";
+
+function findTournamentDraftId(): string | null {
+  if (typeof window === "undefined") return null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(TOURNAMENT_DRAFT_KEY_PREFIX)) {
+      return key.slice(TOURNAMENT_DRAFT_KEY_PREFIX.length);
+    }
+  }
+  return null;
+}
+
 export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage }: TeamPageTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -64,6 +77,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   const [dropdownStyle, setDropdownStyle] = useState<{ top: number; right: number } | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const draftRedirectDoneRef = useRef(false);
 
   const tabParam = searchParams.get("tab");
   const matchIdParam = searchParams.get("matchId");
@@ -102,6 +116,32 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
     }
     setMobileMenuOpen(true);
   };
+
+  useEffect(() => {
+    if (draftRedirectDoneRef.current) return;
+    draftRedirectDoneRef.current = true;
+
+    if (!canManage) return;
+    if (searchParams.size > 0) return;
+
+    const matchDraftKey = `match-form-draft:${teamId}`;
+    if (localStorage.getItem(matchDraftKey)) {
+      const params = new URLSearchParams();
+      params.set("section", "match");
+      params.set("action", "create");
+      router.replace(`/team/${teamId}/manager?${params.toString()}`, { scroll: false });
+      return;
+    }
+
+    const tournamentId = findTournamentDraftId();
+    if (tournamentId) {
+      const params = new URLSearchParams();
+      params.set("section", "tournament");
+      params.set("tournamentId", tournamentId);
+      params.set("action", "create-match");
+      router.replace(`/team/${teamId}/manager?${params.toString()}`, { scroll: false });
+    }
+  }, [canManage, router, searchParams, teamId]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
