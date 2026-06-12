@@ -132,6 +132,20 @@ function clearDraft(key: string) {
   }
 }
 
+function hasTournamentMatchDraftContent(
+  data: Pick<TournamentMatchFormDraft, "opponentName" | "games" | "isPso">,
+): boolean {
+  return data.opponentName.trim() !== "" || data.games.length > 0 || data.isPso;
+}
+
+function persistTournamentMatchDraft(key: string, data: TournamentMatchFormDraft) {
+  if (!hasTournamentMatchDraftContent(data)) {
+    clearDraft(key);
+    return;
+  }
+  saveDraft(key, data);
+}
+
 function sanitizeDraftGames(games: GameForm[], validAttendeeIds: Set<string>): GameForm[] {
   const keep = (ids: string[]) => ids.filter((id) => validAttendeeIds.has(id));
   return games.map((game) => ({
@@ -339,7 +353,7 @@ export function TournamentMatchRecordForm({
 
   useEffect(() => {
     if (!tournamentMeta) return;
-    saveDraft(tournamentDraftKey(tournamentId), {
+    persistTournamentMatchDraft(tournamentDraftKey(tournamentId), {
       opponentName,
       matchDate,
       opponentLevel,

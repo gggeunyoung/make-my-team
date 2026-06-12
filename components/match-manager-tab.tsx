@@ -166,6 +166,18 @@ function clearDraft(key: string) {
   }
 }
 
+function hasMatchDraftContent(data: Pick<MatchFormDraft, "opponentName" | "attendees" | "games">): boolean {
+  return data.opponentName.trim() !== "" || data.attendees.length > 0 || data.games.length > 0;
+}
+
+function persistMatchDraft(key: string, data: MatchFormDraft) {
+  if (!hasMatchDraftContent(data)) {
+    clearDraft(key);
+    return;
+  }
+  saveDraft(key, data);
+}
+
 function isGoalCountMismatch(game: GameForm): boolean {
   const parsed = toInt(game.scoreUs);
   if (parsed === null) {
@@ -374,7 +386,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
 
   useEffect(() => {
     if (!draftSaveReadyRef.current) return;
-    saveDraft(matchDraftKey(teamId), {
+    persistMatchDraft(matchDraftKey(teamId), {
       opponentName,
       matchDate,
       opponentLevel,
