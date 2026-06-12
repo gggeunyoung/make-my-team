@@ -86,6 +86,64 @@ function createGameForm(attendees: string[]): GameForm {
 
 const GOAL_COUNT_MISMATCH_MSG = "우리팀 득점 수와 골 기록 수가 일치하지 않습니다.";
 
+type TournamentMatchFormDraft = {
+  opponentName: string;
+  matchDate: string;
+  opponentLevel: OpponentLevel;
+  matchFormatFutsal: MatchFormatFutsal;
+  stage: TournamentStage;
+  isPso: boolean;
+  psoResult: "WIN" | "LOSS" | null;
+  attendees: string[];
+  games: GameForm[];
+};
+
+function tournamentDraftKey(tournamentId: string) {
+  return `tournament-match-form-draft:${tournamentId}`;
+}
+
+function saveDraft(key: string, data: TournamentMatchFormDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error("Failed to save tournament match form draft", error);
+  }
+}
+
+function loadDraft(key: string): TournamentMatchFormDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as TournamentMatchFormDraft;
+  } catch (error) {
+    console.error("Failed to load tournament match form draft", error);
+    return null;
+  }
+}
+
+function clearDraft(key: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error("Failed to clear tournament match form draft", error);
+  }
+}
+
+function sanitizeDraftGames(games: GameForm[], validAttendeeIds: Set<string>): GameForm[] {
+  const keep = (ids: string[]) => ids.filter((id) => validAttendeeIds.has(id));
+  return games.map((game) => ({
+    ...game,
+    playersAll: keep(game.playersAll),
+    playersFw: keep(game.playersFw),
+    playersMf: keep(game.playersMf),
+    playersDf: keep(game.playersDf),
+    playersGk: keep(game.playersGk),
+  }));
+}
+
 function isGoalCountMismatch(game: GameForm): boolean {
   const parsed = toInt(game.scoreUs);
   if (parsed === null) {
@@ -194,6 +252,7 @@ export function TournamentMatchRecordForm({
   const [submitting, setSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState("");
   const [formIsError, setFormIsError] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
 
   const playerMap = useMemo(() => new Map(players.map((player) => [player.id, player.name])), [players]);
 
@@ -223,22 +282,42 @@ export function TournamentMatchRecordForm({
       }
       const start = data.tournament.start_date ? data.tournament.start_date.slice(0, 10) : "";
       const finish = data.tournament.finish_date ? data.tournament.finish_date.slice(0, 10) : "";
+      const validAttendeeIds = new Set(data.tournament.attendees);
+      const clampDate = (d: string) => {
+        if (!start || !finish) return d;
+        if (d < start) return start;
+        if (d > finish) return finish;
+        return d;
+      };
+
       setTournamentMeta({
         attendees: data.tournament.attendees,
         startDate: start,
         finishDate: finish,
         is_completed: data.tournament.is_completed,
       });
-      setAttendees([...data.tournament.attendees]);
-      if (start && finish) {
-        const clamp = (d: string) => {
-          if (d < start) return start;
-          if (d > finish) return finish;
-          return d;
-        };
-        setMatchDate((prev) => clamp(prev));
+
+      const draft = loadDraft(tournamentDraftKey(tournamentId));
+      if (draft) {
+        const filteredAttendees = (draft.attendees ?? []).filter((id) => validAttendeeIds.has(id));
+        setOpponentName(draft.opponentName ?? "");
+        setMatchDate(clampDate(draft.matchDate ?? todayIso()));
+        setOpponentLevel(draft.opponentLevel ?? "MID");
+        setMatchFormatFutsal(draft.matchFormatFutsal ?? "FIVE_VS_FIVE");
+        setStage(draft.stage ?? "PRELIMINARY");
+        setIsPso(draft.isPso ?? false);
+        setPsoResult(draft.psoResult ?? null);
+        setAttendees(
+          filteredAttendees.length > 0 ? filteredAttendees : [...data.tournament.attendees],
+        );
+        setGames(sanitizeDraftGames(draft.games ?? [], validAttendeeIds));
+      } else {
+        setAttendees([...data.tournament.attendees]);
+        setGames([]);
+        if (start && finish) {
+          setMatchDate((prev) => clampDate(prev));
+        }
       }
-      setGames([]);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "대회 정보 조회 중 오류가 발생했습니다.");
     }
@@ -257,6 +336,33 @@ export function TournamentMatchRecordForm({
       })),
     );
   }, [tournamentMeta]);
+
+  useEffect(() => {
+    if (!tournamentMeta) return;
+    saveDraft(tournamentDraftKey(tournamentId), {
+      opponentName,
+      matchDate,
+      opponentLevel,
+      matchFormatFutsal,
+      stage,
+      isPso,
+      psoResult,
+      attendees,
+      games,
+    });
+  }, [
+    tournamentId,
+    tournamentMeta,
+    opponentName,
+    matchDate,
+    opponentLevel,
+    matchFormatFutsal,
+    stage,
+    isPso,
+    psoResult,
+    attendees,
+    games,
+  ]);
 
   const toggleAttendee = (playerId: string) => {
     setAttendees((prev) => {
@@ -396,6 +502,16 @@ export function TournamentMatchRecordForm({
     return "";
   };
 
+  const handleRegisterClick = () => {
+    const validationError = validateBeforeSubmit();
+    if (validationError) {
+      setFormIsError(true);
+      setFormMessage(validationError);
+      return;
+    }
+    setConfirmSubmitOpen(true);
+  };
+
   const submitMatch = async () => {
     if (submitting) return;
     const validationError = validateBeforeSubmit();
@@ -455,6 +571,7 @@ export function TournamentMatchRecordForm({
         }).catch(() => {});
       }
 
+      clearDraft(tournamentDraftKey(tournamentId));
       onSaved();
     } catch (error) {
       setFormIsError(true);
@@ -878,12 +995,53 @@ export function TournamentMatchRecordForm({
 
         <button
           type="button"
-          onClick={() => void submitMatch()}
+          onClick={handleRegisterClick}
           className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
         >
           {submitting ? "등록 중..." : "등록 완료"}
         </button>
       </div>
+
+      {confirmSubmitOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tournament-match-confirm-title"
+          onClick={() => setConfirmSubmitOpen(false)}
+        >
+          <div
+            className="max-w-sm rounded-xl border border-zinc-200 bg-white p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="tournament-match-confirm-title" className="mb-3 text-sm font-semibold text-zinc-900">
+              매치 등록
+            </h3>
+            <p className="text-sm leading-relaxed text-zinc-700">
+              매치를 등록하시겠습니까? 등록 후에는 수정할 수 없으며, 잘못 입력한 경우 삭제 후 다시 입력해야 합니다.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmSubmitOpen(false)}
+                className="h-10 flex-1 rounded-lg border border-zinc-300 text-sm font-semibold text-zinc-700"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmSubmitOpen(false);
+                  void submitMatch();
+                }}
+                className="h-10 flex-1 rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+              >
+                등록
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

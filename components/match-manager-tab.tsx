@@ -122,6 +122,49 @@ function futsalFormatLabel(format: MatchFormatFutsal | null) {
 
 const GOAL_COUNT_MISMATCH_MSG = "우리팀 득점 수와 골 기록 수가 일치하지 않습니다.";
 
+type MatchFormDraft = {
+  opponentName: string;
+  matchDate: string;
+  opponentLevel: OpponentLevel;
+  matchFormatFutsal: MatchFormatFutsal;
+  attendees: string[];
+  games: GameForm[];
+};
+
+function matchDraftKey(teamId: string) {
+  return `match-form-draft:${teamId}`;
+}
+
+function saveDraft(key: string, data: MatchFormDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error("Failed to save match form draft", error);
+  }
+}
+
+function loadDraft(key: string): MatchFormDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as MatchFormDraft;
+  } catch (error) {
+    console.error("Failed to load match form draft", error);
+    return null;
+  }
+}
+
+function clearDraft(key: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error("Failed to clear match form draft", error);
+  }
+}
+
 function isGoalCountMismatch(game: GameForm): boolean {
   const parsed = toInt(game.scoreUs);
   if (parsed === null) {
@@ -270,6 +313,9 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   );
 
   const [matchInfoOpen, setMatchInfoOpen] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const draftLoadedRef = useRef(false);
+  const draftSaveReadyRef = useRef(false);
 
   const fetchMatches = useCallback(async () => {
     setLoading(true);
@@ -292,7 +338,35 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     void fetchMatches();
   }, [fetchMatches]);
 
+  useEffect(() => {
+    if (draftLoadedRef.current) return;
+    draftLoadedRef.current = true;
+    const draft = loadDraft(matchDraftKey(teamId));
+    if (draft) {
+      setOpponentName(draft.opponentName ?? "");
+      setMatchDate(draft.matchDate ?? todayIso());
+      setOpponentLevel(draft.opponentLevel ?? "MID");
+      setMatchFormatFutsal(draft.matchFormatFutsal ?? "FIVE_VS_FIVE");
+      setAttendees(draft.attendees ?? []);
+      setGames(draft.games ?? []);
+    }
+    draftSaveReadyRef.current = true;
+  }, [teamId]);
+
+  useEffect(() => {
+    if (!draftSaveReadyRef.current) return;
+    saveDraft(matchDraftKey(teamId), {
+      opponentName,
+      matchDate,
+      opponentLevel,
+      matchFormatFutsal,
+      attendees,
+      games,
+    });
+  }, [teamId, opponentName, matchDate, opponentLevel, matchFormatFutsal, attendees, games]);
+
   const resetForm = () => {
+    clearDraft(matchDraftKey(teamId));
     setOpponentName("");
     setMatchDate(todayIso());
     setOpponentLevel("MID");
@@ -424,6 +498,16 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
       }
     }
     return "";
+  };
+
+  const handleRegisterClick = () => {
+    const validationError = validateBeforeSubmit();
+    if (validationError) {
+      setFormIsError(true);
+      setFormMessage(validationError);
+      return;
+    }
+    setConfirmSubmitOpen(true);
   };
 
   const submitMatch = async () => {
@@ -955,12 +1039,53 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
 
         <button
           type="button"
-          onClick={() => void submitMatch()}
+          onClick={handleRegisterClick}
           className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
         >
           {submitting ? "등록 중..." : "등록 완료"}
         </button>
       </div>
+
+      {confirmSubmitOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="match-confirm-title"
+          onClick={() => setConfirmSubmitOpen(false)}
+        >
+          <div
+            className="max-w-sm rounded-xl border border-zinc-200 bg-white p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="match-confirm-title" className="mb-3 text-sm font-semibold text-zinc-900">
+              매치 등록
+            </h3>
+            <p className="text-sm leading-relaxed text-zinc-700">
+              매치를 등록하시겠습니까? 등록 후에는 수정할 수 없으며, 잘못 입력한 경우 삭제 후 다시 입력해야 합니다.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmSubmitOpen(false)}
+                className="h-10 flex-1 rounded-lg border border-zinc-300 text-sm font-semibold text-zinc-700"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmSubmitOpen(false);
+                  void submitMatch();
+                }}
+                className="h-10 flex-1 rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+              >
+                등록
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
