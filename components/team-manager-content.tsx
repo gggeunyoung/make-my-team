@@ -1,8 +1,8 @@
 "use client";
 
 import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
 import { MatchManagerTab } from "@/components/match-manager-tab";
@@ -11,6 +11,20 @@ import { PlayerPhotoCropModal } from "@/components/player-photo-crop-modal";
 import { TeamLogo } from "@/components/team-logo";
 
 type ManagerTab = "MATCH" | "PLAYER" | "TOURNAMENT" | "TEAM";
+
+const SECTION_TO_TAB: Record<string, ManagerTab> = {
+  match: "MATCH",
+  player: "PLAYER",
+  tournament: "TOURNAMENT",
+  team: "TEAM",
+};
+
+const TAB_TO_SECTION: Record<ManagerTab, string> = {
+  MATCH: "match",
+  PLAYER: "player",
+  TOURNAMENT: "tournament",
+  TEAM: "team",
+};
 type SportType = "FUTSAL" | "SOCCER";
 type Player = {
   id: string;
@@ -129,10 +143,25 @@ function sortPlayerFormsNewest(forms: PlayerFormItem[]) {
   });
 }
 
-export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
+function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [activeMenu, setActiveMenu] = useState<ManagerTab>("MATCH");
+
+  const activeMenu = useMemo(() => {
+    const section = searchParams.get("section")?.toLowerCase() ?? "match";
+    return SECTION_TO_TAB[section] ?? "MATCH";
+  }, [searchParams]);
+
+  const selectSection = useCallback(
+    (tab: ManagerTab) => {
+      const params = new URLSearchParams();
+      params.set("section", TAB_TO_SECTION[tab]);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
+  );
   const [name, setName] = useState(initialTeam.name);
   const [logo, setLogo] = useState<string | null>(initialTeam.logo);
   const [logoPreviewIsImage, setLogoPreviewIsImage] = useState(() => {
@@ -870,7 +899,7 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
                 <button
                   key={menu.key}
                   type="button"
-                  onClick={() => setActiveMenu(menu.key)}
+                  onClick={() => selectSection(menu.key)}
                   className={`rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                     isActive ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"
                   }`}
@@ -898,5 +927,19 @@ export function TeamManagerContent({ teamId, initialTeam, initialPlayers }: Team
         />
       ) : null}
     </main>
+  );
+}
+
+export function TeamManagerContent(props: TeamManagerContentProps) {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-8">
+          <p className="text-sm text-zinc-500">불러오는 중...</p>
+        </main>
+      }
+    >
+      <TeamManagerContentInner {...props} />
+    </Suspense>
   );
 }

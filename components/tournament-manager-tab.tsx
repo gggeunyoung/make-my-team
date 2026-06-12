@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { validateTournamentCompletePayload } from "@/lib/tournament-complete-validation";
 import { TournamentMatchRecordForm } from "@/components/tournament-match-record-form";
@@ -201,13 +202,51 @@ function formatPeriod(startIso: string | null | undefined, finishIso: string | n
   return `${s} ~ ${f}`;
 }
 
-export function TournamentManagerTab({ teamId, sportType, players }: TournamentManagerTabProps) {
-  type ViewState =
-    | { type: "LIST" }
-    | { type: "DETAIL"; tournamentId: string; mode: "edit" | "view" }
-    | { type: "MATCH_FORM"; tournamentId: string };
+type TournamentViewState =
+  | { type: "LIST" }
+  | { type: "DETAIL"; tournamentId: string }
+  | { type: "MATCH_FORM"; tournamentId: string };
 
-  const [view, setView] = useState<ViewState>({ type: "LIST" });
+export function TournamentManagerTab({ teamId, sportType, players }: TournamentManagerTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tournamentIdParam = searchParams.get("tournamentId")?.trim() || null;
+  const actionParam = searchParams.get("action")?.trim() || null;
+
+  const view = useMemo((): TournamentViewState => {
+    if (!tournamentIdParam) return { type: "LIST" };
+    if (actionParam === "create-match") return { type: "MATCH_FORM", tournamentId: tournamentIdParam };
+    return { type: "DETAIL", tournamentId: tournamentIdParam };
+  }, [tournamentIdParam, actionParam]);
+
+  const navigateToList = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set("section", "tournament");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router]);
+
+  const navigateToDetail = useCallback(
+    (tournamentId: string) => {
+      const params = new URLSearchParams();
+      params.set("section", "tournament");
+      params.set("tournamentId", tournamentId);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
+  );
+
+  const navigateToMatchForm = useCallback(
+    (tournamentId: string) => {
+      const params = new URLSearchParams();
+      params.set("section", "tournament");
+      params.set("tournamentId", tournamentId);
+      params.set("action", "create-match");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
+  );
   const [listItems, setListItems] = useState<TournamentListRow[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState("");
@@ -426,7 +465,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
       const res = await fetch(`/api/tournament/${encodeURIComponent(tournamentId)}/complete`, { method: "POST" });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? "등록 완료 처리에 실패했습니다.");
-      setView({ type: "LIST" });
+      navigateToList();
       setDetail(null);
       await fetchList();
     } catch (e) {
@@ -446,7 +485,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
       if (!res.ok || !data.tournamentId) {
         throw new Error(data.message ?? "대회 생성에 실패했습니다.");
       }
-      setView({ type: "DETAIL", tournamentId: data.tournamentId, mode: "edit" });
+      navigateToDetail(data.tournamentId);
     } catch (e) {
       setListError(e instanceof Error ? e.message : "대회 생성 중 오류가 발생했습니다.");
     }
@@ -460,8 +499,8 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? "삭제에 실패했습니다.");
       await fetchList();
-      if (view.type === "DETAIL" && view.tournamentId === tournamentId) {
-        setView({ type: "LIST" });
+      if (tournamentIdParam === tournamentId) {
+        navigateToList();
         setDetail(null);
       }
     } catch (e) {
@@ -477,7 +516,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
       const res = await fetch(`/api/tournament/${encodeURIComponent(detail.id)}`, { method: "DELETE" });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? "취소 처리에 실패했습니다.");
-      setView({ type: "LIST" });
+      navigateToList();
       setDetail(null);
       await fetchList();
     } catch (e) {
@@ -487,6 +526,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
   };
 
   const blockedRemovalSet = useMemo(() => new Set(detail?.attendeeRemovalBlockedIds ?? []), [detail]);
+  const detailMode: "edit" | "view" = detail?.is_completed ? "view" : "edit";
 
   const toggleAttendee = (playerId: string) => {
     if (!detail || detail.is_completed) return;
@@ -526,7 +566,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
     }
     const ok = await persistOverview();
     if (!ok) return;
-    setView({ type: "MATCH_FORM", tournamentId });
+    navigateToMatchForm(tournamentId);
   };
 
   if (view.type === "MATCH_FORM") {
@@ -537,10 +577,10 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
         sportType={sportType}
         players={players}
         onBack={() => {
-          setView({ type: "DETAIL", tournamentId: view.tournamentId, mode: "edit" });
+          navigateToDetail(view.tournamentId);
         }}
         onSaved={async () => {
-          setView({ type: "DETAIL", tournamentId: view.tournamentId, mode: "edit" });
+          navigateToDetail(view.tournamentId);
           await fetchDetail(view.tournamentId);
           await fetchList();
         }}
@@ -553,13 +593,13 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-zinc-900">
-            {view.mode === "view" ? "대회 조회" : "대회 입력"}
+            {detailMode === "view" ? "대회 조회" : "대회 입력"}
           </h2>
-          {view.mode === "view" ? (
+          {detailMode === "view" ? (
             <button
               type="button"
               onClick={() => {
-                setView({ type: "LIST" });
+                navigateToList();
                 setDetail(null);
               }}
               className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700"
@@ -575,7 +615,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
         ) : null}
 
         {!detailLoading && detail ? (
-          view.mode === "view" ? (
+          detailMode === "view" ? (
             <div className="space-y-6">
               <div className="rounded-lg border border-zinc-200 p-4">
                 <h3 className="mb-2 text-sm font-semibold text-zinc-900">대회 개요</h3>
@@ -886,7 +926,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
             <div className="flex items-start justify-between gap-2">
               <button
                 type="button"
-                onClick={() => setView({ type: "DETAIL", tournamentId: item.id, mode: "view" })}
+                onClick={() => navigateToDetail(item.id)}
                 className="flex-1 text-left"
               >
                 <p className="text-lg font-bold text-zinc-900">{tournamentResultLabel(item.tournament_result)}</p>

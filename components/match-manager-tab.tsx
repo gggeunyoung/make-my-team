@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SportType = "FUTSAL" | "SOCCER";
@@ -290,10 +291,28 @@ function toInt(value: string) {
 }
 
 export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const view = useMemo(() => (searchParams.get("action") === "create" ? "FORM" : "LIST"), [searchParams]);
+
+  const goToForm = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set("section", "match");
+    params.set("action", "create");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router]);
+
+  const goToList = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set("section", "match");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router]);
+
   const [matches, setMatches] = useState<MatchListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [view, setView] = useState<"LIST" | "FORM">("LIST");
   const [submitting, setSubmitting] = useState(false);
 
   const [opponentName, setOpponentName] = useState("");
@@ -567,7 +586,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
       }
 
       resetForm();
-      setView("LIST");
+      goToList();
       await fetchMatches();
     } catch (error) {
       setFormIsError(true);
@@ -610,7 +629,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
           </div>
           <button
             type="button"
-            onClick={() => setView("FORM")}
+            onClick={goToForm}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white"
           >
             매치 기록
@@ -694,7 +713,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
           type="button"
           onClick={() => {
             resetForm();
-            setView("LIST");
+            goToList();
           }}
           className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700"
         >
