@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmModal } from "@/components/confirm-modal";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -344,6 +345,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   );
 
   const [matchInfoOpen, setMatchInfoOpen] = useState(false);
+  const [deleteMatchId, setDeleteMatchId] = useState<string | null>(null);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
   const draftLoadedRef = useRef(false);
   const draftSaveReadyRef = useRef(false);
@@ -609,9 +611,6 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   };
 
   const deleteMatch = async (matchId: string) => {
-    const ok = window.confirm("정말 삭제하시겠습니까?");
-    if (!ok) return;
-
     try {
       const res = await fetch(`/api/match/${matchId}`, { method: "DELETE" });
       const data = (await res.json()) as { message?: string };
@@ -661,7 +660,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                     <p className="text-sm font-semibold text-zinc-900">VS {match.opponent_name}</p>
                     <button
                       type="button"
-                      onClick={() => void deleteMatch(match.id)}
+                      onClick={() => setDeleteMatchId(match.id)}
                       className="shrink-0 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                     >
                       삭제
@@ -684,6 +683,19 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
             ))}
           </div>
         </div>
+
+        <ConfirmModal
+          open={deleteMatchId !== null}
+          title="매치 삭제"
+          message="정말 삭제하시겠습니까?"
+          onConfirm={() => {
+            if (deleteMatchId) {
+              void deleteMatch(deleteMatchId);
+            }
+            setDeleteMatchId(null);
+          }}
+          onCancel={() => setDeleteMatchId(null)}
+        />
 
         {matchInfoOpen ? (
           <div

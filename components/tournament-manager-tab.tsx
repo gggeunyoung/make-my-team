@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { validateTournamentCompletePayload } from "@/lib/tournament-complete-validation";
 import { TournamentMatchRecordForm } from "@/components/tournament-match-record-form";
 
@@ -207,6 +208,11 @@ type TournamentViewState =
   | { type: "DETAIL"; tournamentId: string }
   | { type: "MATCH_FORM"; tournamentId: string };
 
+type ConfirmDialogState =
+  | { kind: "delete-tournament"; tournamentId: string }
+  | { kind: "cancel-draft" }
+  | { kind: "delete-match"; matchId: string };
+
 export function TournamentManagerTab({ teamId, sportType, players }: TournamentManagerTabProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -250,6 +256,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
   const [listItems, setListItems] = useState<TournamentListRow[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
 
   const [detail, setDetail] = useState<DetailModel | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -491,9 +498,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
     }
   };
 
-  const onDeleteTournament = async (tournamentId: string) => {
-    const ok = window.confirm("정말 삭제하시겠습니까?");
-    if (!ok) return;
+  const executeDeleteTournament = async (tournamentId: string) => {
     try {
       const res = await fetch(`/api/tournament/${encodeURIComponent(tournamentId)}`, { method: "DELETE" });
       const data = (await res.json()) as { message?: string };
@@ -508,10 +513,8 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
     }
   };
 
-  const onCancelDraft = async () => {
+  const executeCancelDraft = async () => {
     if (!detail) return;
-    const ok = window.confirm("대회 등록을 취소하면 입력한 내용이 모두 삭제됩니다. 계속할까요?");
-    if (!ok) return;
     try {
       const res = await fetch(`/api/tournament/${encodeURIComponent(detail.id)}`, { method: "DELETE" });
       const data = (await res.json()) as { message?: string };
@@ -539,10 +542,8 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
     });
   };
 
-  const deleteMatch = async (matchId: string) => {
+  const executeDeleteMatch = async (matchId: string) => {
     if (!detail || detail.is_completed) return;
-    const ok = window.confirm("이 매치를 삭제할까요?");
-    if (!ok) return;
     try {
       const res = await fetch(`/api/tournament/${encodeURIComponent(detail.id)}/match/${encodeURIComponent(matchId)}`, {
         method: "DELETE",
@@ -569,6 +570,53 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
     navigateToMatchForm(tournamentId);
   };
 
+  const confirmModal = (() => {
+    if (!confirmDialog) return null;
+    if (confirmDialog.kind === "delete-tournament") {
+      const tournamentId = confirmDialog.tournamentId;
+      return (
+        <ConfirmModal
+          open
+          title="대회 삭제"
+          message="정말 삭제하시겠습니까?"
+          onConfirm={() => {
+            setConfirmDialog(null);
+            void executeDeleteTournament(tournamentId);
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      );
+    }
+    if (confirmDialog.kind === "cancel-draft") {
+      return (
+        <ConfirmModal
+          open
+          title="등록 취소"
+          message="대회 등록을 취소하면 입력한 내용이 모두 삭제됩니다. 계속할까요?"
+          confirmLabel="취소하기"
+          onConfirm={() => {
+            setConfirmDialog(null);
+            void executeCancelDraft();
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      );
+    }
+    const matchId = confirmDialog.matchId;
+    return (
+      <ConfirmModal
+        open
+        title="매치 삭제"
+        message="이 매치를 삭제할까요?"
+        onConfirm={() => {
+          setConfirmDialog(null);
+          void executeDeleteMatch(matchId);
+        }}
+        onCancel={() => setConfirmDialog(null)}
+      />
+    );
+  })();
+
   if (view.type === "MATCH_FORM") {
     return (
       <TournamentMatchRecordForm
@@ -590,6 +638,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
 
   if (view.type === "DETAIL") {
     return (
+      <>
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-zinc-900">
@@ -796,7 +845,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                           {!detail.is_completed ? (
                             <button
                               type="button"
-                              onClick={() => void deleteMatch(m.id)}
+                              onClick={() => setConfirmDialog({ kind: "delete-match", matchId: m.id })}
                               className="shrink-0 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                             >
                               X
@@ -878,7 +927,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
                   ) : null}
                   <button
                     type="button"
-                    onClick={() => void onCancelDraft()}
+                    onClick={() => setConfirmDialog({ kind: "cancel-draft" })}
                     className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700"
                   >
                     등록취소
@@ -897,10 +946,13 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
           )
         ) : null}
       </section>
+      {confirmModal}
+      </>
     );
   }
 
   return (
+    <>
     <section className="rounded-xl border border-zinc-200 bg-white p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-zinc-900">대회관리</h2>
@@ -935,7 +987,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
               </button>
               <button
                 type="button"
-                onClick={() => void onDeleteTournament(item.id)}
+                onClick={() => setConfirmDialog({ kind: "delete-tournament", tournamentId: item.id })}
                 className="shrink-0 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
               >
                 X
@@ -945,5 +997,7 @@ export function TournamentManagerTab({ teamId, sportType, players }: TournamentM
         ))}
       </div>
     </section>
+    {confirmModal}
+    </>
   );
 }

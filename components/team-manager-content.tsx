@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { MatchManagerTab } from "@/components/match-manager-tab";
 import { TournamentManagerTab } from "@/components/tournament-manager-tab";
 import { PlayerPhotoCropModal } from "@/components/player-photo-crop-modal";
@@ -226,6 +227,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
   const [playerIsError, setPlayerIsError] = useState(false);
   const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
   const [cropState, setCropState] = useState<{ clientId: string; imageSrc: string } | null>(null);
+  const [removePlayerClientId, setRemovePlayerClientId] = useState<string | null>(null);
 
   const units = useMemo(() => calculateTeamNameUnits(name), [name]);
   const progress = Math.min((units / 30) * 100, 100);
@@ -767,7 +769,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
                     <p className="text-sm font-semibold text-zinc-900">{item.playerId ? "기존 선수" : "새 선수"}</p>
                     <button
                       type="button"
-                      onClick={() => onRemovePlayerContainer(item.clientId)}
+                      onClick={() => setRemovePlayerClientId(item.clientId)}
                       className="rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
                       aria-label="선수 삭제"
                     >
@@ -954,6 +956,20 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
 
         <div>{content}</div>
       </div>
+
+      <ConfirmModal
+        open={removePlayerClientId !== null}
+        title="선수 삭제"
+        message="정말 이 선수를 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        onConfirm={() => {
+          if (removePlayerClientId) {
+            onRemovePlayerContainer(removePlayerClientId);
+          }
+          setRemovePlayerClientId(null);
+        }}
+        onCancel={() => setRemovePlayerClientId(null)}
+      />
 
       {cropState ? (
         <PlayerPhotoCropModal
