@@ -71,6 +71,7 @@ function resolveUsername(
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV === "development",
+  basePath: "/api/auth",
   providers: [
     Google({
       clientId: googleClientId ?? "",
@@ -84,6 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: kakaoClientId ?? "",
       clientSecret: kakaoClientSecret ?? "",
       authorization: {
+        url: "https://kauth.kakao.com/oauth/authorize",
         params: { scope: "profile_nickname account_email" },
       },
     }),
