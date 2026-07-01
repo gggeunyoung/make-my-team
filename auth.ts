@@ -22,6 +22,39 @@ const kakaoClientId =
 const kakaoClientSecret =
   process.env.AUTH_KAKAO_SECRET ?? process.env.KAKAO_CLIENT_SECRET;
 
+function warnMissingOAuthCredentials(
+  provider: string,
+  clientId: string | undefined,
+  clientSecret: string | undefined,
+  envHint: string,
+) {
+  if (!clientId?.trim() || !clientSecret?.trim()) {
+    console.error(
+      `[auth] ${provider} OAuth credentials are missing or empty (${envHint}). ` +
+        "Empty clientId/clientSecret can cause OAuth callback failures that surface as a Configuration error.",
+    );
+  }
+}
+
+warnMissingOAuthCredentials(
+  "Google",
+  googleClientId,
+  googleClientSecret,
+  "AUTH_GOOGLE_ID/SECRET or GOOGLE_CLIENT_ID/SECRET",
+);
+warnMissingOAuthCredentials(
+  "Naver",
+  naverClientId,
+  naverClientSecret,
+  "AUTH_NAVER_ID/SECRET or NAVER_CLIENT_ID/SECRET",
+);
+warnMissingOAuthCredentials(
+  "Kakao",
+  kakaoClientId,
+  kakaoClientSecret,
+  "AUTH_KAKAO_ID/SECRET or KAKAO_CLIENT_ID/SECRET",
+);
+
 /** 네이버는 이름이 profile.response.name 에 옴 (user.name 은 비는 경우가 많음) */
 function resolveUsername(
   provider: string | null,
@@ -50,6 +83,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Kakao({
       clientId: kakaoClientId ?? "",
       clientSecret: kakaoClientSecret ?? "",
+      authorization: {
+        params: { scope: "profile_nickname account_email" },
+      },
     }),
   ],
   trustHost: true,
