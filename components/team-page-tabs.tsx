@@ -17,6 +17,7 @@ type TeamPageTabsProps = {
   teamLogo: string | null;
   teamColor: string | null;
   canManage: boolean;
+  hasNoMatches: boolean;
 };
 
 type TeamTab = "HOME" | "PLAYERS" | "MATCHES" | "STATS" | "TOURNAMENT" | "AWARD";
@@ -51,6 +52,18 @@ const URL_NAME_TO_TAB = Object.fromEntries(
   Object.entries(TAB_URL_NAMES).map(([tab, name]) => [name, tab as TeamTab]),
 ) as Record<string, TeamTab>;
 
+/* Manager tab highlight — canManage && hasNoMatches (designer-tunable) */
+const MANAGER_HIGHLIGHT = {
+  hintText: "text-[10px] font-medium leading-tight text-amber-100",
+  arrow: "h-3 w-3 shrink-0 animate-bounce text-amber-200",
+  linkDesktop:
+    "rounded-md border border-amber-300 bg-amber-400/25 px-3 py-2 text-sm font-semibold text-white shadow-sm",
+  hamburgerButton: "ring-2 ring-amber-300",
+  hamburgerBadge: "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-300",
+  dropdownHint: "px-4 pt-2 text-[11px] font-medium text-amber-200",
+  linkMobile: "border-l-2 border-amber-300 bg-amber-500/20 font-semibold text-white",
+} as const;
+
 function parseTabFromUrl(tabParam: string | null): TeamTab {
   if (!tabParam) return "HOME";
   return URL_NAME_TO_TAB[tabParam.toLowerCase()] ?? "HOME";
@@ -69,7 +82,14 @@ function findTournamentDraftId(): string | null {
   return null;
 }
 
-export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage }: TeamPageTabsProps) {
+export function TeamPageTabs({
+  teamId,
+  teamName,
+  teamLogo,
+  teamColor,
+  canManage,
+  hasNoMatches,
+}: TeamPageTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -83,6 +103,7 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
   const matchIdParam = searchParams.get("matchId");
   const urlMatchId = matchIdParam?.trim() || null;
   const activeTab = urlMatchId ? "MATCHES" : parseTabFromUrl(tabParam);
+  const highlightManager = canManage && hasNoMatches;
 
   const replaceUrl = useCallback(
     (tab: TeamTab, matchId?: string | null) => {
@@ -227,12 +248,31 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
               );
             })}
             {canManage ? (
-              <Link
-                href={`/team/${teamId}/manager`}
-                className="rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
-              >
-                Manager
-              </Link>
+              <div className="flex shrink-0 flex-col items-center">
+                {highlightManager ? (
+                  <div className="mb-0.5 flex flex-col items-center gap-0.5">
+                    <span className={MANAGER_HIGHLIGHT.hintText}>여기서 선수와 매치를 등록하세요</span>
+                    <svg
+                      viewBox="0 0 12 12"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      className={MANAGER_HIGHLIGHT.arrow}
+                    >
+                      <path d="M6 8.5 2.5 5h7L6 8.5Z" />
+                    </svg>
+                  </div>
+                ) : null}
+                <Link
+                  href={`/team/${teamId}/manager`}
+                  className={
+                    highlightManager
+                      ? MANAGER_HIGHLIGHT.linkDesktop
+                      : "rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
+                  }
+                >
+                  Manager
+                </Link>
+              </div>
             ) : null}
           </nav>
 
@@ -245,9 +285,12 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
                 aria-label="메뉴 열기"
                 aria-expanded={mobileMenuOpen}
                 onClick={handleMobileMenuToggle}
-                className="rounded-md px-2 py-1 text-2xl leading-none text-white/90 transition hover:bg-white/20"
+                className={`relative rounded-md px-2 py-1 text-2xl leading-none text-white/90 transition hover:bg-white/20 ${
+                  highlightManager ? MANAGER_HIGHLIGHT.hamburgerButton : ""
+                }`}
               >
                 ≡
+                {highlightManager ? <span className={MANAGER_HIGHLIGHT.hamburgerBadge} aria-hidden="true" /> : null}
               </button>
             </div>
 
@@ -272,13 +315,32 @@ export function TeamPageTabs({ teamId, teamName, teamLogo, teamColor, canManage 
                   );
                 })}
                 {canManage ? (
-                  <Link
-                    href={`/team/${teamId}/manager`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-2.5 text-sm font-medium text-white/90 transition hover:bg-white/10"
-                  >
-                    Manager
-                  </Link>
+                  <div>
+                    {highlightManager ? (
+                      <div className={`flex items-center gap-1 ${MANAGER_HIGHLIGHT.dropdownHint}`}>
+                        <svg
+                          viewBox="0 0 12 12"
+                          fill="currentColor"
+                          aria-hidden="true"
+                          className={MANAGER_HIGHLIGHT.arrow}
+                        >
+                          <path d="M6 8.5 2.5 5h7L6 8.5Z" />
+                        </svg>
+                        <span>여기서 선수와 매치를 등록하세요</span>
+                      </div>
+                    ) : null}
+                    <Link
+                      href={`/team/${teamId}/manager`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block px-4 py-2.5 text-sm font-medium transition ${
+                        highlightManager
+                          ? MANAGER_HIGHLIGHT.linkMobile
+                          : "text-white/90 hover:bg-white/10"
+                      }`}
+                    >
+                      Manager
+                    </Link>
+                  </div>
                 ) : null}
               </div>
             ) : null}

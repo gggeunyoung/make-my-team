@@ -11,10 +11,13 @@ type TeamPageProps = {
 export default async function TeamPage({ params }: TeamPageProps) {
   const { teamId } = await params;
 
-  const [session, team] = await Promise.all([
+  const [session, team, matchCount] = await Promise.all([
     auth(),
     prisma.team.findUnique({
       where: { id: teamId },
+    }),
+    prisma.match.count({
+      where: { teamId },
     }),
   ]);
 
@@ -23,6 +26,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
   }
   const email = session?.user?.email?.trim();
   const canManage = Boolean(email && team.admins.includes(email));
+  const hasNoMatches = matchCount === 0;
 
   return (
     <Suspense
@@ -40,6 +44,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
         teamLogo={team.logo}
         teamColor={team.color}
         canManage={canManage}
+        hasNoMatches={hasNoMatches}
       />
     </Suspense>
   );
