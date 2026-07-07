@@ -54,14 +54,17 @@ const URL_NAME_TO_TAB = Object.fromEntries(
 
 /* Manager tab highlight — canManage && hasNoMatches (designer-tunable) */
 const MANAGER_HIGHLIGHT = {
-  hintText: "text-[10px] font-medium leading-tight text-amber-100",
-  arrow: "h-3 w-3 shrink-0 animate-bounce text-amber-200",
+  arrow: "h-3 w-3 shrink-0 animate-bounce text-white",
+  tooltip:
+    "pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-max max-w-[11rem] -translate-x-1/2 rounded-lg bg-amber-900 px-2.5 py-1.5 text-[10px] font-medium leading-snug text-white shadow-lg",
+  tooltipTail: "absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-amber-900",
+  tooltipContent: "relative flex items-start gap-1",
   linkDesktop:
     "rounded-md border border-amber-300 bg-amber-400/25 px-3 py-2 text-sm font-semibold text-white shadow-sm",
   hamburgerButton: "ring-2 ring-amber-300",
   hamburgerBadge: "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-300",
-  dropdownHint: "px-4 pt-2 text-[11px] font-medium text-amber-200",
   linkMobile: "border-l-2 border-amber-300 bg-amber-500/20 font-semibold text-white",
+  mobileArrow: "h-3 w-3 shrink-0 text-amber-200",
 } as const;
 
 function parseTabFromUrl(tabParam: string | null): TeamTab {
@@ -248,18 +251,21 @@ export function TeamPageTabs({
               );
             })}
             {canManage ? (
-              <div className="flex shrink-0 flex-col items-center">
+              <div className="relative shrink-0">
                 {highlightManager ? (
-                  <div className="mb-0.5 flex flex-col items-center gap-0.5">
-                    <span className={MANAGER_HIGHLIGHT.hintText}>여기서 선수와 매치를 등록하세요</span>
-                    <svg
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                      aria-hidden="true"
-                      className={MANAGER_HIGHLIGHT.arrow}
-                    >
-                      <path d="M6 8.5 2.5 5h7L6 8.5Z" />
-                    </svg>
+                  <div className={MANAGER_HIGHLIGHT.tooltip} role="tooltip">
+                    <span className={MANAGER_HIGHLIGHT.tooltipTail} aria-hidden="true" />
+                    <div className={MANAGER_HIGHLIGHT.tooltipContent}>
+                      <svg
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                        aria-hidden="true"
+                        className={MANAGER_HIGHLIGHT.arrow}
+                      >
+                        <path d="M6 8.5 2.5 5h7L6 8.5Z" />
+                      </svg>
+                      <span>여기서 선수와 매치를 등록하세요</span>
+                    </div>
                   </div>
                 ) : null}
                 <Link
@@ -315,32 +321,27 @@ export function TeamPageTabs({
                   );
                 })}
                 {canManage ? (
-                  <div>
+                  <Link
+                    href={`/team/${teamId}/manager`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition ${
+                      highlightManager
+                        ? MANAGER_HIGHLIGHT.linkMobile
+                        : "text-white/90 hover:bg-white/10"
+                    }`}
+                  >
                     {highlightManager ? (
-                      <div className={`flex items-center gap-1 ${MANAGER_HIGHLIGHT.dropdownHint}`}>
-                        <svg
-                          viewBox="0 0 12 12"
-                          fill="currentColor"
-                          aria-hidden="true"
-                          className={MANAGER_HIGHLIGHT.arrow}
-                        >
-                          <path d="M6 8.5 2.5 5h7L6 8.5Z" />
-                        </svg>
-                        <span>여기서 선수와 매치를 등록하세요</span>
-                      </div>
+                      <svg
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                        aria-hidden="true"
+                        className={MANAGER_HIGHLIGHT.mobileArrow}
+                      >
+                        <path d="M6 8.5 2.5 5h7L6 8.5Z" />
+                      </svg>
                     ) : null}
-                    <Link
-                      href={`/team/${teamId}/manager`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-2.5 text-sm font-medium transition ${
-                        highlightManager
-                          ? MANAGER_HIGHLIGHT.linkMobile
-                          : "text-white/90 hover:bg-white/10"
-                      }`}
-                    >
-                      Manager
-                    </Link>
-                  </div>
+                    Manager
+                  </Link>
                 ) : null}
               </div>
             ) : null}
