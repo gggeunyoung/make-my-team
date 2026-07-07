@@ -56,16 +56,21 @@ const URL_NAME_TO_TAB = Object.fromEntries(
 const MANAGER_HIGHLIGHT = {
   arrow: "h-3 w-3 shrink-0 animate-bounce text-white",
   tooltip:
-    "pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-max max-w-[11rem] -translate-x-1/2 rounded-lg bg-amber-900 px-2.5 py-1.5 text-[10px] font-medium leading-snug text-white shadow-lg",
-  tooltipTail: "absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-amber-900",
+    "pointer-events-none fixed z-40 w-max max-w-[11rem] rounded-lg bg-amber-900 px-2.5 py-1.5 text-[10px] font-medium leading-snug text-white shadow-lg",
+  tooltipTail: "pointer-events-none fixed z-40 h-2 w-2 rotate-45 bg-amber-900",
   tooltipContent: "relative flex items-start gap-1",
   linkDesktop:
     "rounded-md border border-amber-300 bg-amber-400/25 px-3 py-2 text-sm font-semibold text-white shadow-sm",
   hamburgerButton: "ring-2 ring-amber-300",
   hamburgerBadge: "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-300",
   linkMobile: "border-l-2 border-amber-300 bg-amber-500/20 font-semibold text-white",
-  mobileArrow: "h-3 w-3 shrink-0 text-amber-200",
 } as const;
+
+type ManagerTooltipStyle = {
+  top: number;
+  right: number;
+  tailLeft: number;
+};
 
 function parseTabFromUrl(tabParam: string | null): TeamTab {
   if (!tabParam) return "HOME";
@@ -100,13 +105,27 @@ export function TeamPageTabs({
   const [dropdownStyle, setDropdownStyle] = useState<{ top: number; right: number } | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const managerLinkRef = useRef<HTMLAnchorElement>(null);
   const draftRedirectDoneRef = useRef(false);
+  const [managerTooltipStyle, setManagerTooltipStyle] = useState<ManagerTooltipStyle | null>(null);
 
   const tabParam = searchParams.get("tab");
   const matchIdParam = searchParams.get("matchId");
   const urlMatchId = matchIdParam?.trim() || null;
   const activeTab = urlMatchId ? "MATCHES" : parseTabFromUrl(tabParam);
   const highlightManager = canManage && hasNoMatches;
+
+  const updateManagerTooltipPosition = useCallback(() => {
+    const button = managerLinkRef.current;
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+    setManagerTooltipStyle({
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+      tailLeft: rect.left + rect.width / 2 - 4,
+    });
+  }, []);
 
   const replaceUrl = useCallback(
     (tab: TeamTab, matchId?: string | null) => {
@@ -140,6 +159,32 @@ export function TeamPageTabs({
     }
     setMobileMenuOpen(true);
   };
+
+  useEffect(() => {
+    if (!highlightManager) return;
+
+    const update = () => updateManagerTooltipPosition();
+    const frame = requestAnimationFrame(update);
+
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+
+    const button = managerLinkRef.current;
+    const resizeObserver =
+      button && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(update)
+        : null;
+    if (button) {
+      resizeObserver?.observe(button);
+    }
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+      resizeObserver?.disconnect();
+    };
+  }, [highlightManager, updateManagerTooltipPosition]);
 
   useEffect(() => {
     if (draftRedirectDoneRef.current) return;
@@ -251,34 +296,17 @@ export function TeamPageTabs({
               );
             })}
             {canManage ? (
-              <div className="relative shrink-0">
-                {highlightManager ? (
-                  <div className={MANAGER_HIGHLIGHT.tooltip} role="tooltip">
-                    <span className={MANAGER_HIGHLIGHT.tooltipTail} aria-hidden="true" />
-                    <div className={MANAGER_HIGHLIGHT.tooltipContent}>
-                      <svg
-                        viewBox="0 0 12 12"
-                        fill="currentColor"
-                        aria-hidden="true"
-                        className={MANAGER_HIGHLIGHT.arrow}
-                      >
-                        <path d="M6 8.5 2.5 5h7L6 8.5Z" />
-                      </svg>
-                      <span>여기서 선수와 매치를 등록하세요</span>
-                    </div>
-                  </div>
-                ) : null}
-                <Link
-                  href={`/team/${teamId}/manager`}
-                  className={
-                    highlightManager
-                      ? MANAGER_HIGHLIGHT.linkDesktop
-                      : "rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
-                  }
-                >
-                  Manager
-                </Link>
-              </div>
+              <Link
+                ref={managerLinkRef}
+                href={`/team/${teamId}/manager`}
+                className={
+                  highlightManager
+                    ? MANAGER_HIGHLIGHT.linkDesktop
+                    : "rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
+                }
+              >
+                Manager
+              </Link>
             ) : null}
           </nav>
 
@@ -324,22 +352,12 @@ export function TeamPageTabs({
                   <Link
                     href={`/team/${teamId}/manager`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition ${
+                    className={`block px-4 py-2.5 text-sm font-medium transition ${
                       highlightManager
                         ? MANAGER_HIGHLIGHT.linkMobile
                         : "text-white/90 hover:bg-white/10"
                     }`}
                   >
-                    {highlightManager ? (
-                      <svg
-                        viewBox="0 0 12 12"
-                        fill="currentColor"
-                        aria-hidden="true"
-                        className={MANAGER_HIGHLIGHT.mobileArrow}
-                      >
-                        <path d="M6 8.5 2.5 5h7L6 8.5Z" />
-                      </svg>
-                    ) : null}
                     Manager
                   </Link>
                 ) : null}
@@ -348,6 +366,33 @@ export function TeamPageTabs({
           </div>
         </div>
       </header>
+
+      {highlightManager && managerTooltipStyle ? (
+        <>
+          <span
+            aria-hidden="true"
+            className={MANAGER_HIGHLIGHT.tooltipTail}
+            style={{ top: managerTooltipStyle.top - 4, left: managerTooltipStyle.tailLeft }}
+          />
+          <div
+            role="tooltip"
+            className={MANAGER_HIGHLIGHT.tooltip}
+            style={{ top: managerTooltipStyle.top, right: managerTooltipStyle.right }}
+          >
+            <div className={MANAGER_HIGHLIGHT.tooltipContent}>
+              <svg
+                viewBox="0 0 12 12"
+                fill="currentColor"
+                aria-hidden="true"
+                className={MANAGER_HIGHLIGHT.arrow}
+              >
+                <path d="M6 8.5 2.5 5h7L6 8.5Z" />
+              </svg>
+              <span>여기서 선수와 매치를 등록하세요</span>
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {tabContent}
     </main>
