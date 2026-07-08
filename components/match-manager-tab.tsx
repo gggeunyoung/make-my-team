@@ -780,8 +780,11 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                     <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
                     <p>상대팀 수준: {levelLabel(match.opponent_level)}</p>
                     {sportType === "FUTSAL" ? <p>매치 유형: {futsalFormatLabel(match.match_format_futsal)}</p> : null}
-                    <p>
-                      스코어: {match.total_score_us} : {match.total_score_them}
+                    <p className="text-lg font-bold text-zinc-900">
+                      스코어:{" "}
+                      <span className="text-xl">
+                        {match.total_score_us} : {match.total_score_them}
+                      </span>
                     </p>
                     <p>
                       종합 승무패: {match.count_win}승 {match.count_draw}무 {match.count_loss}패
