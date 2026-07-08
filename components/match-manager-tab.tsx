@@ -352,8 +352,17 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   const [matchInfoOpen, setMatchInfoOpen] = useState(false);
   const [deleteMatchId, setDeleteMatchId] = useState<string | null>(null);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const draftLoadedRef = useRef(false);
   const draftSaveReadyRef = useRef(false);
+  const historyGuardPushedRef = useRef(false);
+  const allowLeaveRef = useRef(false);
+  const leaveActionRef = useRef<"ui" | "popstate" | null>(null);
+
+  const hasUnsavedChanges = useMemo(
+    () => view === "FORM" && hasMatchDraftContent({ opponentName, attendees, games }),
+    [view, opponentName, attendees, games],
+  );
 
   const fetchMatches = useCallback(async () => {
     setLoading(true);
@@ -412,6 +421,73 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
       games,
     });
   }, [teamId, opponentName, matchDate, opponentLevel, matchFormatFutsal, attendees, games]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      historyGuardPushedRef.current = false;
+      return;
+    }
+
+    if (!historyGuardPushedRef.current) {
+      window.history.pushState({ matchFormGuard: true }, "", window.location.href);
+      historyGuardPushedRef.current = true;
+    }
+
+    const onPopState = () => {
+      if (allowLeaveRef.current) {
+        allowLeaveRef.current = false;
+        historyGuardPushedRef.current = false;
+        return;
+      }
+      historyGuardPushedRef.current = false;
+      leaveActionRef.current = "popstate";
+      setLeaveConfirmOpen(true);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [hasUnsavedChanges]);
+
+  const requestLeaveToList = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      goToList();
+      return;
+    }
+    leaveActionRef.current = "ui";
+    setLeaveConfirmOpen(true);
+  }, [goToList, hasUnsavedChanges]);
+
+  const confirmLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+    const action = leaveActionRef.current;
+    leaveActionRef.current = null;
+    allowLeaveRef.current = true;
+    historyGuardPushedRef.current = false;
+    if (action === "popstate") {
+      window.history.back();
+      return;
+    }
+    goToList();
+  }, [goToList]);
+
+  const cancelLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+    leaveActionRef.current = null;
+    if (hasUnsavedChanges && !historyGuardPushedRef.current) {
+      window.history.pushState({ matchFormGuard: true }, "", window.location.href);
+      historyGuardPushedRef.current = true;
+    }
+  }, [hasUnsavedChanges]);
 
   const resetForm = () => {
     clearDraft(matchDraftKey(teamId));
@@ -768,7 +844,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         <h2 className="text-lg font-semibold text-zinc-900">매치 기록</h2>
         <button
           type="button"
-          onClick={goToList}
+          onClick={requestLeaveToList}
           className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700"
         >
           목록으로
@@ -856,7 +932,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
             >
               경기 추가
             </button>
-            <span className="text-sm text-zinc-600">(현재 {games.length}경기)</span>
+            <span className="text-sm text-zinc-600">(총 {games.length}경기)</span>
           </div>
         </div>
 
@@ -1163,6 +1239,17 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
           </div>
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={leaveConfirmOpen}
+        title="나가시겠습니까?"
+        message="저장되지 않은 기록이 있습니다. 나가시겠습니까?"
+        confirmLabel="나가기"
+        cancelLabel="취소"
+        confirmVariant="primary"
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
+      />
     </section>
   );
 }

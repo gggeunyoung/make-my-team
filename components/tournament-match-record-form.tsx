@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmModal } from "@/components/confirm-modal";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -272,6 +273,15 @@ export function TournamentMatchRecordForm({
   const [formMessage, setFormMessage] = useState("");
   const [formIsError, setFormIsError] = useState(false);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const historyGuardPushedRef = useRef(false);
+  const allowLeaveRef = useRef(false);
+  const leaveActionRef = useRef<"ui" | "popstate" | null>(null);
+
+  const hasUnsavedChanges = useMemo(
+    () => hasTournamentMatchDraftContent({ opponentName, games, isPso }),
+    [opponentName, games, isPso],
+  );
 
   const playerMap = useMemo(() => new Map(players.map((player) => [player.id, player.name])), [players]);
 
@@ -384,6 +394,73 @@ export function TournamentMatchRecordForm({
     attendees,
     games,
   ]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      historyGuardPushedRef.current = false;
+      return;
+    }
+
+    if (!historyGuardPushedRef.current) {
+      window.history.pushState({ tournamentMatchFormGuard: true }, "", window.location.href);
+      historyGuardPushedRef.current = true;
+    }
+
+    const onPopState = () => {
+      if (allowLeaveRef.current) {
+        allowLeaveRef.current = false;
+        historyGuardPushedRef.current = false;
+        return;
+      }
+      historyGuardPushedRef.current = false;
+      leaveActionRef.current = "popstate";
+      setLeaveConfirmOpen(true);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [hasUnsavedChanges]);
+
+  const requestLeave = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      onBack();
+      return;
+    }
+    leaveActionRef.current = "ui";
+    setLeaveConfirmOpen(true);
+  }, [hasUnsavedChanges, onBack]);
+
+  const confirmLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+    const action = leaveActionRef.current;
+    leaveActionRef.current = null;
+    allowLeaveRef.current = true;
+    historyGuardPushedRef.current = false;
+    if (action === "popstate") {
+      window.history.back();
+      return;
+    }
+    onBack();
+  }, [onBack]);
+
+  const cancelLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+    leaveActionRef.current = null;
+    if (hasUnsavedChanges && !historyGuardPushedRef.current) {
+      window.history.pushState({ tournamentMatchFormGuard: true }, "", window.location.href);
+      historyGuardPushedRef.current = true;
+    }
+  }, [hasUnsavedChanges]);
 
   const toggleAttendee = (playerId: string) => {
     setAttendees((prev) => {
@@ -624,7 +701,7 @@ export function TournamentMatchRecordForm({
     return (
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
         <p className="text-sm text-red-600">{loadError}</p>
-        <button type="button" onClick={onBack} className="mt-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <button type="button" onClick={requestLeave} className="mt-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
           돌아가기
         </button>
       </section>
@@ -649,7 +726,7 @@ export function TournamentMatchRecordForm({
     <section className="rounded-xl border border-zinc-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-zinc-900">대회 매치 기록</h2>
-        <button type="button" onClick={onBack} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700">
+        <button type="button" onClick={requestLeave} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700">
           돌아가기
         </button>
       </div>
@@ -773,7 +850,7 @@ export function TournamentMatchRecordForm({
             >
               경기 추가
             </button>
-            <span className="text-sm text-zinc-600">(현재 {games.length}경기)</span>
+            <span className="text-sm text-zinc-600">(총 {games.length}경기)</span>
           </div>
         </div>
 
@@ -1083,6 +1160,17 @@ export function TournamentMatchRecordForm({
           </div>
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={leaveConfirmOpen}
+        title="나가시겠습니까?"
+        message="저장되지 않은 기록이 있습니다. 나가시겠습니까?"
+        confirmLabel="나가기"
+        cancelLabel="취소"
+        confirmVariant="primary"
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
+      />
     </section>
   );
 }
