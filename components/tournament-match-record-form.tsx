@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmModal } from "@/components/confirm-modal";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -188,6 +189,10 @@ function PlayerNameSuggestInput({
     return attendeePlayers.filter((p) => p.name.includes(q));
   }, [value, attendeePlayers]);
 
+  const trimmed = value.trim();
+  const showUnregisteredWarning =
+    !disabled && trimmed !== "" && !attendeePlayers.some((p) => p.name === trimmed);
+
   return (
     <div className="relative">
       <input
@@ -228,6 +233,7 @@ function PlayerNameSuggestInput({
           ))}
         </ul>
       ) : null}
+      <p className="mt-1 h-4 text-xs text-red-600">{showUnregisteredWarning ? "등록된 선수가 아닙니다" : ""}</p>
     </div>
   );
 }
@@ -267,6 +273,15 @@ export function TournamentMatchRecordForm({
   const [formMessage, setFormMessage] = useState("");
   const [formIsError, setFormIsError] = useState(false);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const historyGuardPushedRef = useRef(false);
+  const allowLeaveRef = useRef(false);
+  const leaveActionRef = useRef<"ui" | "popstate" | null>(null);
+
+  const hasUnsavedChanges = useMemo(
+    () => hasTournamentMatchDraftContent({ opponentName, games, isPso }),
+    [opponentName, games, isPso],
+  );
 
   const playerMap = useMemo(() => new Map(players.map((player) => [player.id, player.name])), [players]);
 
@@ -314,6 +329,8 @@ export function TournamentMatchRecordForm({
       const draft = loadDraft(tournamentDraftKey(tournamentId));
       if (draft) {
         const filteredAttendees = (draft.attendees ?? []).filter((id) => validAttendeeIds.has(id));
+        const restoredAttendees =
+          filteredAttendees.length > 0 ? filteredAttendees : [...data.tournament.attendees];
         setOpponentName(draft.opponentName ?? "");
         setMatchDate(clampDate(draft.matchDate ?? todayIso()));
         setOpponentLevel(draft.opponentLevel ?? "MID");
@@ -321,13 +338,13 @@ export function TournamentMatchRecordForm({
         setStage(draft.stage ?? "PRELIMINARY");
         setIsPso(draft.isPso ?? false);
         setPsoResult(draft.psoResult ?? null);
-        setAttendees(
-          filteredAttendees.length > 0 ? filteredAttendees : [...data.tournament.attendees],
-        );
-        setGames(sanitizeDraftGames(draft.games ?? [], validAttendeeIds));
+        setAttendees(restoredAttendees);
+        const restoredGames = sanitizeDraftGames(draft.games ?? [], validAttendeeIds);
+        setGames(restoredGames.length > 0 ? restoredGames : [createGameForm(restoredAttendees)]);
       } else {
-        setAttendees([...data.tournament.attendees]);
-        setGames([]);
+        const initialAttendees = [...data.tournament.attendees];
+        setAttendees(initialAttendees);
+        setGames([createGameForm(initialAttendees)]);
         if (start && finish) {
           setMatchDate((prev) => clampDate(prev));
         }
@@ -378,6 +395,73 @@ export function TournamentMatchRecordForm({
     games,
   ]);
 
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      historyGuardPushedRef.current = false;
+      return;
+    }
+
+    if (!historyGuardPushedRef.current) {
+      window.history.pushState({ tournamentMatchFormGuard: true }, "", window.location.href);
+      historyGuardPushedRef.current = true;
+    }
+
+    const onPopState = () => {
+      if (allowLeaveRef.current) {
+        allowLeaveRef.current = false;
+        historyGuardPushedRef.current = false;
+        return;
+      }
+      historyGuardPushedRef.current = false;
+      leaveActionRef.current = "popstate";
+      setLeaveConfirmOpen(true);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [hasUnsavedChanges]);
+
+  const requestLeave = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      onBack();
+      return;
+    }
+    leaveActionRef.current = "ui";
+    setLeaveConfirmOpen(true);
+  }, [hasUnsavedChanges, onBack]);
+
+  const confirmLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+    const action = leaveActionRef.current;
+    leaveActionRef.current = null;
+    allowLeaveRef.current = true;
+    historyGuardPushedRef.current = false;
+    if (action === "popstate") {
+      window.history.back();
+      return;
+    }
+    onBack();
+  }, [onBack]);
+
+  const cancelLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+    leaveActionRef.current = null;
+    if (hasUnsavedChanges && !historyGuardPushedRef.current) {
+      window.history.pushState({ tournamentMatchFormGuard: true }, "", window.location.href);
+      historyGuardPushedRef.current = true;
+    }
+  }, [hasUnsavedChanges]);
+
   const toggleAttendee = (playerId: string) => {
     setAttendees((prev) => {
       const exists = prev.includes(playerId);
@@ -409,10 +493,28 @@ export function TournamentMatchRecordForm({
     setGames((prev) => prev.map((game) => (game.id === gameId ? { ...game, ...updates } : game)));
   };
 
-  const addGoal = (gameId: string) => {
+  const updateScoreUs = (gameId: string, rawValue: string) => {
+    const digitsOnly = rawValue.replace(/\D/g, "");
     setGames((prev) =>
-      prev.map((game) => (game.id === gameId ? { ...game, goals: [...game.goals, createGoalForm()] } : game)),
+      prev.map((game) => {
+        if (game.id !== gameId) return game;
+        const prevScore = toInt(game.scoreUs) ?? 0;
+        const nextScore = toInt(digitsOnly);
+        let nextGoals = game.goals;
+        if (nextScore !== null && nextScore > prevScore) {
+          const toAdd = nextScore - game.goals.length;
+          if (toAdd > 0) {
+            nextGoals = [...game.goals, ...Array.from({ length: toAdd }, () => createGoalForm())];
+          }
+        }
+        return { ...game, scoreUs: digitsOnly, goals: nextGoals };
+      }),
     );
+  };
+
+  const updateScoreThem = (gameId: string, rawValue: string) => {
+    const digitsOnly = rawValue.replace(/\D/g, "");
+    updateGame(gameId, { scoreThem: digitsOnly });
   };
 
   const removeGoal = (gameId: string, goalId: string) => {
@@ -599,7 +701,7 @@ export function TournamentMatchRecordForm({
     return (
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
         <p className="text-sm text-red-600">{loadError}</p>
-        <button type="button" onClick={onBack} className="mt-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <button type="button" onClick={requestLeave} className="mt-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
           돌아가기
         </button>
       </section>
@@ -624,7 +726,7 @@ export function TournamentMatchRecordForm({
     <section className="rounded-xl border border-zinc-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-zinc-900">대회 매치 기록</h2>
-        <button type="button" onClick={onBack} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700">
+        <button type="button" onClick={requestLeave} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700">
           돌아가기
         </button>
       </div>
@@ -740,13 +842,16 @@ export function TournamentMatchRecordForm({
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={addGame}
-            className="mt-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-          >
-            경기 추가
-          </button>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={addGame}
+              className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+              경기 추가
+            </button>
+            <span className="text-sm text-zinc-600">(총 {games.length}경기)</span>
+          </div>
         </div>
 
         {games.map((game, gameIndex) => {
@@ -770,22 +875,28 @@ export function TournamentMatchRecordForm({
               {goalMismatch ? <p className="mb-3 text-sm font-medium text-red-600">{GOAL_COUNT_MISMATCH_MSG}</p> : null}
 
               <div className="mb-3 grid gap-3 md:grid-cols-2">
-                <input
-                  type="number"
-                  min={0}
-                  value={game.scoreUs}
-                  onChange={(e) => updateGame(game.id, { scoreUs: e.target.value })}
-                  placeholder="우리팀 득점"
-                  className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={game.scoreThem}
-                  onChange={(e) => updateGame(game.id, { scoreThem: e.target.value })}
-                  placeholder="상대팀 득점"
-                  className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-                />
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-zinc-600">우리팀 득점</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={game.scoreUs}
+                    onChange={(e) => updateScoreUs(game.id, e.target.value)}
+                    placeholder="우리팀 득점"
+                    className="h-10 w-full rounded-md border border-zinc-300 px-3 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-zinc-600">상대팀 득점</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={game.scoreThem}
+                    onChange={(e) => updateScoreThem(game.id, e.target.value)}
+                    placeholder="상대팀 득점"
+                    className="h-10 w-full rounded-md border border-zinc-300 px-3 text-sm"
+                  />
+                </div>
               </div>
 
               {sportType === "FUTSAL" ? (
@@ -825,7 +936,8 @@ export function TournamentMatchRecordForm({
                           key={player.id}
                           draggable
                           onDragStart={(event) => event.dataTransfer.setData("text/player-id", player.id)}
-                          className="cursor-move rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
+                          className="cursor-move select-none rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
+                          style={{ WebkitUserSelect: "none", touchAction: "none" }}
                         >
                           {player.name}
                         </div>
@@ -879,14 +991,6 @@ export function TournamentMatchRecordForm({
                   </div>
                 </div>
               )}
-
-              <button
-                type="button"
-                onClick={() => addGoal(game.id)}
-                className="mb-3 rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700"
-              >
-                골 기록 추가
-              </button>
 
               <div className="space-y-3">
                 {game.goals.map((goal, goalIndex) => (
@@ -1056,6 +1160,17 @@ export function TournamentMatchRecordForm({
           </div>
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={leaveConfirmOpen}
+        title="나가시겠습니까?"
+        message="저장되지 않은 기록이 있습니다. 나가시겠습니까?"
+        confirmLabel="나가기"
+        cancelLabel="취소"
+        confirmVariant="primary"
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
+      />
     </section>
   );
 }
