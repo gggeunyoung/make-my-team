@@ -900,7 +900,8 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                           key={player.id}
                           draggable
                           onDragStart={(event) => event.dataTransfer.setData("text/player-id", player.id)}
-                          className="cursor-move rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
+                          className="cursor-move select-none rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700"
+                          style={{ WebkitUserSelect: "none", touchAction: "none" }}
                         >
                           {player.name}
                         </div>
