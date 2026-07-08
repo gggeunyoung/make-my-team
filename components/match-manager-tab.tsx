@@ -211,6 +211,10 @@ function PlayerNameSuggestInput({
     return attendeePlayers.filter((p) => p.name.includes(q));
   }, [value, attendeePlayers]);
 
+  const trimmed = value.trim();
+  const showUnregisteredWarning =
+    !disabled && trimmed !== "" && !attendeePlayers.some((p) => p.name === trimmed);
+
   const selectSuggestion = (player: AttendeeOption) => {
     onCommit(player.name, player.id);
     setOpen(false);
@@ -293,6 +297,7 @@ function PlayerNameSuggestInput({
           ))}
         </ul>
       ) : null}
+      <p className="mt-1 h-4 text-xs text-red-600">{showUnregisteredWarning ? "등록된 선수가 아닙니다" : ""}</p>
     </div>
   );
 }
@@ -371,6 +376,8 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     void fetchMatches();
   }, [fetchMatches]);
 
+  const [draftReady, setDraftReady] = useState(false);
+
   useEffect(() => {
     if (draftLoadedRef.current) return;
     draftLoadedRef.current = true;
@@ -384,7 +391,15 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
       setGames(draft.games ?? []);
     }
     draftSaveReadyRef.current = true;
+    setDraftReady(true);
   }, [teamId]);
+
+  useEffect(() => {
+    if (!draftReady || view !== "FORM") return;
+    setGames((prev) => (prev.length > 0 ? prev : [createGameForm(attendees)]));
+    // attendees: only used when seeding the first empty sheet after draft load / FORM enter
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- do not re-seed when attendees change
+  }, [draftReady, view]);
 
   useEffect(() => {
     if (!draftSaveReadyRef.current) return;
@@ -441,10 +456,28 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     setGames((prev) => prev.map((game) => (game.id === gameId ? { ...game, ...updates } : game)));
   };
 
-  const addGoal = (gameId: string) => {
+  const updateScoreUs = (gameId: string, rawValue: string) => {
+    const digitsOnly = rawValue.replace(/\D/g, "");
     setGames((prev) =>
-      prev.map((game) => (game.id === gameId ? { ...game, goals: [...game.goals, createGoalForm()] } : game)),
+      prev.map((game) => {
+        if (game.id !== gameId) return game;
+        const prevScore = toInt(game.scoreUs) ?? 0;
+        const nextScore = toInt(digitsOnly);
+        let nextGoals = game.goals;
+        if (nextScore !== null && nextScore > prevScore) {
+          const toAdd = nextScore - game.goals.length;
+          if (toAdd > 0) {
+            nextGoals = [...game.goals, ...Array.from({ length: toAdd }, () => createGoalForm())];
+          }
+        }
+        return { ...game, scoreUs: digitsOnly, goals: nextGoals };
+      }),
     );
+  };
+
+  const updateScoreThem = (gameId: string, rawValue: string) => {
+    const digitsOnly = rawValue.replace(/\D/g, "");
+    updateGame(gameId, { scoreThem: digitsOnly });
   };
 
   const removeGoal = (gameId: string, goalId: string) => {
@@ -815,13 +848,16 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={addGame}
-            className="mt-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-          >
-            경기 추가
-          </button>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={addGame}
+              className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+              경기 추가
+            </button>
+            <span className="text-sm text-zinc-600">(현재 {games.length}경기)</span>
+          </div>
         </div>
 
         {games.map((game, gameIndex) => {
@@ -845,22 +881,28 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
               {goalMismatch ? <p className="mb-3 text-sm font-medium text-red-600">{GOAL_COUNT_MISMATCH_MSG}</p> : null}
 
               <div className="mb-3 grid gap-3 md:grid-cols-2">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={game.scoreUs}
-                  onChange={(e) => updateGame(game.id, { scoreUs: e.target.value })}
-                  placeholder="우리팀 득점"
-                  className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-                />
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={game.scoreThem}
-                  onChange={(e) => updateGame(game.id, { scoreThem: e.target.value })}
-                  placeholder="상대팀 득점"
-                  className="h-10 rounded-md border border-zinc-300 px-3 text-sm"
-                />
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-zinc-600">우리팀 득점</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={game.scoreUs}
+                    onChange={(e) => updateScoreUs(game.id, e.target.value)}
+                    placeholder="우리팀 득점"
+                    className="h-10 w-full rounded-md border border-zinc-300 px-3 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-zinc-600">상대팀 득점</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={game.scoreThem}
+                    onChange={(e) => updateScoreThem(game.id, e.target.value)}
+                    placeholder="상대팀 득점"
+                    className="h-10 w-full rounded-md border border-zinc-300 px-3 text-sm"
+                  />
+                </div>
               </div>
 
               {sportType === "FUTSAL" ? (
@@ -955,14 +997,6 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                   </div>
                 </div>
               )}
-
-              <button
-                type="button"
-                onClick={() => addGoal(game.id)}
-                className="mb-3 rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700"
-              >
-                골 기록 추가
-              </button>
 
               <div className="space-y-3">
                 {game.goals.map((goal, goalIndex) => (
@@ -1076,7 +1110,9 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
           );
         })}
 
-        {formMessage ? <p className={`text-sm ${formIsError ? "text-red-600" : "text-emerald-600"}`}>{formMessage}</p> : null}
+        {formMessage ? (
+          <p className={`text-sm ${formIsError ? "text-red-600" : "text-emerald-600"}`}>{formMessage}</p>
+        ) : null}
 
         <button
           type="button"
