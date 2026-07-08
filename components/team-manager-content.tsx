@@ -849,6 +849,9 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
             >
               {playerSubmitting ? "저장 중..." : "저장하기"}
             </button>
+            {playerMessage ? (
+              <p className={`mt-2 text-sm ${playerIsError ? "text-red-600" : "text-emerald-600"}`}>{playerMessage}</p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
@@ -975,10 +978,6 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
               );
             })}
           </div>
-
-          {playerMessage ? (
-            <p className={`mt-4 text-sm ${playerIsError ? "text-red-600" : "text-emerald-600"}`}>{playerMessage}</p>
-          ) : null}
 
           {showPlayerInfoModal ? (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
