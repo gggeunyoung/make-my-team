@@ -3,6 +3,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { TeamLogo } from "@/components/team-logo";
 import { calculateTeamNameUnits } from "@/lib/team";
@@ -37,6 +38,7 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
   const [joinMessage, setJoinMessage] = useState("");
   const [joinPending, setJoinPending] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newlyCreatedTeamId, setNewlyCreatedTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -170,10 +172,59 @@ export function TeamDashboard({ userEmail, userName }: { userEmail: string; user
           onCreated={(team) => {
             setTeams((prev) => [team, ...prev]);
             setShowCreateModal(false);
+            setNewlyCreatedTeamId(team.id);
           }}
         />
       ) : null}
+
+      {newlyCreatedTeamId ? (
+        <TeamCreatedModal
+          teamId={newlyCreatedTeamId}
+          teamName={teams.find((t) => t.id === newlyCreatedTeamId)?.name ?? ""}
+          onClose={() => setNewlyCreatedTeamId(null)}
+        />
+      ) : null}
     </main>
+  );
+}
+
+function TeamCreatedModal({
+  teamId,
+  teamName,
+  onClose,
+}: {
+  teamId: string;
+  teamName: string;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl">
+        <h3 className="text-xl font-semibold text-zinc-900">
+          <span className="mr-1">🎉</span>
+          {teamName} 팀이 만들어졌어요!
+        </h3>
+        <p className="mt-3 text-sm text-zinc-600">이제 선수를 등록하고 첫 매치를 기록해보세요</p>
+        <div className="mt-6 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => router.push(`/team/${teamId}/manager?section=player`)}
+            className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+          >
+            선수 등록하러 가기
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 w-full rounded-lg border border-zinc-300 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+          >
+            나중에 할게요
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

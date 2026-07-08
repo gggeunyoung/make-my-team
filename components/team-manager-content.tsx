@@ -157,6 +157,69 @@ function sortPlayerFormsNewest(forms: PlayerFormItem[]) {
   });
 }
 
+function samePositions(a: PositionValue[], b: PositionValue[]) {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((item, idx) => item === sortedB[idx]);
+}
+
+function getPlayerFormPosition(item: PlayerFormItem, sportType: SportType): PositionValue[] {
+  return sportType === "SOCCER" ? item.position : [];
+}
+
+function isPlayerFormNew(item: PlayerFormItem): boolean {
+  return item.playerId === null;
+}
+
+function isPlayerFormModified(item: PlayerFormItem, sportType: SportType): boolean {
+  if (!item.playerId || !item.original) return false;
+  const name = item.name.trim();
+  const position = getPlayerFormPosition(item, sportType);
+  const original = item.original;
+  return (
+    original.name !== name ||
+    original.photo !== item.photo ||
+    original.style !== item.style ||
+    !samePositions(original.position, position)
+  );
+}
+
+function isPlayerFormRemoved(item: PlayerFormItem): boolean {
+  return item.removed && item.playerId !== null;
+}
+
+function hasPlayerUnsavedChanges(forms: PlayerFormItem[], sportType: SportType): boolean {
+  return forms.some(
+    (item) =>
+      isPlayerFormNew(item) || isPlayerFormModified(item, sportType) || isPlayerFormRemoved(item),
+  );
+}
+
+function resetPlayerFormsToOriginal(forms: PlayerFormItem[]): PlayerFormItem[] {
+  return sortPlayerFormsNewest(
+    forms
+      .filter((item) => item.playerId && item.original)
+      .map((item) =>
+        makePlayerFormItem({
+          id: item.playerId!,
+          name: item.original!.name,
+          photo: item.original!.photo,
+          style: item.original!.style,
+          position: item.original!.position,
+          createdAt: item.createdAt ?? undefined,
+        }),
+      ),
+  );
+}
+
+function getPlayerCardClass(item: PlayerFormItem, sportType: SportType): string {
+  if (item.errorMessage) return "border-red-400 bg-zinc-50";
+  if (isPlayerFormNew(item)) return "border-blue-300 bg-blue-50";
+  if (isPlayerFormModified(item, sportType)) return "border-amber-400 bg-zinc-50";
+  return "border-zinc-300 bg-zinc-50";
+}
+
 function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -228,6 +291,35 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
   const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
   const [cropState, setCropState] = useState<{ clientId: string; imageSrc: string } | null>(null);
   const [removePlayerClientId, setRemovePlayerClientId] = useState<string | null>(null);
+  const [pendingMenuTab, setPendingMenuTab] = useState<ManagerTab | null>(null);
+
+  const hasUnsavedChanges = useMemo(
+    () => hasPlayerUnsavedChanges(playerForms, initialTeam.sportType),
+    [playerForms, initialTeam.sportType],
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  const onSelectMenu = useCallback(
+    (tab: ManagerTab) => {
+      if (activeMenu === "PLAYER" && tab !== "PLAYER" && hasUnsavedChanges) {
+        setPendingMenuTab(tab);
+        return;
+      }
+      selectSection(tab);
+    },
+    [activeMenu, hasUnsavedChanges, selectSection],
+  );
 
   const units = useMemo(() => calculateTeamNameUnits(name), [name]);
   const progress = Math.min((units / 30) * 100, 100);
@@ -419,13 +511,6 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
     );
   };
 
-  const samePositions = (a: PositionValue[], b: PositionValue[]) => {
-    if (a.length !== b.length) return false;
-    const sortedA = [...a].sort();
-    const sortedB = [...b].sort();
-    return sortedA.every((item, idx) => item === sortedB[idx]);
-  };
-
   const validatePlayerForms = () => {
     const normalizedNames = new Map<string, string[]>();
     const nextErrors = new Map<string, string>();
@@ -551,6 +636,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
 
       const errors: string[] = [];
       const nextPlayerForms: PlayerFormItem[] = [];
+      let savedCount = 0;
 
       for (const result of results) {
         if (result.status === "rejected") {
@@ -559,6 +645,9 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
         }
         const { task, data } = result.value;
         if (task.type === "deactivate") continue;
+        if (task.type === "create" || task.type === "update") {
+          savedCount += 1;
+        }
         if (task.type === "skip") {
           nextPlayerForms.push({
             ...task.item,
@@ -581,7 +670,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
       } else {
         setPlayerForms(sortPlayerFormsNewest(nextPlayerForms));
         setPlayerIsError(false);
-        setPlayerMessage("저장 완료!");
+        setPlayerMessage(`${savedCount}명의 선수 정보가 저장되었습니다`);
       }
       router.refresh();
     } catch (error) {
@@ -751,30 +840,52 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
             <button
               type="button"
               onClick={() => void onSavePlayers()}
-              className="h-10 rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white"
+              disabled={!hasUnsavedChanges || playerSubmitting}
+              className={
+                hasUnsavedChanges
+                  ? "h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                  : "h-10 cursor-not-allowed rounded-lg bg-zinc-200 px-4 text-sm font-semibold text-zinc-400"
+              }
             >
               {playerSubmitting ? "저장 중..." : "저장하기"}
             </button>
+            {playerMessage ? (
+              <p className={`mt-2 text-sm ${playerIsError ? "text-red-600" : "text-emerald-600"}`}>{playerMessage}</p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
             {playerForms.map((item) => {
               if (item.removed) return null;
+              const showNewBadge = isPlayerFormNew(item);
+              const showModifiedBadge = !showNewBadge && isPlayerFormModified(item, initialTeam.sportType);
               return (
                 <div
                   key={item.clientId}
-                  className={`rounded-xl border bg-zinc-50 p-4 ${item.errorMessage ? "border-red-400" : "border-zinc-300"}`}
+                  className={`relative rounded-xl border p-4 ${getPlayerCardClass(item, initialTeam.sportType)}`}
                 >
-                  <div className="mb-3 flex items-start justify-between">
+                  <div className="mb-3 flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold text-zinc-900">{item.playerId ? "기존 선수" : "새 선수"}</p>
-                    <button
-                      type="button"
-                      onClick={() => setRemovePlayerClientId(item.clientId)}
-                      className="rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
-                      aria-label="선수 삭제"
-                    >
-                      🗑️
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {showNewBadge ? (
+                        <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                          NEW
+                        </span>
+                      ) : null}
+                      {showModifiedBadge ? (
+                        <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                          변경됨
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setRemovePlayerClientId(item.clientId)}
+                        className="rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                        aria-label="선수 삭제"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-3">
@@ -868,10 +979,6 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
             })}
           </div>
 
-          {playerMessage ? (
-            <p className={`mt-4 text-sm ${playerIsError ? "text-red-600" : "text-emerald-600"}`}>{playerMessage}</p>
-          ) : null}
-
           {showPlayerInfoModal ? (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
               <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
@@ -942,7 +1049,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
                 <button
                   key={menu.key}
                   type="button"
-                  onClick={() => selectSection(menu.key)}
+                  onClick={() => onSelectMenu(menu.key)}
                   className={`rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                     isActive ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"
                   }`}
@@ -969,6 +1076,25 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
           setRemovePlayerClientId(null);
         }}
         onCancel={() => setRemovePlayerClientId(null)}
+      />
+
+      <ConfirmModal
+        open={pendingMenuTab !== null}
+        title="저장하지 않은 변경사항"
+        message="저장하지 않은 변경사항이 있습니다. 이동하시겠습니까?"
+        confirmLabel="이동"
+        cancelLabel="취소"
+        confirmVariant="primary"
+        onConfirm={() => {
+          if (pendingMenuTab) {
+            setPlayerForms(resetPlayerFormsToOriginal(playerForms));
+            setPlayerMessage("");
+            setPlayerIsError(false);
+            selectSection(pendingMenuTab);
+            setPendingMenuTab(null);
+          }
+        }}
+        onCancel={() => setPendingMenuTab(null)}
       />
 
       {cropState ? (
