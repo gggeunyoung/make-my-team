@@ -511,7 +511,7 @@ export function TeamMatchesTab({
           {yearGroups.map((yearGroup) => (
             <div key={yearGroup.year}>
               <h2 className="mb-5 px-1 text-2xl font-bold text-zinc-900">{yearGroup.year}년</h2>
-              <div className="space-y-8">
+              <div className="space-y-5">
                 {yearGroup.monthGroups.map((group) => (
                   <div key={group.key}>
                     <h3 className="mb-3 px-1 text-lg font-semibold text-zinc-700">{group.month}월</h3>
