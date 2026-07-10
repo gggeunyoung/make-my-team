@@ -459,7 +459,7 @@ export function TeamMatchesTab({
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
       {!loadingList && seasonSummary.total > 0 ? (
-        <div className="mx-auto mb-8 flex w-full max-w-2xl items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:gap-6 sm:p-6">
+        <div className="mx-auto mb-8 flex w-fit items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:gap-6 sm:p-6">
           <div className="flex shrink-0 flex-col items-center border-r border-zinc-100 pr-4 sm:pr-6">
             <span className="text-2xl font-extrabold tabular-nums text-emerald-600 sm:text-3xl">
               {seasonSummary.winRate}%
