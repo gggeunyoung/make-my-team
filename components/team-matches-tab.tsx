@@ -128,6 +128,16 @@ function resultAccent(result: MatchResult, _teamColor: string | null) {
   return { borderColor: "#fca5a5", backgroundColor: "#fef2f2", textColor: "#dc2626" };
 }
 
+function matchCardAccent(result: MatchResult) {
+  if (result === "WIN") {
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  }
+  if (result === "DRAW") {
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
+  }
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
+}
+
 function gameResultClass(result: MatchResult) {
   if (result === "WIN") return "text-emerald-600 font-semibold";
   if (result === "DRAW") return "text-zinc-500 font-semibold";
@@ -431,36 +441,58 @@ export function TeamMatchesTab({
       ) : (
         <ul className="space-y-3">
           {filteredMatches.map((match) => {
-            const accent = resultAccent(match.totalResult, teamColor);
+            const accent = matchCardAccent(match.totalResult);
             return (
               <li key={match.id}>
                 <button
                   type="button"
                   onClick={() => openDetail(match.id)}
-                  className="w-full rounded-xl border-2 bg-white p-4 text-left transition hover:shadow-md"
-                  style={{ borderColor: accent.borderColor, backgroundColor: accent.backgroundColor }}
+                  className="relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-lg font-semibold" style={{ color: accent.textColor }}>
-                        VS {match.opponentName}
+                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-lg font-bold text-zinc-900">
+                        <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                        {match.opponentName}
                       </h3>
-                      <p className="mt-1 text-xs text-zinc-600">
-                        {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
-                      </p>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                      >
+                        {matchResultLabel(match.totalResult)}
+                      </span>
                     </div>
-                    <div className="text-right text-sm">
-                      <p className="font-medium text-zinc-800">
-                        {match.countWin}승 {match.countDraw}무 {match.countLoss}패
-                      </p>
-                      <p className="text-zinc-700">
-                        {match.totalScoreUs} : {match.totalScoreThem}
-                      </p>
-                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
+                    </p>
+                    {match.momName ? (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <svg
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                          className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                        >
+                          <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+                        </svg>
+                        <p className="truncate text-xs text-zinc-500">
+                          MOM <span className="font-semibold text-zinc-800">{match.momName}</span>
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
-                  {match.momName ? (
-                    <p className="mt-2 text-xs text-zinc-600">MOM {match.momName}</p>
-                  ) : null}
+
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs text-zinc-500">
+                      {match.countWin}승 {match.countDraw}무 {match.countLoss}패
+                    </p>
+                    <p className="mt-1 flex items-baseline justify-end gap-1.5">
+                      <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreUs}</span>
+                      <span className="text-xl font-bold text-zinc-300">:</span>
+                      <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreThem}</span>
+                    </p>
+                  </div>
                 </button>
               </li>
             );
