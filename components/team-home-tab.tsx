@@ -150,9 +150,24 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
         <p className="mb-4 text-sm text-zinc-500">{data.quarterLabel}</p>
 
         {!data.hasQuarterMatches ? (
-          <p className="rounded-lg border border-dashed border-zinc-200 py-8 text-center text-sm text-zinc-500">
-            진행한 매치가 없어요
-          </p>
+          <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 py-10 text-center">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              aria-hidden="true"
+              className="h-8 w-8 text-zinc-300"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 13.5V21h3v-7.5H3zm7.5-6V21h3V7.5h-3zM18 3v18h3V3h-3z"
+              />
+            </svg>
+            <p className="text-sm font-medium text-zinc-500">이번 분기엔 아직 기록된 매치가 없어요</p>
+            <p className="text-xs text-zinc-400">매치를 등록하면 여기에 선수 순위가 표시돼요</p>
+          </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2">
             {data.rankings.map((cat) => (
