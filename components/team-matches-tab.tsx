@@ -203,6 +203,32 @@ export function TeamMatchesTab({
     return matches.filter((m) => m.opponentName.includes(q));
   }, [matches, searchQuery]);
 
+  const monthGroups = useMemo(() => {
+    const groups: { key: string; year: number; month: number; items: MatchListItem[] }[] = [];
+    for (const match of filteredMatches) {
+      const d = new Date(match.date);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const key = `${year}-${month}`;
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) {
+        last.items.push(match);
+      } else {
+        groups.push({ key, year, month, items: [match] });
+      }
+    }
+    return groups;
+  }, [filteredMatches]);
+
+  const seasonSummary = useMemo(() => {
+    const wins = matches.filter((m) => m.totalResult === "WIN").length;
+    const draws = matches.filter((m) => m.totalResult === "DRAW").length;
+    const losses = matches.filter((m) => m.totalResult === "LOSS").length;
+    const total = matches.length;
+    const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+    return { wins, draws, losses, total, winRate };
+  }, [matches]);
+
   const sortedStatEntries = useMemo(
     () => (detail ? sortStatEntries(detail.statEntries) : []),
     [detail],
@@ -423,6 +449,35 @@ export function TeamMatchesTab({
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      {!loadingList && seasonSummary.total > 0 ? (
+        <div className="mx-auto mb-6 flex w-full max-w-xl items-center justify-center gap-5 rounded-2xl border border-zinc-200 bg-white px-6 py-4 shadow-sm sm:gap-8">
+          <div className="text-center">
+            <p className="text-xs text-zinc-500">이번 시즌 전적</p>
+            <p className="mt-0.5 text-lg font-bold text-zinc-900">{seasonSummary.total}경기</p>
+          </div>
+          <div className="h-9 w-px shrink-0 bg-zinc-200" aria-hidden="true" />
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className="text-center">
+              <p className="text-lg font-bold text-emerald-600">{seasonSummary.wins}</p>
+              <p className="text-xs text-zinc-500">승</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-zinc-500">{seasonSummary.draws}</p>
+              <p className="text-xs text-zinc-500">무</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-rose-600">{seasonSummary.losses}</p>
+              <p className="text-xs text-zinc-500">패</p>
+            </div>
+          </div>
+          <div className="h-9 w-px shrink-0 bg-zinc-200" aria-hidden="true" />
+          <div className="text-center">
+            <p className="text-xs text-zinc-500">승률</p>
+            <p className="mt-0.5 text-lg font-bold text-zinc-900">{seasonSummary.winRate}%</p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mb-6 flex justify-center">
         <input
           value={searchQuery}
@@ -439,65 +494,80 @@ export function TeamMatchesTab({
           {matches.length === 0 ? "진행한 매치가 없어요" : "검색 결과가 없습니다"}
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredMatches.map((match) => {
-            const accent = matchCardAccent(match.totalResult);
+        <div className="space-y-8">
+          {monthGroups.map((group, idx) => {
+            const prevYear = idx > 0 ? monthGroups[idx - 1].year : null;
+            const showYear = group.year !== prevYear;
+            const monthLabel = showYear
+              ? `${String(group.year).slice(2)}년 ${group.month}월`
+              : `${group.month}월`;
+
             return (
-              <li key={match.id}>
-                <button
-                  type="button"
-                  onClick={() => openDetail(match.id)}
-                  className="relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+              <div key={group.key}>
+                <h2 className="mb-3 px-1 text-sm font-semibold text-zinc-500">{monthLabel}</h2>
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.items.map((match) => {
+                    const accent = matchCardAccent(match.totalResult);
+                    return (
+                      <li key={match.id}>
+                        <button
+                          type="button"
+                          onClick={() => openDetail(match.id)}
+                          className="relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
 
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="truncate text-base font-bold text-zinc-900">
-                      <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
-                      {match.opponentName}
-                    </h3>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
-                    >
-                      {matchResultLabel(match.totalResult)}
-                    </span>
-                  </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="truncate text-base font-bold text-zinc-900">
+                              <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                              {match.opponentName}
+                            </h3>
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                            >
+                              {matchResultLabel(match.totalResult)}
+                            </span>
+                          </div>
 
-                  <p className="flex items-baseline gap-1.5">
-                    <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreUs}</span>
-                    <span className="text-lg font-bold text-zinc-300">:</span>
-                    <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreThem}</span>
-                  </p>
+                          <p className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreUs}</span>
+                            <span className="text-lg font-bold text-zinc-300">:</span>
+                            <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreThem}</span>
+                          </p>
 
-                  <div className="flex items-center justify-between gap-2 text-xs text-zinc-500">
-                    <span className="truncate">
-                      {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
-                    </span>
-                    <span className="shrink-0">
-                      {match.countWin}승 {match.countDraw}무 {match.countLoss}패
-                    </span>
-                  </div>
+                          <div className="flex items-center justify-between gap-2 text-xs text-zinc-500">
+                            <span className="truncate">
+                              {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
+                            </span>
+                            <span className="shrink-0">
+                              {match.countWin}승 {match.countDraw}무 {match.countLoss}패
+                            </span>
+                          </div>
 
-                  {match.momName ? (
-                    <div className="flex items-center gap-1.5">
-                      <svg
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
-                        className="h-3.5 w-3.5 shrink-0 text-amber-400"
-                      >
-                        <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
-                      </svg>
-                      <p className="truncate text-xs text-zinc-500">
-                        MOM <span className="font-semibold text-zinc-800">{match.momName}</span>
-                      </p>
-                    </div>
-                  ) : null}
-                </button>
-              </li>
+                          {match.momName ? (
+                            <div className="flex items-center gap-1.5">
+                              <svg
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                              >
+                                <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+                              </svg>
+                              <p className="truncate text-xs text-zinc-500">
+                                MOM <span className="font-semibold text-zinc-800">{match.momName}</span>
+                              </p>
+                            </div>
+                          ) : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </section>
   );
