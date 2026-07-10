@@ -254,7 +254,7 @@ export function TeamPageTabs({
   return (
     <main className="min-h-screen bg-zinc-50">
       <header
-        className="sticky top-0 z-20 overflow-x-hidden border-b border-black/10 px-4 py-3"
+        className="sticky top-0 z-20 overflow-x-hidden px-4 py-3.5 shadow-md"
         style={{ backgroundColor: teamColor ?? "#3f3f46" }}
       >
         <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 md:gap-4">
@@ -262,7 +262,7 @@ export function TeamPageTabs({
             <Link
               href="/"
               aria-label="대시보드로 이동"
-              className="shrink-0 rounded-md px-2 py-1 text-xl font-semibold text-white/90 transition hover:bg-white/20"
+              className="shrink-0 rounded-full px-2 py-1 text-xl font-semibold text-white/90 transition hover:bg-white/20"
             >
               ←
             </Link>
@@ -273,14 +273,19 @@ export function TeamPageTabs({
             className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden md:gap-3"
           >
             {teamLogo ? (
-              <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-10 w-10 shrink-0" rounded="lg" />
+              <TeamLogo
+                src={teamLogo}
+                alt={`${teamName} 로고`}
+                className="h-10 w-10 shrink-0 ring-2 ring-white/30"
+                rounded="lg"
+              />
             ) : (
-              <div className="h-10 w-10 shrink-0 rounded-full bg-white/60" />
+              <div className="h-10 w-10 shrink-0 rounded-full bg-white/60 ring-2 ring-white/30" />
             )}
-            <span className="min-w-0 truncate text-lg font-semibold text-white">{teamName}</span>
+            <span className="min-w-0 truncate text-lg font-bold tracking-tight text-white">{teamName}</span>
           </button>
 
-          <nav className="hidden shrink-0 items-center gap-2 md:flex">
+          <nav className="hidden shrink-0 items-center gap-1.5 md:flex">
             {tabs.map((tab) => {
               const active = activeTab === tab.key;
               return (
@@ -288,7 +293,7 @@ export function TeamPageTabs({
                   key={tab.key}
                   type="button"
                   onClick={() => selectTab(tab.key)}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${active ? "bg-white text-zinc-900" : "text-white/90 hover:bg-white/20"
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${active ? "bg-white text-zinc-900 shadow-sm" : "text-white/85 hover:bg-white/15"
                     }`}
                 >
                   {tab.label}
@@ -302,7 +307,7 @@ export function TeamPageTabs({
                 className={
                   highlightManager
                     ? MANAGER_HIGHLIGHT.linkDesktop
-                    : "rounded-md px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/20"
+                    : "rounded-full px-4 py-2 text-sm font-medium text-white/85 transition hover:bg-white/15"
                 }
               >
                 Manager
@@ -319,7 +324,7 @@ export function TeamPageTabs({
                 aria-label="메뉴 열기"
                 aria-expanded={mobileMenuOpen}
                 onClick={handleMobileMenuToggle}
-                className={`relative rounded-md px-2 py-1 text-2xl leading-none text-white/90 transition hover:bg-white/20 ${
+                className={`relative rounded-full px-2 py-1 text-2xl leading-none text-white/90 transition hover:bg-white/20 ${
                   highlightManager ? MANAGER_HIGHLIGHT.hamburgerButton : ""
                 }`}
               >
