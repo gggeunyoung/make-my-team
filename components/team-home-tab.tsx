@@ -244,7 +244,10 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                   <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
 
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="truncate text-base font-semibold text-zinc-900">VS {match.opponentName}</h3>
+                    <h3 className="truncate text-lg font-bold text-zinc-900">
+                      <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                      {match.opponentName}
+                    </h3>
                     <span
                       className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
                     >
@@ -255,9 +258,9 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                     {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
                   </p>
 
-                  <div className="mt-3 flex items-baseline gap-1.5">
+                  <div className="mt-3 flex items-baseline gap-2">
                     <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreUs}</span>
-                    <span className="text-sm text-zinc-400">:</span>
+                    <span className="text-xl font-bold text-zinc-300">:</span>
                     <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreThem}</span>
                     <span className="ml-auto text-xs text-zinc-500">
                       {match.countWin}승 {match.countDraw}무 {match.countLoss}패
@@ -265,9 +268,19 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                   </div>
 
                   {match.momName ? (
-                    <p className="mt-3 truncate border-t border-zinc-100 pt-2 text-xs text-zinc-500">
-                      MOM <span className="font-medium text-zinc-700">{match.momName}</span>
-                    </p>
+                    <div className="mt-3 flex items-center gap-1.5 border-t border-zinc-100 pt-2">
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-amber-400"
+                      >
+                        <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+                      </svg>
+                      <p className="truncate text-xs text-zinc-500">
+                        MOM <span className="font-semibold text-zinc-800">{match.momName}</span>
+                      </p>
+                    </div>
                   ) : null}
                 </button>
               );
