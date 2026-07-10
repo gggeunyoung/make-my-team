@@ -293,11 +293,17 @@ export function TeamPageTabs({
                   key={tab.key}
                   type="button"
                   onClick={() => selectTab(tab.key)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 ${
-                    active ? "bg-white shadow-sm" : "text-white/80 hover:bg-white/25 hover:text-white"
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 ${
+                    active ? "bg-white text-zinc-900 shadow-sm" : "text-white/80 hover:bg-white/25 hover:text-white"
                   }`}
-                  style={active ? { color: teamColor ?? "#3f3f46" } : undefined}
                 >
+                  {active ? (
+                    <span
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: teamColor ?? "#3f3f46" }}
+                      aria-hidden="true"
+                    />
+                  ) : null}
                   {tab.label}
                 </button>
               );
