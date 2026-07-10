@@ -216,7 +216,7 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
             진행한 매치가 없어요
           </p>
         ) : (
-          <div className="scrollbar-hide flex gap-4 overflow-x-auto pb-2">
+          <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-2">
             {data.recentMatches.map((match) => {
               const accent = resultAccent(match.totalResult);
               return (
