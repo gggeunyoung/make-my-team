@@ -459,34 +459,30 @@ export function TeamMatchesTab({
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
       {!loadingList && seasonSummary.total > 0 ? (
-        <div className="mx-auto mb-8 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium text-zinc-400">이번 시즌 전적 · {seasonSummary.total}경기</p>
-              <p className="mt-1.5 text-2xl font-bold text-zinc-900 sm:text-3xl">
-                {seasonSummary.wins}
-                <span className="mr-2 text-sm font-semibold text-zinc-400">승</span>
-                {seasonSummary.draws}
-                <span className="mr-2 text-sm font-semibold text-zinc-400">무</span>
-                {seasonSummary.losses}
-                <span className="text-sm font-semibold text-zinc-400">패</span>
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-xs font-medium text-zinc-400">승률</p>
-              <p className="mt-1.5 text-2xl font-bold text-emerald-600 sm:text-3xl">{seasonSummary.winRate}%</p>
-            </div>
+        <div className="mx-auto mb-8 flex w-full max-w-2xl items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:gap-6 sm:p-6">
+          <div className="flex shrink-0 flex-col items-center border-r border-zinc-100 pr-4 sm:pr-6">
+            <span className="text-3xl font-extrabold tabular-nums text-emerald-600 sm:text-4xl">
+              {seasonSummary.winRate}%
+            </span>
+            <span className="mt-1 text-xs font-medium text-zinc-400">시즌 승률</span>
           </div>
-          <div className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-zinc-100">
-            {seasonSummary.winPct > 0 ? (
-              <div className="bg-emerald-500" style={{ width: `${seasonSummary.winPct}%` }} />
-            ) : null}
-            {seasonSummary.drawPct > 0 ? (
-              <div className="bg-zinc-300" style={{ width: `${seasonSummary.drawPct}%` }} />
-            ) : null}
-            {seasonSummary.lossPct > 0 ? (
-              <div className="bg-rose-400" style={{ width: `${seasonSummary.lossPct}%` }} />
-            ) : null}
+          <div className="grid flex-1 grid-cols-4 gap-2">
+            <div className="text-center">
+              <p className="text-xs font-medium text-zinc-400">경기</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900 sm:text-xl">{seasonSummary.total}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-medium text-zinc-400">승</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-emerald-600 sm:text-xl">{seasonSummary.wins}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-medium text-zinc-400">무</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500 sm:text-xl">{seasonSummary.draws}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-medium text-zinc-400">패</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-rose-600 sm:text-xl">{seasonSummary.losses}</p>
+            </div>
           </div>
         </div>
       ) : null}
