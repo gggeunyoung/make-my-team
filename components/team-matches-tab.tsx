@@ -130,30 +130,12 @@ function resultAccent(result: MatchResult, _teamColor: string | null) {
 
 function matchCardAccent(result: MatchResult) {
   if (result === "WIN") {
-    return {
-      bar: "bg-emerald-500",
-      badgeBg: "bg-emerald-100",
-      badgeText: "text-emerald-700",
-      cardBg: "bg-emerald-50/60",
-      cardBorder: "border-emerald-100",
-    };
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
   }
   if (result === "DRAW") {
-    return {
-      bar: "bg-zinc-300",
-      badgeBg: "bg-zinc-100",
-      badgeText: "text-zinc-600",
-      cardBg: "bg-white",
-      cardBorder: "border-zinc-200",
-    };
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
   }
-  return {
-    bar: "bg-rose-500",
-    badgeBg: "bg-rose-100",
-    badgeText: "text-rose-700",
-    cardBg: "bg-rose-50/60",
-    cardBorder: "border-rose-100",
-  };
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
 function gameResultClass(result: MatchResult) {
@@ -465,7 +447,7 @@ export function TeamMatchesTab({
                 <button
                   type="button"
                   onClick={() => openDetail(match.id)}
-                  className={`relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${accent.cardBg} ${accent.cardBorder}`}
+                  className="relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
 
@@ -487,10 +469,14 @@ export function TeamMatchesTab({
                     <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreThem}</span>
                   </p>
 
-                  <p className="truncate text-xs text-zinc-500">
-                    {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)} ·{" "}
-                    {match.countWin}승 {match.countDraw}무 {match.countLoss}패
-                  </p>
+                  <div className="flex items-center justify-between gap-2 text-xs text-zinc-500">
+                    <span className="truncate">
+                      {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
+                    </span>
+                    <span className="shrink-0">
+                      {match.countWin}승 {match.countDraw}무 {match.countLoss}패
+                    </span>
+                  </div>
 
                   {match.momName ? (
                     <div className="flex items-center gap-1.5">
