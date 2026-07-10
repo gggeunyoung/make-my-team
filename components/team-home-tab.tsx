@@ -85,14 +85,14 @@ function formatRankingValue(key: string, value: number) {
   return String(value);
 }
 
-function resultAccent(result: MatchResult, _teamColor: string | null) {
+function resultAccent(result: MatchResult) {
   if (result === "WIN") {
-    return { borderColor: "#a7f3d0", backgroundColor: "#ecfdf5", textColor: "#059669" };
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
   }
   if (result === "DRAW") {
-    return { borderColor: "#d4d4d8", backgroundColor: "#fafafa", textColor: "#52525b" };
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
   }
-  return { borderColor: "#fca5a5", backgroundColor: "#fef2f2", textColor: "#dc2626" };
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
 export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProps) {
@@ -216,36 +216,44 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
             진행한 매치가 없어요
           </p>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="scrollbar-hide flex gap-4 overflow-x-auto pb-2">
             {data.recentMatches.map((match) => {
-              const accentStyle = resultAccent(match.totalResult, teamColor);
+              const accent = resultAccent(match.totalResult);
               return (
                 <button
                   key={match.id}
                   type="button"
                   onClick={() => onMatchClick(match.id)}
-                  className="w-72 shrink-0 rounded-xl border-2 p-4 text-left transition hover:shadow-md"
-                  style={{
-                    borderColor: accentStyle.borderColor,
-                    backgroundColor: accentStyle.backgroundColor,
-                  }}
+                  className="relative w-72 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <h3 className="text-lg font-semibold" style={{ color: accentStyle.textColor }}>
-                    VS {match.opponentName}
-                  </h3>
-                  <p className="mt-1 text-xs text-zinc-600">
+                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="truncate text-base font-semibold text-zinc-900">VS {match.opponentName}</h3>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                    >
+                      {matchResultLabel(match.totalResult)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-zinc-500">
                     {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
                   </p>
-                  <p className="mt-2 text-sm text-zinc-700">
-                    {match.countWin}승 {match.countDraw}무 {match.countLoss}패 · {match.totalScoreUs} :{" "}
-                    {match.totalScoreThem}
-                  </p>
+
+                  <div className="mt-3 flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreUs}</span>
+                    <span className="text-sm text-zinc-400">:</span>
+                    <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreThem}</span>
+                    <span className="ml-auto text-xs text-zinc-500">
+                      {match.countWin}승 {match.countDraw}무 {match.countLoss}패
+                    </span>
+                  </div>
+
                   {match.momName ? (
-                    <p className="mt-2 text-xs text-zinc-600">MOM {match.momName}</p>
+                    <p className="mt-3 truncate border-t border-zinc-100 pt-2 text-xs text-zinc-500">
+                      MOM <span className="font-medium text-zinc-700">{match.momName}</span>
+                    </p>
                   ) : null}
-                  <p className="mt-2 text-sm font-bold" style={{ color: accentStyle.textColor }}>
-                    {matchResultLabel(match.totalResult)}
-                  </p>
                 </button>
               );
             })}
