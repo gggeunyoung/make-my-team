@@ -293,10 +293,10 @@ export function TeamPageTabs({
                   key={tab.key}
                   type="button"
                   onClick={() => selectTab(tab.key)}
-                  className={`rounded-full px-4 py-2 text-sm transition-all duration-150 ${
+                  className={`rounded-full px-4 py-2 text-sm transition-all duration-150 ease-out ${
                     active
                       ? "bg-white/30 font-bold text-white shadow-inner"
-                      : "font-semibold text-white/80 hover:bg-white/20 hover:text-white"
+                      : "font-semibold text-white/75 hover:scale-105 hover:bg-white/10 hover:text-white/90"
                   }`}
                 >
                   {tab.label}
@@ -310,7 +310,7 @@ export function TeamPageTabs({
                 className={
                   highlightManager
                     ? MANAGER_HIGHLIGHT.linkDesktop
-                    : "rounded-full px-4 py-2 text-sm font-semibold text-white/80 transition-all duration-150 hover:bg-white/25 hover:text-white"
+                    : "rounded-full px-4 py-2 text-sm font-semibold text-white/75 transition-all duration-150 ease-out hover:scale-105 hover:bg-white/10 hover:text-white/90"
                 }
               >
                 Manager
