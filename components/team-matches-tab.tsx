@@ -461,27 +461,27 @@ export function TeamMatchesTab({
       {!loadingList && seasonSummary.total > 0 ? (
         <div className="mx-auto mb-8 flex w-full max-w-2xl items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:gap-6 sm:p-6">
           <div className="flex shrink-0 flex-col items-center border-r border-zinc-100 pr-4 sm:pr-6">
-            <span className="text-3xl font-extrabold tabular-nums text-emerald-600 sm:text-4xl">
+            <span className="text-2xl font-extrabold tabular-nums text-emerald-600 sm:text-3xl">
               {seasonSummary.winRate}%
             </span>
             <span className="mt-1 text-xs font-medium text-zinc-400">시즌 승률</span>
           </div>
-          <div className="grid flex-1 grid-cols-4 gap-2">
+          <div className="flex items-center gap-4 sm:gap-5">
             <div className="text-center">
               <p className="text-xs font-medium text-zinc-400">경기</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900 sm:text-xl">{seasonSummary.total}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{seasonSummary.total}</p>
             </div>
             <div className="text-center">
               <p className="text-xs font-medium text-zinc-400">승</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-emerald-600 sm:text-xl">{seasonSummary.wins}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-emerald-600">{seasonSummary.wins}</p>
             </div>
             <div className="text-center">
               <p className="text-xs font-medium text-zinc-400">무</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500 sm:text-xl">{seasonSummary.draws}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">{seasonSummary.draws}</p>
             </div>
             <div className="text-center">
               <p className="text-xs font-medium text-zinc-400">패</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-rose-600 sm:text-xl">{seasonSummary.losses}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-rose-600">{seasonSummary.losses}</p>
             </div>
           </div>
         </div>
