@@ -118,9 +118,9 @@ const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "attendanceRate", label: "출석률" },
 ];
 
-function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
+function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initial = name.trim().charAt(0) || "?";
-  const cls = size === "sm" ? "h-8 w-8 text-sm" : "h-10 w-10 text-base";
+  const cls = size === "sm" ? "h-8 w-8 text-sm" : size === "lg" ? "h-20 w-20 text-2xl" : "h-10 w-10 text-base";
   return (
     <div className={`flex shrink-0 items-center justify-center rounded-full bg-zinc-200 font-semibold text-zinc-500 ${cls}`}>
       {initial}
@@ -241,11 +241,30 @@ function formatRankingTitle(title: string) {
   return title.replace(/경기당/g, "매치당");
 }
 
-function rankBadgeClass(rank: number) {
-  if (rank === 1) return "bg-amber-400 text-white";
-  if (rank === 2) return "bg-zinc-300 text-zinc-700";
-  if (rank === 3) return "bg-amber-700 text-white";
-  return "bg-zinc-100 text-zinc-500";
+const MEDAL_COLORS: Record<number, { disc: string; discDark: string }> = {
+  1: { disc: "#fbbf24", discDark: "#b45309" },
+  2: { disc: "#d4d4d8", discDark: "#71717a" },
+  3: { disc: "#d0824a", discDark: "#92400e" },
+};
+
+function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) {
+  const colors = MEDAL_COLORS[rank];
+  if (!colors) return null;
+
+  return (
+    <svg
+      viewBox="0 0 24 28"
+      className={`shrink-0 ${size === "lg" ? "h-9 w-9" : "h-6 w-6"}`}
+      aria-hidden="true"
+    >
+      <path d="M8 1 L4 12 L9 12.5 Z" fill="#ef4444" />
+      <path d="M16 1 L20 12 L15 12.5 Z" fill="#3b82f6" />
+      <circle cx="12" cy="17" r="8" fill={colors.disc} stroke={colors.discDark} strokeWidth="1" />
+      <text x="12" y="20.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="white">
+        {rank}
+      </text>
+    </svg>
+  );
 }
 
 function TeamStatsContent({
@@ -394,39 +413,79 @@ function PlayerStatsContent({
                 {cat.items.length === 0 ? (
                   <p className="text-xs text-zinc-400">데이터 없음</p>
                 ) : (
-                  <ul className="space-y-3">
-                    {cat.items.map((item) => {
+                  <>
+                    {(() => {
+                      const top = cat.items[0];
                       const hideValue = cat.key === "attack" || cat.key === "defense";
-
                       return (
-                        <li key={item.id} className="flex items-center gap-2">
-                          <span
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${rankBadgeClass(item.rank)}`}
-                          >
-                            {item.rank}
-                          </span>
-                          {item.photo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={item.photo} alt={item.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
-                          ) : (
-                            <DefaultPlayerPhoto name={item.name} size="sm" />
-                          )}
-                          {hideValue ? (
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                            </div>
-                          ) : (
-                            <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                              <p className="shrink-0 text-xs font-semibold text-zinc-600">
-                                {formatRankingValue(cat.key, item.value)}
-                              </p>
-                            </div>
-                          )}
-                        </li>
+                        <div className="mb-3 flex flex-col items-center rounded-lg bg-white p-3 text-center shadow-sm">
+                          <div className="relative">
+                            {top.photo ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={top.photo}
+                                alt={top.name}
+                                className="h-20 w-20 rounded-full object-cover ring-4 ring-amber-300"
+                              />
+                            ) : (
+                              <DefaultPlayerPhoto name={top.name} size="lg" />
+                            )}
+                            <span className="absolute -bottom-2 -right-2">
+                              <MedalIcon rank={1} size="lg" />
+                            </span>
+                          </div>
+                          <p className="mt-3 truncate text-base font-bold text-zinc-900">{top.name}</p>
+                          {!hideValue ? (
+                            <p className="text-xs font-semibold text-amber-600">
+                              {formatRankingValue(cat.key, top.value)}
+                            </p>
+                          ) : null}
+                        </div>
                       );
-                    })}
-                  </ul>
+                    })()}
+
+                    {cat.items.length > 1 ? (
+                      <ul className="space-y-3">
+                        {cat.items.slice(1).map((item) => {
+                          const hideValue = cat.key === "attack" || cat.key === "defense";
+
+                          return (
+                            <li key={item.id} className="flex items-center gap-2">
+                              {item.rank <= 3 ? (
+                                <MedalIcon rank={item.rank} />
+                              ) : (
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">
+                                  {item.rank}
+                                </span>
+                              )}
+                              {item.photo ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.photo}
+                                  alt={item.name}
+                                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                                />
+                              ) : (
+                                <DefaultPlayerPhoto name={item.name} size="sm" />
+                              )}
+                              {hideValue ? (
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                                </div>
+                              ) : (
+                                <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                                  <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                                  <p className="shrink-0 text-xs font-semibold text-zinc-600">
+                                    {formatRankingValue(cat.key, item.value)}
+                                  </p>
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null}
+                  </>
                 )}
               </div>
             ))}
