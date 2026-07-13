@@ -239,6 +239,8 @@ export function TeamPageTabs({
       return (
         <TeamMatchesTab
           teamId={teamId}
+          teamName={teamName}
+          teamLogo={teamLogo}
           teamColor={teamColor}
           openMatchId={urlMatchId}
           onMatchOpen={(matchId) => replaceUrl("MATCHES", matchId)}

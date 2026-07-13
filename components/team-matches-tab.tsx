@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
+import { TeamLogo } from "@/components/team-logo";
 import {
   formatMatchDate,
   matchResultLabel,
@@ -71,6 +72,8 @@ type MatchDetailResponse = {
 
 type TeamMatchesTabProps = {
   teamId: string;
+  teamName: string;
+  teamLogo: string | null;
   teamColor: string | null;
   openMatchId?: string | null;
   onMatchOpen?: (matchId: string) => void;
@@ -183,6 +186,8 @@ function Toast({ message }: { message: string }) {
 
 export function TeamMatchesTab({
   teamId,
+  teamName,
+  teamLogo,
   teamColor,
   openMatchId = null,
   onMatchOpen,
@@ -459,29 +464,37 @@ export function TeamMatchesTab({
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
       {!loadingList && seasonSummary.total > 0 ? (
-        <div className="mx-auto mb-8 flex w-fit items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:gap-6 sm:p-6">
-          <div className="flex shrink-0 flex-col items-center border-r border-zinc-100 pr-4 sm:pr-6">
-            <span className="text-2xl font-extrabold tabular-nums text-emerald-600 sm:text-3xl">
-              {seasonSummary.winRate}%
-            </span>
-            <span className="mt-1 text-xs font-medium text-zinc-400">시즌 승률</span>
+        <div className="mb-8 flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+          <div className="flex shrink-0 items-center gap-3 sm:border-r sm:border-zinc-100 sm:pr-6">
+            {teamLogo ? (
+              <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-12 w-12 shrink-0" rounded="lg" />
+            ) : (
+              <div className="h-12 w-12 shrink-0 rounded-lg bg-zinc-100" />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-zinc-900">{teamName}</p>
+              <p className="text-xs text-zinc-400">이번 시즌 성적</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4 sm:gap-5">
-            <div className="text-center">
-              <p className="text-xs font-medium text-zinc-400">경기</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{seasonSummary.total}</p>
+
+          <div className="flex flex-1 items-center gap-5 sm:gap-6">
+            <div className="flex shrink-0 flex-col items-center">
+              <span className="text-3xl font-extrabold tabular-nums text-emerald-600">{seasonSummary.winRate}%</span>
+              <span className="mt-1 text-xs font-medium text-zinc-400">승률</span>
             </div>
-            <div className="text-center">
-              <p className="text-xs font-medium text-zinc-400">승</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-emerald-600">{seasonSummary.wins}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs font-medium text-zinc-400">무</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">{seasonSummary.draws}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs font-medium text-zinc-400">패</p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-rose-600">{seasonSummary.losses}</p>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100">
+                <span className="h-full bg-emerald-500" style={{ width: `${seasonSummary.winPct}%` }} />
+                <span className="h-full bg-zinc-300" style={{ width: `${seasonSummary.drawPct}%` }} />
+                <span className="h-full bg-rose-500" style={{ width: `${seasonSummary.lossPct}%` }} />
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                <span className="text-zinc-500">{seasonSummary.total}경기</span>
+                <span className="font-medium text-emerald-600">{seasonSummary.wins}승</span>
+                <span className="font-medium text-zinc-500">{seasonSummary.draws}무</span>
+                <span className="font-medium text-rose-600">{seasonSummary.losses}패</span>
+              </div>
             </div>
           </div>
         </div>
