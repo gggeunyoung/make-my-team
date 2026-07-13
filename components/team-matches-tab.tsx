@@ -412,12 +412,12 @@ export function TeamMatchesTab({
             </div>
 
             <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-400">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-zinc-900">
                 <svg
                   viewBox="0 0 20 20"
                   fill="currentColor"
                   aria-hidden="true"
-                  className="h-4 w-4 shrink-0 text-amber-400"
+                  className="h-5 w-5 shrink-0 text-amber-400"
                 >
                   <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
                 </svg>
@@ -462,7 +462,7 @@ export function TeamMatchesTab({
                   ))}
                 </div>
                 <div
-                  className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent"
+                  className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-black/10 to-transparent"
                   aria-hidden="true"
                 />
               </div>
