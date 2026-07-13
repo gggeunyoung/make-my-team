@@ -121,16 +121,6 @@ function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "md" |
   );
 }
 
-function resultAccent(result: MatchResult, _teamColor: string | null) {
-  if (result === "WIN") {
-    return { borderColor: "#a7f3d0", backgroundColor: "#ecfdf5", textColor: "#059669" };
-  }
-  if (result === "DRAW") {
-    return { borderColor: "#d4d4d8", backgroundColor: "#fafafa", textColor: "#52525b" };
-  }
-  return { borderColor: "#fca5a5", backgroundColor: "#fef2f2", textColor: "#dc2626" };
-}
-
 function matchCardAccent(result: MatchResult) {
   if (result === "WIN") {
     return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
@@ -188,7 +178,6 @@ export function TeamMatchesTab({
   teamId,
   teamName,
   teamLogo,
-  teamColor,
   openMatchId = null,
   onMatchOpen,
   onMatchBack,
@@ -336,7 +325,7 @@ export function TeamMatchesTab({
 
   if (view === "DETAIL") {
     const m = detail?.match;
-    const accent = m ? resultAccent(m.totalResult, teamColor) : null;
+    const accent = m ? matchCardAccent(m.totalResult) : null;
     const finalResult = m
       ? m.isPso
         ? m.psoResult
@@ -355,7 +344,7 @@ export function TeamMatchesTab({
         <button
           type="button"
           onClick={backToList}
-          className="mb-4 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+          className="mb-4 rounded-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50"
         >
           ← 목록으로
         </button>
@@ -364,28 +353,50 @@ export function TeamMatchesTab({
           <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">매치 정보를 불러오는 중...</div>
         ) : (
           <div className="space-y-6">
-            <div
-              className="rounded-xl border-2 bg-white p-6"
-              style={
-                accent
-                  ? { borderColor: accent.borderColor, backgroundColor: accent.backgroundColor }
-                  : undefined
-              }
-            >
-              <h2 className="text-2xl font-bold text-zinc-900">VS {m.opponentName}</h2>
-              <p className="mt-1 text-sm text-zinc-600">
+            <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 pl-7 shadow-sm">
+              {accent ? (
+                <span className={`absolute inset-y-0 left-0 w-1.5 ${accent.bar}`} aria-hidden="true" />
+              ) : null}
+
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h2 className="text-2xl font-bold text-zinc-900">
+                  <span className="mr-1.5 text-sm font-semibold text-zinc-400">VS</span>
+                  {m.opponentName}
+                </h2>
+                {accent ? (
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                  >
+                    {finalResult}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1 text-sm text-zinc-500">
                 {formatMatchDate(m.date)} · {opponentLevelLabel(m.opponentLevel)}
               </p>
-              <p className="mt-3 text-sm text-zinc-700">
-                {m.countWin}승 {m.countDraw}무 {m.countLoss}패 · {m.totalScoreUs} : {m.totalScoreThem}
-              </p>
-              <p className="mt-2 text-xl font-bold" style={{ color: accent?.textColor }}>
-                {finalResult}
-              </p>
+
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-3xl font-bold tabular-nums text-zinc-900">{m.totalScoreUs}</span>
+                <span className="text-2xl font-bold text-zinc-300">:</span>
+                <span className="text-3xl font-bold tabular-nums text-zinc-900">{m.totalScoreThem}</span>
+                <span className="ml-auto text-sm text-zinc-500">
+                  {m.countWin}승 {m.countDraw}무 {m.countLoss}패
+                </span>
+              </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
-              <h3 className="mb-4 text-lg font-semibold text-zinc-900">MOM</h3>
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-zinc-900">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-amber-400"
+                >
+                  <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+                </svg>
+                MOM
+              </h3>
               {detail.momPlayer ? (
                 <div className="flex items-center gap-4">
                   {detail.momPlayer.photo ? (
@@ -410,7 +421,7 @@ export function TeamMatchesTab({
               )}
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">경기별 결과</h3>
               <ul className="space-y-2">
                 {detail.games.map((g) => (
@@ -424,7 +435,7 @@ export function TeamMatchesTab({
               </ul>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">스탯 모음</h3>
               {sortedStatEntries.length === 0 ? (
                 <p className="text-sm text-zinc-500">기록된 골·도움이 없습니다</p>
@@ -449,7 +460,7 @@ export function TeamMatchesTab({
               <button
                 type="button"
                 onClick={() => void handleShare()}
-                className="rounded-lg border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+                className="rounded-full border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
               >
                 카카오 공유하기
               </button>
