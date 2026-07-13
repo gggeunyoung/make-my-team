@@ -483,18 +483,20 @@ export function TeamMatchesTab({
               <span className="mt-1 text-xs font-medium text-zinc-400">승률</span>
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100">
-                <span className="h-full bg-emerald-500" style={{ width: `${seasonSummary.winPct}%` }} />
-                <span className="h-full bg-zinc-300" style={{ width: `${seasonSummary.drawPct}%` }} />
-                <span className="h-full bg-rose-500" style={{ width: `${seasonSummary.lossPct}%` }} />
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                <span className="text-sm font-bold tabular-nums text-emerald-700">{seasonSummary.wins}승</span>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                <span className="text-zinc-500">{seasonSummary.total}경기</span>
-                <span className="font-medium text-emerald-600">{seasonSummary.wins}승</span>
-                <span className="font-medium text-zinc-500">{seasonSummary.draws}무</span>
-                <span className="font-medium text-rose-600">{seasonSummary.losses}패</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-zinc-400" aria-hidden="true" />
+                <span className="text-sm font-bold tabular-nums text-zinc-600">{seasonSummary.draws}무</span>
               </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" aria-hidden="true" />
+                <span className="text-sm font-bold tabular-nums text-rose-700">{seasonSummary.losses}패</span>
+              </div>
+              <span className="ml-1 text-xs text-zinc-400">총 {seasonSummary.total}경기</span>
             </div>
           </div>
         </div>
