@@ -241,6 +241,13 @@ function formatRankingTitle(title: string) {
   return title.replace(/경기당/g, "매치당");
 }
 
+function rankBadgeClass(rank: number) {
+  if (rank === 1) return "bg-amber-400 text-white";
+  if (rank === 2) return "bg-zinc-300 text-zinc-700";
+  if (rank === 3) return "bg-amber-700 text-white";
+  return "bg-zinc-100 text-zinc-500";
+}
+
 function TeamStatsContent({
   data,
   loading,
@@ -337,23 +344,29 @@ function TeamStatsContent({
 function PlayerStatsContent({
   data,
   loading,
-  accent,
 }: {
   data: PlayerStatsResponse | null;
   loading: boolean;
-  accent: string;
 }) {
   const [sortKey, setSortKey] = useState<TableSortKey>("goals");
+  const [tableSearch, setTableSearch] = useState("");
 
-  const sortedTable = useMemo(() => {
+  const rankedTable = useMemo(() => {
     const rows = data?.table ?? [];
-    return [...rows].sort((a, b) => {
+    const sorted = [...rows].sort((a, b) => {
       const av = a[sortKey];
       const bv = b[sortKey];
       if (typeof av === "number" && typeof bv === "number") return bv - av;
       return 0;
     });
+    return sorted.map((row, index) => ({ ...row, rank: index + 1 }));
   }, [data?.table, sortKey]);
+
+  const filteredTable = useMemo(() => {
+    const q = tableSearch.trim();
+    if (!q) return rankedTable;
+    return rankedTable.filter((row) => row.name.includes(q));
+  }, [rankedTable, tableSearch]);
 
   if (loading) {
     return <p className="text-sm text-zinc-500">선수 스탯을 불러오는 중...</p>;
@@ -388,8 +401,7 @@ function PlayerStatsContent({
                       return (
                         <li key={item.id} className="flex items-center gap-2">
                           <span
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                            style={{ backgroundColor: accent }}
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${rankBadgeClass(item.rank)}`}
                           >
                             {item.rank}
                           </span>
@@ -423,7 +435,17 @@ function PlayerStatsContent({
       </section>
 
       <section>
-        <h3 className="mb-4 text-lg font-semibold text-zinc-900">세부 선수 통계</h3>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold text-zinc-900">세부 선수 통계</h3>
+          {hasMatches ? (
+            <input
+              value={tableSearch}
+              onChange={(e) => setTableSearch(e.target.value)}
+              placeholder="선수 이름 검색"
+              className="h-9 w-full max-w-[200px] rounded-lg border border-zinc-300 px-3 text-sm shadow-sm"
+            />
+          ) : null}
+        </div>
         {!hasMatches ? (
           <p className="rounded-lg border border-dashed border-zinc-200 py-8 text-center text-sm text-zinc-500">
             진행한 매치가 없어요
@@ -433,7 +455,7 @@ function PlayerStatsContent({
             <table className="min-w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-100">
-                  <th className="sticky left-0 z-10 min-w-[140px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-left font-semibold text-zinc-700">
+                  <th className="sticky left-0 z-10 min-w-[160px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-left font-semibold text-zinc-700">
                     선수
                   </th>
                   {TABLE_COLUMNS.map((col) => (
@@ -441,21 +463,32 @@ function PlayerStatsContent({
                       <button
                         type="button"
                         onClick={() => setSortKey(col.key)}
-                        className={`font-semibold transition hover:text-zinc-900 ${
-                          sortKey === col.key ? "text-zinc-900 underline" : "text-zinc-600"
+                        className={`inline-flex items-center gap-1 font-semibold transition hover:text-zinc-900 ${
+                          sortKey === col.key ? "text-zinc-900" : "text-zinc-500"
                         }`}
                       >
                         {col.label}
+                        {sortKey === col.key ? <span aria-hidden="true">▼</span> : null}
                       </button>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {sortedTable.map((row) => (
+                {filteredTable.length === 0 ? (
+                  <tr>
+                    <td colSpan={TABLE_COLUMNS.length + 1} className="px-3 py-8 text-center text-sm text-zinc-500">
+                      검색 결과가 없습니다
+                    </td>
+                  </tr>
+                ) : null}
+                {filteredTable.map((row) => (
                   <tr key={row.id} className="border-b border-zinc-100 hover:bg-zinc-50">
                     <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2">
                       <div className="flex items-center gap-2">
+                        <span className="w-5 shrink-0 text-center text-xs font-semibold text-zinc-400">
+                          {row.rank}
+                        </span>
                         {row.photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={row.photo} alt={row.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
@@ -624,7 +657,7 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
         {view === "TEAM" ? (
           <TeamStatsContent data={teamData} loading={loadingTeam} />
         ) : (
-          <PlayerStatsContent data={playerData} loading={loadingPlayer} accent={accent} />
+          <PlayerStatsContent data={playerData} loading={loadingPlayer} />
         )}
       </div>
     </section>
