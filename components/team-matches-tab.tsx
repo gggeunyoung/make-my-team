@@ -370,7 +370,9 @@ export function TeamMatchesTab({
                   ) : (
                     <div className="h-14 w-14 rounded-lg bg-white/20" />
                   )}
-                  <span className="max-w-full truncate text-sm font-semibold">{teamName}</span>
+                  <span className="line-clamp-2 max-w-full break-words text-center text-sm font-semibold">
+                    {teamName}
+                  </span>
                 </div>
 
                 <div className="flex shrink-0 items-baseline gap-2 text-4xl font-extrabold tabular-nums sm:text-5xl">
@@ -383,7 +385,9 @@ export function TeamMatchesTab({
                   <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white/20 text-lg font-bold">
                     {m.opponentName.trim().charAt(0) || "?"}
                   </div>
-                  <span className="max-w-full truncate text-sm font-semibold">{m.opponentName}</span>
+                  <span className="line-clamp-2 max-w-full break-words text-center text-sm font-semibold">
+                    {m.opponentName}
+                  </span>
                 </div>
               </div>
 
@@ -443,18 +447,24 @@ export function TeamMatchesTab({
 
             <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">경기별 결과</h3>
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {detail.games.map((g) => (
-                  <div
-                    key={g.id}
-                    className="flex w-24 shrink-0 flex-col items-center gap-1 rounded-lg border border-zinc-100 bg-zinc-50 py-3"
-                  >
-                    <span className="text-xs text-zinc-400">{g.gameNumber}경기</span>
-                    <span className={`text-base tabular-nums ${gameResultClass(g.result)}`}>
-                      {g.scoreUs}:{g.scoreThem}
-                    </span>
-                  </div>
-                ))}
+              <div className="relative -mx-6">
+                <div className="flex gap-3 overflow-x-auto px-6 pb-1">
+                  {detail.games.map((g) => (
+                    <div
+                      key={g.id}
+                      className="flex w-24 shrink-0 flex-col items-center gap-1 rounded-lg border border-zinc-100 bg-zinc-50 py-3"
+                    >
+                      <span className="text-xs text-zinc-400">{g.gameNumber}경기</span>
+                      <span className={`text-base tabular-nums ${gameResultClass(g.result)}`}>
+                        {g.scoreUs}:{g.scoreThem}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent"
+                  aria-hidden="true"
+                />
               </div>
             </div>
 
