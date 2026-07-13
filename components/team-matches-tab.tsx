@@ -178,6 +178,7 @@ export function TeamMatchesTab({
   teamId,
   teamName,
   teamLogo,
+  teamColor,
   openMatchId = null,
   onMatchOpen,
   onMatchBack,
@@ -325,7 +326,6 @@ export function TeamMatchesTab({
 
   if (view === "DETAIL") {
     const m = detail?.match;
-    const accent = m ? matchCardAccent(m.totalResult) : null;
     const finalResult = m
       ? m.isPso
         ? m.psoResult
@@ -353,40 +353,62 @@ export function TeamMatchesTab({
           <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">매치 정보를 불러오는 중...</div>
         ) : (
           <div className="space-y-6">
-            <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 pl-7 shadow-sm">
-              {accent ? (
-                <span className={`absolute inset-y-0 left-0 w-1.5 ${accent.bar}`} aria-hidden="true" />
-              ) : null}
-
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-2xl font-bold text-zinc-900">
-                  <span className="mr-1.5 text-sm font-semibold text-zinc-400">VS</span>
-                  {m.opponentName}
-                </h2>
-                {accent ? (
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${accent.badgeBg} ${accent.badgeText}`}
-                  >
-                    {finalResult}
-                  </span>
-                ) : null}
+            <div
+              className="overflow-hidden rounded-2xl p-6 text-white shadow-sm sm:p-8"
+              style={{ background: `linear-gradient(135deg, ${teamColor ?? "#3f3f46"} 0%, #18181b 100%)` }}
+            >
+              <div className="flex justify-center">
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+                  경기종료 · {formatMatchDate(m.date)}
+                </span>
               </div>
-              <p className="mt-1 text-sm text-zinc-500">
-                {formatMatchDate(m.date)} · {opponentLevelLabel(m.opponentLevel)}
-              </p>
 
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tabular-nums text-zinc-900">{m.totalScoreUs}</span>
-                <span className="text-2xl font-bold text-zinc-300">:</span>
-                <span className="text-3xl font-bold tabular-nums text-zinc-900">{m.totalScoreThem}</span>
-                <span className="ml-auto text-sm text-zinc-500">
+              <div className="mt-5 flex items-center justify-center gap-4 sm:gap-10">
+                <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  {teamLogo ? (
+                    <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-14 w-14" rounded="lg" />
+                  ) : (
+                    <div className="h-14 w-14 rounded-lg bg-white/20" />
+                  )}
+                  <span className="max-w-full truncate text-sm font-semibold">{teamName}</span>
+                </div>
+
+                <div className="flex shrink-0 items-baseline gap-2 text-4xl font-extrabold tabular-nums sm:text-5xl">
+                  <span>{m.totalScoreUs}</span>
+                  <span className="text-2xl text-white/40">:</span>
+                  <span>{m.totalScoreThem}</span>
+                </div>
+
+                <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white/20 text-lg font-bold">
+                    {m.opponentName.trim().charAt(0) || "?"}
+                  </div>
+                  <span className="max-w-full truncate text-sm font-semibold">{m.opponentName}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
+                <span
+                  className={`rounded-full px-2.5 py-1 font-semibold ${
+                    m.totalResult === "WIN"
+                      ? "bg-emerald-400/20 text-emerald-200"
+                      : m.totalResult === "DRAW"
+                        ? "bg-white/15 text-white/80"
+                        : "bg-rose-400/20 text-rose-200"
+                  }`}
+                >
+                  {finalResult}
+                </span>
+                <span>{opponentLevelLabel(m.opponentLevel)} 상대</span>
+                <span>·</span>
+                <span>
                   {m.countWin}승 {m.countDraw}무 {m.countLoss}패
                 </span>
               </div>
             </div>
 
             <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-zinc-900">
+              <h3 className="mb-4 flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-400">
                 <svg
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -395,44 +417,45 @@ export function TeamMatchesTab({
                 >
                   <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
                 </svg>
-                MOM
+                MAN OF THE MATCH
               </h3>
               {detail.momPlayer ? (
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center text-center">
                   {detail.momPlayer.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={detail.momPlayer.photo}
                       alt={detail.momPlayer.name}
-                      className="h-24 w-20 rounded-lg object-cover"
+                      className="h-28 w-24 rounded-xl object-cover shadow-sm"
                     />
                   ) : (
                     <DefaultPlayerPhoto name={detail.momPlayer.name} />
                   )}
-                  <div>
-                    <p className="text-lg font-semibold text-zinc-900">{detail.momPlayer.name}</p>
-                    <p className="text-sm text-zinc-600">
-                      {detail.momPlayer.goals}골 {detail.momPlayer.assists}도움
-                    </p>
-                  </div>
+                  <p className="mt-3 text-xl font-bold text-zinc-900">{detail.momPlayer.name}</p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {detail.momPlayer.goals}골 {detail.momPlayer.assists}도움
+                  </p>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500">MOM 없음</p>
+                <p className="text-center text-sm text-zinc-500">MOM 없음</p>
               )}
             </div>
 
             <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">경기별 결과</h3>
-              <ul className="space-y-2">
+              <div className="flex gap-3 overflow-x-auto pb-1">
                 {detail.games.map((g) => (
-                  <li key={g.id} className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-3">
-                    <span className="text-sm font-medium text-zinc-800">{g.gameNumber}경기</span>
-                    <span className={`text-sm ${gameResultClass(g.result)}`}>
-                      {g.scoreUs} : {g.scoreThem}
+                  <div
+                    key={g.id}
+                    className="flex w-24 shrink-0 flex-col items-center gap-1 rounded-lg border border-zinc-100 bg-zinc-50 py-3"
+                  >
+                    <span className="text-xs text-zinc-400">{g.gameNumber}경기</span>
+                    <span className={`text-base tabular-nums ${gameResultClass(g.result)}`}>
+                      {g.scoreUs}:{g.scoreThem}
                     </span>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
 
             <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -440,19 +463,26 @@ export function TeamMatchesTab({
               {sortedStatEntries.length === 0 ? (
                 <p className="text-sm text-zinc-500">기록된 골·도움이 없습니다</p>
               ) : (
-                <ul className="space-y-2">
-                  {sortedStatEntries.map((s) => (
-                    <li
-                      key={s.playerId}
-                      className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-2.5 text-sm"
-                    >
-                      <span className="font-medium text-zinc-900">{s.playerName}</span>
-                      <span className="text-zinc-600">
-                        {s.goals}골 {s.assists}도움
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[280px] text-sm">
+                    <thead>
+                      <tr className="border-b border-zinc-200 text-xs text-zinc-400">
+                        <th className="py-2 text-left font-medium">선수명</th>
+                        <th className="py-2 text-right font-medium">골</th>
+                        <th className="py-2 text-right font-medium">도움</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {sortedStatEntries.map((s) => (
+                        <tr key={s.playerId}>
+                          <td className="py-2.5 font-medium text-zinc-900">{s.playerName}</td>
+                          <td className="py-2.5 text-right tabular-nums text-zinc-700">{s.goals}</td>
+                          <td className="py-2.5 text-right tabular-nums text-zinc-700">{s.assists}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
