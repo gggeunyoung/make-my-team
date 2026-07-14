@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatMatchDate, matchResultLabel, opponentLevelLabel, type OpponentLevelValue } from "@/lib/player-display";
+import {
+  formatMatchDate,
+  matchResultLabel,
+  opponentLevelBadgeClass,
+  opponentLevelLabel,
+  type OpponentLevelValue,
+} from "@/lib/player-display";
 import { periodTypeLabel, type PeriodOption, type PeriodType } from "@/lib/player-period";
 
 type StatsView = "TEAM" | "PLAYER";
@@ -128,11 +134,13 @@ function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" |
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string | number }) {
+function StatBox({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
+    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-center shadow-sm">
       <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
+      <p className={`mt-1 text-lg font-bold tabular-nums ${highlight ? "text-emerald-600" : "text-zinc-900"}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -160,13 +168,13 @@ function PeriodFilters({
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-3">
-      <div className="flex rounded-lg border border-zinc-200 p-0.5">
+      <div className="flex rounded-full border border-zinc-200 p-0.5">
         {PERIOD_TAB_ORDER.map((p) => (
           <button
             key={p}
             type="button"
             onClick={() => onPeriodChange(p)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
+            className={`rounded-full px-3 py-1.5 text-sm transition ${
               period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
             }`}
           >
@@ -207,16 +215,14 @@ function PeriodFilters({
   );
 }
 
-function resultRowClass(result: "WIN" | "DRAW" | "LOSS") {
-  if (result === "WIN") return "border-emerald-200 bg-emerald-50";
-  if (result === "DRAW") return "border-zinc-200 bg-zinc-50";
-  return "border-red-200 bg-red-50";
-}
-
-function resultTextClass(result: "WIN" | "DRAW" | "LOSS") {
-  if (result === "WIN") return "text-emerald-600";
-  if (result === "DRAW") return "text-zinc-500";
-  return "text-red-600";
+function matchCardAccent(result: "WIN" | "DRAW" | "LOSS") {
+  if (result === "WIN") {
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  }
+  if (result === "DRAW") {
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
+  }
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
 function formatRankingValue(key: string, value: number) {
@@ -288,7 +294,7 @@ function TeamStatsContent({
         <h3 className="mb-4 text-lg font-semibold text-zinc-900">매치 결과 종합</h3>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
           <StatBox label="진행한 매치" value={summary?.matchCount ?? 0} />
-          <StatBox label="승률" value={`${summary?.winRate ?? 0}%`} />
+          <StatBox label="승률" value={`${summary?.winRate ?? 0}%`} highlight />
           <StatBox label="득점" value={summary?.goalsScored ?? 0} />
           <StatBox label="실점" value={summary?.goalsConceded ?? 0} />
           <StatBox label="골 득실차" value={summary?.goalDifference ?? 0} />
@@ -302,9 +308,13 @@ function TeamStatsContent({
         <h3 className="mb-4 text-lg font-semibold text-zinc-900">상대팀 수준별 통계</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {byLevel.map((row) => (
-            <div key={row.level} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-              <p className="mb-2 text-sm font-semibold text-zinc-800">{opponentLevelLabel(row.level)}</p>
-              <dl className="space-y-1 text-sm">
+            <div key={row.level} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+              <span
+                className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${opponentLevelBadgeClass(row.level)}`}
+              >
+                {opponentLevelLabel(row.level)}
+              </span>
+              <dl className="mt-3 space-y-1 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-zinc-500">진행한 매치</dt>
                   <dd className="font-medium text-zinc-900">{row.matchCount}</dd>
@@ -315,7 +325,7 @@ function TeamStatsContent({
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-zinc-500">승률</dt>
-                  <dd className="font-medium text-zinc-900">{row.winRate}%</dd>
+                  <dd className="font-bold text-zinc-900">{row.winRate}%</dd>
                 </div>
               </dl>
             </div>
@@ -330,29 +340,42 @@ function TeamStatsContent({
             해당 기간 진행한 매치가 없습니다
           </p>
         ) : (
-          <ul className="space-y-2">
-            {recent.map((m) => (
-              <li
-                key={m.id}
-                className={`flex items-center justify-between rounded-lg border px-4 py-3 ${resultRowClass(m.totalResult)}`}
-              >
-                <div>
-                  <p className="font-semibold text-zinc-900">VS {m.opponentName}</p>
-                  <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
-                </div>
-                <div className="text-right text-sm">
-                  <p className="font-medium text-zinc-800">
-                    {m.totalScoreUs} : {m.totalScoreThem}
-                  </p>
-                  <p className="text-zinc-600">
-                    {m.countWin}승 {m.countDraw}무 {m.countLoss}패
-                  </p>
-                  <p className={`font-semibold ${resultTextClass(m.totalResult)}`}>
-                    {matchResultLabel(m.totalResult)}
-                  </p>
-                </div>
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {recent.map((m) => {
+              const accent = matchCardAccent(m.totalResult);
+              return (
+                <li
+                  key={m.id}
+                  className="relative flex items-center justify-between gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 shadow-sm"
+                >
+                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="truncate text-base font-bold text-zinc-900">
+                        <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                        {m.opponentName}
+                      </h4>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                      >
+                        {matchResultLabel(m.totalResult)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                  </div>
+
+                  <div className="flex shrink-0 items-baseline gap-1.5">
+                    <span className="text-xl font-bold tabular-nums text-zinc-900">{m.totalScoreUs}</span>
+                    <span className="text-base font-bold text-zinc-300">:</span>
+                    <span className="text-xl font-bold tabular-nums text-zinc-900">{m.totalScoreThem}</span>
+                    <span className="ml-2 text-xs text-zinc-500">
+                      {m.countWin}승 {m.countDraw}무 {m.countLoss}패
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -678,11 +701,11 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="mb-6 flex rounded-lg border border-zinc-200 p-0.5 w-fit">
+      <div className="mb-6 flex w-fit rounded-full border border-zinc-200 p-0.5">
         <button
           type="button"
           onClick={() => setView("TEAM")}
-          className={`rounded-md px-4 py-2 text-sm font-medium ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             view === "TEAM" ? "text-white" : "text-zinc-600 hover:bg-zinc-100"
           }`}
           style={view === "TEAM" ? { backgroundColor: accent } : undefined}
@@ -692,7 +715,7 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
         <button
           type="button"
           onClick={() => setView("PLAYER")}
-          className={`rounded-md px-4 py-2 text-sm font-medium ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             view === "PLAYER" ? "text-white" : "text-zinc-600 hover:bg-zinc-100"
           }`}
           style={view === "PLAYER" ? { backgroundColor: accent } : undefined}
