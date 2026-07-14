@@ -154,7 +154,7 @@ function matchCardAccent(result: "WIN" | "DRAW" | "LOSS") {
 function DefaultPlayerPhoto({ name }: { name: string }) {
   const initial = name.trim().charAt(0) || "?";
   return (
-    <div className="flex h-20 w-16 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-2xl font-semibold text-zinc-500 md:h-28 md:w-24 md:text-3xl">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-2xl font-semibold text-zinc-500">
       {initial}
     </div>
   );
@@ -587,16 +587,17 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 </div>
               </div>
 
-              <div className="hidden md:flex md:gap-4 md:items-start">
-                {info.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={info.photo} alt={info.name} className="h-28 w-24 shrink-0 rounded-lg object-cover" />
-                ) : (
-                  <DefaultPlayerPhoto name={info.name} />
-                )}
-                <div className="flex min-w-0 flex-1 flex-col gap-4">
+              <div className="hidden md:flex md:flex-col md:gap-4">
+                <div className="flex items-center gap-4">
+                  {info.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={info.photo} alt={info.name} className="h-16 w-16 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <DefaultPlayerPhoto name={info.name} />
+                  )}
                   <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
-                  <div className="flex min-w-0 items-stretch gap-5">
+                </div>
+                <div className="flex min-w-0 items-stretch gap-5">
                     <div className="flex w-36 shrink-0 flex-col justify-center gap-6 rounded-xl border border-zinc-100 bg-white px-4 py-4 shadow-sm lg:w-44">
                       <div>
                         <span className="text-sm font-medium text-zinc-500">성향</span>
@@ -673,10 +674,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                   </div>
                 </div>
               </div>
-            </div>
           )}
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 md:p-6">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">기간별 스탯</h3>
 
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
