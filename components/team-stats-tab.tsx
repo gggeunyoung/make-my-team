@@ -118,6 +118,14 @@ const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "attendanceRate", label: "출석률" },
 ];
 
+function formatTableCell(key: TableSortKey, row: TableRow) {
+  if (key === "goalsPerMatch") return row.goalsPerMatch.toFixed(2);
+  if (key === "assistsPerMatch") return row.assistsPerMatch.toFixed(2);
+  if (key === "attackPointsPerMatch") return row.attackPointsPerMatch.toFixed(2);
+  if (key === "attendanceRate") return `${row.attendanceRate}%`;
+  return row[key];
+}
+
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initial = name.trim().charAt(0) || "?";
   const cls = size === "sm" ? "h-8 w-8 text-sm" : size === "lg" ? "h-20 w-20 text-2xl" : "h-10 w-10 text-base";
@@ -517,20 +525,30 @@ function PlayerStatsContent({
                   <th className="sticky left-0 z-10 min-w-[160px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-center font-semibold text-zinc-700">
                     선수
                   </th>
-                  {TABLE_COLUMNS.map((col) => (
-                    <th key={col.key} className="whitespace-nowrap px-3 py-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => setSortKey(col.key)}
-                        className={`inline-flex items-center gap-1 font-semibold transition hover:text-zinc-900 ${
-                          sortKey === col.key ? "text-zinc-900" : "text-zinc-500"
+                  {TABLE_COLUMNS.map((col) => {
+                    const isSortCol = sortKey === col.key;
+                    return (
+                      <th
+                        key={col.key}
+                        className={`whitespace-nowrap px-3 py-2 text-center ${
+                          isSortCol
+                            ? "sticky left-[160px] z-10 w-[110px] min-w-[110px] border-r border-zinc-200 bg-zinc-100"
+                            : ""
                         }`}
                       >
-                        {col.label}
-                        {sortKey === col.key ? <span aria-hidden="true">▼</span> : null}
-                      </button>
-                    </th>
-                  ))}
+                        <button
+                          type="button"
+                          onClick={() => setSortKey(col.key)}
+                          className={`inline-flex items-center gap-1 font-semibold transition hover:text-zinc-900 ${
+                            isSortCol ? "text-zinc-900" : "text-zinc-500"
+                          }`}
+                        >
+                          {col.label}
+                          {isSortCol ? <span aria-hidden="true">▼</span> : null}
+                        </button>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -557,16 +575,19 @@ function PlayerStatsContent({
                         <span className="font-medium text-zinc-900">{row.name}</span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.matchCount}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.goals}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.assists}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.attackPoints}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.goalsPerMatch.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.assistsPerMatch.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">
-                      {row.attackPointsPerMatch.toFixed(2)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.attendanceRate}%</td>
+                    {TABLE_COLUMNS.map((col) => {
+                      const isSortCol = sortKey === col.key;
+                      return (
+                        <td
+                          key={col.key}
+                          className={`whitespace-nowrap px-3 py-2 text-center tabular-nums ${
+                            isSortCol ? "sticky left-[160px] z-10 w-[110px] min-w-[110px] border-r border-zinc-200 bg-white" : ""
+                          }`}
+                        >
+                          {formatTableCell(col.key, row)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
