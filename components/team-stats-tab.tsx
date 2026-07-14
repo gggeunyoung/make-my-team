@@ -514,11 +514,11 @@ function PlayerStatsContent({
             <table className="min-w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-100">
-                  <th className="sticky left-0 z-10 min-w-[160px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-left font-semibold text-zinc-700">
+                  <th className="sticky left-0 z-10 min-w-[160px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-center font-semibold text-zinc-700">
                     선수
                   </th>
                   {TABLE_COLUMNS.map((col) => (
-                    <th key={col.key} className="whitespace-nowrap px-3 py-2 text-right">
+                    <th key={col.key} className="whitespace-nowrap px-3 py-2 text-center">
                       <button
                         type="button"
                         onClick={() => setSortKey(col.key)}
@@ -544,7 +544,7 @@ function PlayerStatsContent({
                 {filteredTable.map((row) => (
                   <tr key={row.id} className="border-b border-zinc-100 hover:bg-zinc-50">
                     <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <span className="w-5 shrink-0 text-center text-xs font-semibold text-zinc-400">
                           {row.rank}
                         </span>
@@ -557,16 +557,16 @@ function PlayerStatsContent({
                         <span className="font-medium text-zinc-900">{row.name}</span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.matchCount}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.goals}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.assists}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.attackPoints}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.goalsPerMatch.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.assistsPerMatch.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.matchCount}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.goals}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.assists}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.attackPoints}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.goalsPerMatch.toFixed(2)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.assistsPerMatch.toFixed(2)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">
                       {row.attackPointsPerMatch.toFixed(2)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.attendanceRate}%</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.attendanceRate}%</td>
                   </tr>
                 ))}
               </tbody>
