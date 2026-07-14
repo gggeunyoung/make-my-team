@@ -597,7 +597,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 <div className="flex min-w-0 flex-1 flex-col gap-4">
                   <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
                   <div className="flex min-w-0 items-stretch gap-5">
-                    <div className="flex w-36 shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-white px-4 py-4 shadow-sm lg:w-44">
+                    <div className="flex w-36 shrink-0 flex-col justify-center gap-6 rounded-xl border border-zinc-100 bg-white px-4 py-4 shadow-sm lg:w-44">
                       <div>
                         <span className="text-sm font-medium text-zinc-500">성향</span>
                         <p className="mt-1 text-base font-semibold text-zinc-900">
