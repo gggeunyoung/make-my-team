@@ -495,41 +495,34 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">선수 정보를 불러오는 중...</div>
           ) : (
             <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
-              <div className="flex items-stretch gap-3 md:hidden">
-                <div className="flex w-20 shrink-0 flex-col">
-                  <div className="flex flex-1 overflow-hidden rounded-lg bg-zinc-200">
-                    {info.photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={info.photo} alt={info.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-500">
-                        {info.name.trim().charAt(0) || "?"}
-                      </div>
-                    )}
-                  </div>
-                  <h2 className="mt-2 text-center text-base font-bold text-zinc-900">{info.name}</h2>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-xl border border-zinc-100 bg-white px-3 py-3 shadow-sm">
-                  <div>
-                    <span className="text-sm font-medium text-zinc-500">성향</span>
-                    <p className="mt-1 text-base font-semibold text-zinc-900">
-                      {playerStyleLabel(info.style)}
-                    </p>
-                  </div>
-                  {sportType === "SOCCER" && showPosition ? (
-                    <div>
-                      <span className="text-sm font-medium text-zinc-500">포지션</span>
-                      <p className="mt-1 text-base font-semibold text-zinc-900">
-                        {positionLabels(info.position)}
-                      </p>
+              <div className="flex items-center gap-3 md:hidden">
+                <div className="flex h-16 w-16 shrink-0 overflow-hidden rounded-full bg-zinc-200">
+                  {info.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={info.photo} alt={info.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-zinc-500">
+                      {info.name.trim().charAt(0) || "?"}
                     </div>
-                  ) : null}
-                  <div>
-                    <span className="text-sm font-medium text-zinc-500">출석률</span>
-                    <p className="mt-1 text-2xl font-bold text-zinc-900">
-                      {playerInfo?.attendanceRate ?? 0}%
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-zinc-900">{info.name}</h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                    <p className="text-xs text-zinc-600">
+                      <span className="text-zinc-400">성향</span>{" "}
+                      <span className="font-semibold text-zinc-900">{playerStyleLabel(info.style)}</span>
                     </p>
-                    <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
+                    {sportType === "SOCCER" && showPosition ? (
+                      <p className="text-xs text-zinc-600">
+                        <span className="text-zinc-400">포지션</span>{" "}
+                        <span className="font-semibold text-zinc-900">{positionLabels(info.position)}</span>
+                      </p>
+                    ) : null}
+                    <p className="text-xs text-zinc-600">
+                      <span className="text-zinc-400">출석률</span>{" "}
+                      <span className="font-bold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</span>
+                    </p>
                   </div>
                 </div>
               </div>
