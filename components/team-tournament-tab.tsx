@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { shortYear } from "@/lib/player-period";
-import type { OpponentLevelValue } from "@/lib/player-display";
+import { opponentLevelBadgeClass, type OpponentLevelValue } from "@/lib/player-display";
 
 type TournamentView = "LIST" | "DETAIL";
 
@@ -183,7 +183,11 @@ function MatchCard({ match }: { match: TournamentMatchItem }) {
         <div>
           <p className="text-xs font-medium text-zinc-500">{tournamentStageLabel(match.stage)}</p>
           <h4 className="font-semibold text-zinc-900">VS {match.opponentName}</h4>
-          <p className="text-xs text-zinc-500">{opponentLevelLabel(match.opponentLevel)}</p>
+          <span
+            className={`mt-1 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
+          >
+            상대 {opponentLevelLabel(match.opponentLevel)}
+          </span>
         </div>
         <div className="text-right">
           <p className={`text-lg font-bold ${resultClass}`}>{resultText}</p>

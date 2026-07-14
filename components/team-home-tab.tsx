@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   formatMatchDate,
   matchResultLabel,
+  opponentLevelBadgeClass,
   opponentLevelLabel,
   type OpponentLevelValue,
 } from "@/lib/player-display";
@@ -254,9 +255,14 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                       {matchResultLabel(match.totalResult)}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
-                  </p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <p className="text-xs text-zinc-500">{formatMatchDate(match.date)}</p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
+                    >
+                      상대 {opponentLevelLabel(match.opponentLevel)}
+                    </span>
+                  </div>
 
                   <div className="mt-3 flex items-baseline gap-2">
                     <span className="text-2xl font-bold tabular-nums text-zinc-900">{match.totalScoreUs}</span>

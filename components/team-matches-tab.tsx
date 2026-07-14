@@ -6,6 +6,8 @@ import { TeamLogo } from "@/components/team-logo";
 import {
   formatMatchDate,
   matchResultLabel,
+  opponentLevelBadgeClass,
+  opponentLevelBadgeClassOnDark,
   opponentLevelLabel,
   psoResultLabel,
   type OpponentLevelValue,
@@ -403,7 +405,11 @@ export function TeamMatchesTab({
                 >
                   {finalResult}
                 </span>
-                <span>{opponentLevelLabel(m.opponentLevel)} 상대</span>
+                <span
+                  className={`rounded-full px-2.5 py-1 font-bold ${opponentLevelBadgeClassOnDark(m.opponentLevel)}`}
+                >
+                  상대 {opponentLevelLabel(m.opponentLevel)}
+                </span>
                 <span>·</span>
                 <span>
                   {m.countWin}승 {m.countDraw}무 {m.countLoss}패
@@ -606,9 +612,14 @@ export function TeamMatchesTab({
                               </p>
 
                               <div className="flex items-center justify-between gap-2 text-xs text-zinc-500">
-                                <span className="truncate">
-                                  {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
-                                </span>
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <span className="truncate">{formatMatchDate(match.date)}</span>
+                                  <span
+                                    className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
+                                  >
+                                    상대 {opponentLevelLabel(match.opponentLevel)}
+                                  </span>
+                                </div>
                                 <span className="shrink-0">
                                   {match.countWin}승 {match.countDraw}무 {match.countLoss}패
                                 </span>

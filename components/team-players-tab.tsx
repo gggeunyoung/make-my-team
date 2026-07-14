@@ -6,6 +6,7 @@ import type { PlayerStyleValue, PositionValue } from "@/lib/player";
 import {
   formatMatchDate,
   matchResultLabel,
+  opponentLevelBadgeClass,
   opponentLevelLabel,
   playerStyleLabel,
   positionLabels,
@@ -704,9 +705,14 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                             <div>
                               <h4 className="font-semibold text-zinc-900">VS {card.opponentName}</h4>
-                              <p className="text-xs text-zinc-500">
-                                {formatMatchDate(card.date)} · {opponentLevelLabel(card.opponentLevel)}
-                              </p>
+                              <div className="mt-1 flex items-center gap-1.5">
+                                <p className="text-xs text-zinc-500">{formatMatchDate(card.date)}</p>
+                                <span
+                                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(card.opponentLevel)}`}
+                                >
+                                  상대 {opponentLevelLabel(card.opponentLevel)}
+                                </span>
+                              </div>
                             </div>
                             <div className="text-sm md:text-right">
                               <p className="font-medium text-zinc-800">
