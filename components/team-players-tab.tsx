@@ -591,37 +591,33 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 <div className="flex items-center gap-4">
                   {info.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={info.photo} alt={info.name} className="h-16 w-16 shrink-0 rounded-full object-cover" />
+                    <img src={info.photo} alt={info.name} className="h-20 w-20 shrink-0 rounded-full object-cover" />
                   ) : (
                     <DefaultPlayerPhoto name={info.name} />
                   )}
-                  <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
+                  <div className="min-w-0">
+                    <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <p className="text-sm text-zinc-600">
+                        <span className="text-zinc-400">성향</span>{" "}
+                        <span className="font-semibold text-zinc-900">{playerStyleLabel(info.style)}</span>
+                      </p>
+                      {sportType === "SOCCER" && showPosition ? (
+                        <p className="text-sm text-zinc-600">
+                          <span className="text-zinc-400">포지션</span>{" "}
+                          <span className="font-semibold text-zinc-900">{positionLabels(info.position)}</span>
+                        </p>
+                      ) : null}
+                      <p className="text-sm text-zinc-600">
+                        <span className="text-zinc-400">출석률</span>{" "}
+                        <span className="font-bold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</span>{" "}
+                        <span className="text-xs text-zinc-400">({playerInfo?.quarterLabel})</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex min-w-0 items-stretch gap-5">
-                    <div className="flex w-36 shrink-0 flex-col justify-center gap-6 rounded-xl border border-zinc-100 bg-white px-4 py-4 shadow-sm lg:w-44">
-                      <div>
-                        <span className="text-sm font-medium text-zinc-500">성향</span>
-                        <p className="mt-1 text-base font-semibold text-zinc-900">
-                          {playerStyleLabel(info.style)}
-                        </p>
-                      </div>
-                      {sportType === "SOCCER" && showPosition ? (
-                        <div>
-                          <span className="text-sm font-medium text-zinc-500">포지션</span>
-                          <p className="mt-1 text-base font-semibold text-zinc-900">
-                            {positionLabels(info.position)}
-                          </p>
-                        </div>
-                      ) : null}
-                      <div>
-                        <span className="text-sm font-medium text-zinc-500">출석률</span>
-                        <p className="mt-1 text-2xl font-bold text-zinc-900">
-                          {playerInfo?.attendanceRate ?? 0}%
-                        </p>
-                        <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
-                      </div>
-                    </div>
-                    <div className="flex min-w-0 flex-[1.2] flex-col">
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-sm font-medium text-zinc-600">수상 이력</span>
                       <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                         {(playerInfo?.awards ?? []).length === 0 ? (
