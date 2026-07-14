@@ -574,7 +574,10 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         >
                           <StarIcon className="h-4 w-4 shrink-0 text-amber-400" />
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-zinc-800">VS {m.opponentName}</p>
+                            <p className="truncate font-semibold text-zinc-900">
+                              <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                              {m.opponentName}
+                            </p>
                             <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
                           </div>
                         </li>
@@ -656,7 +659,10 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                             >
                               <StarIcon className="h-4 w-4 shrink-0 text-amber-400" />
                               <div className="min-w-0">
-                                <p className="truncate font-medium text-zinc-800">VS {m.opponentName}</p>
+                                <p className="truncate font-semibold text-zinc-900">
+                                  <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                                  {m.opponentName}
+                                </p>
                                 <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
                               </div>
                             </li>
