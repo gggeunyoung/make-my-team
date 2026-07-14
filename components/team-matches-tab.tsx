@@ -408,7 +408,7 @@ export function TeamMatchesTab({
                 <span
                   className={`rounded-full px-2.5 py-1 font-bold ${opponentLevelBadgeClassOnDark(m.opponentLevel)}`}
                 >
-                  상대 {opponentLevelLabel(m.opponentLevel)}
+                  상대팀 수준: {opponentLevelLabel(m.opponentLevel)}
                 </span>
                 <span>·</span>
                 <span>
@@ -617,7 +617,7 @@ export function TeamMatchesTab({
                                   <span
                                     className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
                                   >
-                                    상대 {opponentLevelLabel(match.opponentLevel)}
+                                    상대팀 수준: {opponentLevelLabel(match.opponentLevel)}
                                   </span>
                                 </div>
                                 <span className="shrink-0">

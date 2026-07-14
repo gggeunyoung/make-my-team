@@ -25,7 +25,7 @@ export function opponentLevelBadgeClass(level: OpponentLevelValue) {
   if (level === "TOP") return "bg-rose-100 text-rose-700";
   if (level === "HIGH") return "bg-orange-100 text-orange-700";
   if (level === "MID") return "bg-amber-100 text-amber-700";
-  return "bg-emerald-100 text-emerald-700";
+  return "bg-sky-100 text-sky-700";
 }
 
 /** 어두운 배경(그라데이션 배너 등) 위에서 쓰는 상대팀 수준 뱃지 색상 */
@@ -33,7 +33,7 @@ export function opponentLevelBadgeClassOnDark(level: OpponentLevelValue) {
   if (level === "TOP") return "bg-rose-400/20 text-rose-200";
   if (level === "HIGH") return "bg-orange-400/20 text-orange-200";
   if (level === "MID") return "bg-amber-400/20 text-amber-200";
-  return "bg-emerald-400/20 text-emerald-200";
+  return "bg-sky-400/20 text-sky-200";
 }
 
 export function matchResultLabel(result: "WIN" | "DRAW" | "LOSS") {

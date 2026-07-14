@@ -260,7 +260,7 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
                     >
-                      상대 {opponentLevelLabel(match.opponentLevel)}
+                      상대팀 수준: {opponentLevelLabel(match.opponentLevel)}
                     </span>
                   </div>
 

@@ -186,7 +186,7 @@ function MatchCard({ match }: { match: TournamentMatchItem }) {
           <span
             className={`mt-1 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
           >
-            상대 {opponentLevelLabel(match.opponentLevel)}
+            상대팀 수준: {opponentLevelLabel(match.opponentLevel)}
           </span>
         </div>
         <div className="text-right">

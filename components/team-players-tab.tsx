@@ -710,7 +710,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                                 <span
                                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(card.opponentLevel)}`}
                                 >
-                                  상대 {opponentLevelLabel(card.opponentLevel)}
+                                  상대팀 수준: {opponentLevelLabel(card.opponentLevel)}
                                 </span>
                               </div>
                             </div>
