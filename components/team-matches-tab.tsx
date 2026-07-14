@@ -224,10 +224,12 @@ export function TeamMatchesTab({
   }, [filteredMatches]);
 
   const seasonSummary = useMemo(() => {
-    const wins = matches.filter((m) => m.totalResult === "WIN").length;
-    const draws = matches.filter((m) => m.totalResult === "DRAW").length;
-    const losses = matches.filter((m) => m.totalResult === "LOSS").length;
-    const total = matches.length;
+    const currentYear = new Date().getFullYear();
+    const yearMatches = matches.filter((m) => new Date(m.date).getFullYear() === currentYear);
+    const wins = yearMatches.filter((m) => m.totalResult === "WIN").length;
+    const draws = yearMatches.filter((m) => m.totalResult === "DRAW").length;
+    const losses = yearMatches.filter((m) => m.totalResult === "LOSS").length;
+    const total = yearMatches.length;
     const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
     const winPct = total > 0 ? (wins / total) * 100 : 0;
     const drawPct = total > 0 ? (draws / total) * 100 : 0;
