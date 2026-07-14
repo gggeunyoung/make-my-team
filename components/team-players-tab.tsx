@@ -6,6 +6,7 @@ import type { PlayerStyleValue, PositionValue } from "@/lib/player";
 import {
   formatMatchDate,
   matchResultLabel,
+  opponentLevelBadgeClass,
   opponentLevelLabel,
   playerStyleLabel,
   positionLabels,
@@ -139,6 +140,16 @@ const OPPONENT_FILTER_OPTIONS: Array<{ value: "ALL" | OpponentLevelValue; label:
 ];
 
 const PERIOD_TAB_ORDER: PeriodType[] = ["MONTHLY", "QUARTERLY", "SEMIANNUAL", "YEARLY"];
+
+function matchCardAccent(result: "WIN" | "DRAW" | "LOSS") {
+  if (result === "WIN") {
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  }
+  if (result === "DRAW") {
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
+  }
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
+}
 
 function DefaultPlayerPhoto({ name }: { name: string }) {
   const initial = name.trim().charAt(0) || "?";
@@ -629,13 +640,13 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">기간별 스탯</h3>
 
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-              <div className="flex w-full rounded-lg border border-zinc-200 p-0.5 md:w-auto">
+              <div className="flex w-full rounded-full border border-zinc-200 p-0.5 md:w-auto">
                 {PERIOD_TAB_ORDER.map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setPeriod(p)}
-                    className={`rounded-md px-3 py-1.5 text-sm ${period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                    className={`rounded-full px-3 py-1.5 text-sm transition ${period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
                       }`}
                   >
                     {periodTypeLabel(p)}
@@ -698,30 +709,46 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                           ? psoResultLabel(card.psoResult)
                           : "-"
                         : matchResultLabel(card.totalResult);
+                      const accent = matchCardAccent(card.totalResult);
 
                       return (
-                        <article key={card.id} className="rounded-lg border border-zinc-200 p-4">
+                        <article
+                          key={card.id}
+                          className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 shadow-sm"
+                        >
+                          <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
                           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                             <div>
-                              <h4 className="font-semibold text-zinc-900">VS {card.opponentName}</h4>
-                              <p className="text-xs text-zinc-500">
-                                {formatMatchDate(card.date)} · {opponentLevelLabel(card.opponentLevel)}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-zinc-900">VS {card.opponentName}</h4>
+                                <span
+                                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                                >
+                                  {finalResult}
+                                </span>
+                              </div>
+                              <div className="mt-1 flex items-center gap-1.5">
+                                <p className="text-xs text-zinc-500">{formatMatchDate(card.date)}</p>
+                                <span
+                                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(card.opponentLevel)}`}
+                                >
+                                  상대팀 수준: {opponentLevelLabel(card.opponentLevel)}
+                                </span>
+                              </div>
                             </div>
                             <div className="text-sm md:text-right">
-                              <p className="font-medium text-zinc-800">
+                              <p className="font-bold tabular-nums text-zinc-900">
                                 종합 {card.totalScoreUs} : {card.totalScoreThem}
                               </p>
                               <p className="text-zinc-600">
                                 {card.countWin}승 {card.countDraw}무 {card.countLoss}패
                               </p>
-                              <p className="font-medium text-zinc-900">{finalResult}</p>
                             </div>
                           </div>
                           <p className="mt-2 text-sm text-zinc-700">
                             {card.goals}골 {card.assists}도움
                             {card.isMom ? (
-                              <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
                                 MOM
                               </span>
                             ) : null}

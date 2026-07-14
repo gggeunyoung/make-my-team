@@ -2,9 +2,12 @@
 
 import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
+import { TeamLogo } from "@/components/team-logo";
 import {
   formatMatchDate,
   matchResultLabel,
+  opponentLevelBadgeClass,
+  opponentLevelBadgeClassOnDark,
   opponentLevelLabel,
   psoResultLabel,
   type OpponentLevelValue,
@@ -71,6 +74,8 @@ type MatchDetailResponse = {
 
 type TeamMatchesTabProps = {
   teamId: string;
+  teamName: string;
+  teamLogo: string | null;
   teamColor: string | null;
   openMatchId?: string | null;
   onMatchOpen?: (matchId: string) => void;
@@ -118,14 +123,14 @@ function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "md" |
   );
 }
 
-function resultAccent(result: MatchResult, _teamColor: string | null) {
+function matchCardAccent(result: MatchResult) {
   if (result === "WIN") {
-    return { borderColor: "#a7f3d0", backgroundColor: "#ecfdf5", textColor: "#059669" };
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
   }
   if (result === "DRAW") {
-    return { borderColor: "#d4d4d8", backgroundColor: "#fafafa", textColor: "#52525b" };
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
   }
-  return { borderColor: "#fca5a5", backgroundColor: "#fef2f2", textColor: "#dc2626" };
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
 function gameResultClass(result: MatchResult) {
@@ -173,6 +178,8 @@ function Toast({ message }: { message: string }) {
 
 export function TeamMatchesTab({
   teamId,
+  teamName,
+  teamLogo,
   teamColor,
   openMatchId = null,
   onMatchOpen,
@@ -192,6 +199,43 @@ export function TeamMatchesTab({
     if (!q) return matches;
     return matches.filter((m) => m.opponentName.includes(q));
   }, [matches, searchQuery]);
+
+  const yearGroups = useMemo(() => {
+    const years: { year: number; monthGroups: { key: string; month: number; items: MatchListItem[] }[] }[] = [];
+    for (const match of filteredMatches) {
+      const d = new Date(match.date);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+
+      let yearGroup = years[years.length - 1];
+      if (!yearGroup || yearGroup.year !== year) {
+        yearGroup = { year, monthGroups: [] };
+        years.push(yearGroup);
+      }
+
+      const monthGroup = yearGroup.monthGroups[yearGroup.monthGroups.length - 1];
+      if (monthGroup && monthGroup.month === month) {
+        monthGroup.items.push(match);
+      } else {
+        yearGroup.monthGroups.push({ key: `${year}-${month}`, month, items: [match] });
+      }
+    }
+    return years;
+  }, [filteredMatches]);
+
+  const seasonSummary = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const yearMatches = matches.filter((m) => new Date(m.date).getFullYear() === currentYear);
+    const wins = yearMatches.filter((m) => m.totalResult === "WIN").length;
+    const draws = yearMatches.filter((m) => m.totalResult === "DRAW").length;
+    const losses = yearMatches.filter((m) => m.totalResult === "LOSS").length;
+    const total = yearMatches.length;
+    const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+    const winPct = total > 0 ? (wins / total) * 100 : 0;
+    const drawPct = total > 0 ? (draws / total) * 100 : 0;
+    const lossPct = total > 0 ? (losses / total) * 100 : 0;
+    return { wins, draws, losses, total, winRate, winPct, drawPct, lossPct };
+  }, [matches]);
 
   const sortedStatEntries = useMemo(
     () => (detail ? sortStatEntries(detail.statEntries) : []),
@@ -286,7 +330,6 @@ export function TeamMatchesTab({
 
   if (view === "DETAIL") {
     const m = detail?.match;
-    const accent = m ? resultAccent(m.totalResult, teamColor) : null;
     const finalResult = m
       ? m.isPso
         ? m.psoResult
@@ -305,7 +348,7 @@ export function TeamMatchesTab({
         <button
           type="button"
           onClick={backToList}
-          className="mb-4 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+          className="mb-4 rounded-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50"
         >
           ← 목록으로
         </button>
@@ -315,83 +358,143 @@ export function TeamMatchesTab({
         ) : (
           <div className="space-y-6">
             <div
-              className="rounded-xl border-2 bg-white p-6"
-              style={
-                accent
-                  ? { borderColor: accent.borderColor, backgroundColor: accent.backgroundColor }
-                  : undefined
-              }
+              className="overflow-hidden rounded-2xl p-6 text-white shadow-sm sm:p-8"
+              style={{ background: `linear-gradient(135deg, ${teamColor ?? "#3f3f46"} 0%, #18181b 100%)` }}
             >
-              <h2 className="text-2xl font-bold text-zinc-900">VS {m.opponentName}</h2>
-              <p className="mt-1 text-sm text-zinc-600">
-                {formatMatchDate(m.date)} · {opponentLevelLabel(m.opponentLevel)}
-              </p>
-              <p className="mt-3 text-sm text-zinc-700">
-                {m.countWin}승 {m.countDraw}무 {m.countLoss}패 · {m.totalScoreUs} : {m.totalScoreThem}
-              </p>
-              <p className="mt-2 text-xl font-bold" style={{ color: accent?.textColor }}>
-                {finalResult}
-              </p>
+              <div className="flex justify-center">
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+                  경기종료 · {formatMatchDate(m.date)}
+                </span>
+              </div>
+
+              <div className="mt-5 flex items-start justify-center gap-4 sm:gap-10">
+                <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  {teamLogo ? (
+                    <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-14 w-14" rounded="lg" />
+                  ) : (
+                    <div className="h-14 w-14 rounded-lg bg-white/20" />
+                  )}
+                  <span className="line-clamp-2 max-w-full break-words text-center text-sm font-semibold">
+                    {teamName}
+                  </span>
+                </div>
+
+                <div className="flex shrink-0 items-baseline gap-2 self-center text-4xl font-extrabold tabular-nums sm:text-5xl">
+                  <span>{m.totalScoreUs}</span>
+                  <span className="text-2xl text-white/40">:</span>
+                  <span>{m.totalScoreThem}</span>
+                </div>
+
+                <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white/20 text-lg font-bold">
+                    {m.opponentName.trim().charAt(0) || "?"}
+                  </div>
+                  <span className="line-clamp-2 max-w-full break-words text-center text-sm font-semibold">
+                    {m.opponentName}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
+                <span
+                  className={`rounded-full px-2.5 py-1 font-semibold ${
+                    m.totalResult === "WIN"
+                      ? "bg-emerald-400/20 text-emerald-200"
+                      : m.totalResult === "DRAW"
+                        ? "bg-white/15 text-white/80"
+                        : "bg-rose-400/20 text-rose-200"
+                  }`}
+                >
+                  {finalResult}
+                </span>
+                <span
+                  className={`rounded-full px-2.5 py-1 font-bold ${opponentLevelBadgeClassOnDark(m.opponentLevel)}`}
+                >
+                  상대팀 수준: {opponentLevelLabel(m.opponentLevel)}
+                </span>
+                <span>·</span>
+                <span>
+                  {m.countWin}승 {m.countDraw}무 {m.countLoss}패
+                </span>
+              </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
-              <h3 className="mb-4 text-lg font-semibold text-zinc-900">MOM</h3>
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-zinc-900">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-amber-400"
+                >
+                  <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+                </svg>
+                MAN OF THE MATCH
+              </h3>
               {detail.momPlayer ? (
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center text-center">
                   {detail.momPlayer.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={detail.momPlayer.photo}
                       alt={detail.momPlayer.name}
-                      className="h-24 w-20 rounded-lg object-cover"
+                      className="h-28 w-24 rounded-xl object-cover shadow-sm"
                     />
                   ) : (
                     <DefaultPlayerPhoto name={detail.momPlayer.name} />
                   )}
-                  <div>
-                    <p className="text-lg font-semibold text-zinc-900">{detail.momPlayer.name}</p>
-                    <p className="text-sm text-zinc-600">
-                      {detail.momPlayer.goals}골 {detail.momPlayer.assists}도움
-                    </p>
-                  </div>
+                  <p className="mt-3 text-xl font-bold text-zinc-900">{detail.momPlayer.name}</p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {detail.momPlayer.goals}골 {detail.momPlayer.assists}도움
+                  </p>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500">MOM 없음</p>
+                <p className="text-center text-sm text-zinc-500">MOM 없음</p>
               )}
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">경기별 결과</h3>
-              <ul className="space-y-2">
+              <div className="flex gap-3 overflow-x-auto pb-1">
                 {detail.games.map((g) => (
-                  <li key={g.id} className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-3">
-                    <span className="text-sm font-medium text-zinc-800">{g.gameNumber}경기</span>
-                    <span className={`text-sm ${gameResultClass(g.result)}`}>
-                      {g.scoreUs} : {g.scoreThem}
+                  <div
+                    key={g.id}
+                    className="flex w-24 shrink-0 flex-col items-center gap-1 rounded-lg border border-zinc-100 bg-zinc-50 py-3"
+                  >
+                    <span className="text-xs text-zinc-400">{g.gameNumber}경기</span>
+                    <span className={`text-base tabular-nums ${gameResultClass(g.result)}`}>
+                      {g.scoreUs}:{g.scoreThem}
                     </span>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">스탯 모음</h3>
               {sortedStatEntries.length === 0 ? (
                 <p className="text-sm text-zinc-500">기록된 골·도움이 없습니다</p>
               ) : (
-                <ul className="space-y-2">
-                  {sortedStatEntries.map((s) => (
-                    <li
-                      key={s.playerId}
-                      className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-2.5 text-sm"
-                    >
-                      <span className="font-medium text-zinc-900">{s.playerName}</span>
-                      <span className="text-zinc-600">
-                        {s.goals}골 {s.assists}도움
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[280px] text-sm">
+                    <thead>
+                      <tr className="border-b border-zinc-200 text-xs text-zinc-400">
+                        <th className="py-2 text-left font-medium">선수명</th>
+                        <th className="py-2 text-right font-medium">골</th>
+                        <th className="py-2 text-right font-medium">도움</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {sortedStatEntries.map((s) => (
+                        <tr key={s.playerId}>
+                          <td className="py-2.5 font-medium text-zinc-900">{s.playerName}</td>
+                          <td className="py-2.5 text-right tabular-nums text-zinc-700">{s.goals}</td>
+                          <td className="py-2.5 text-right tabular-nums text-zinc-700">{s.assists}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
@@ -399,7 +502,7 @@ export function TeamMatchesTab({
               <button
                 type="button"
                 onClick={() => void handleShare()}
-                className="rounded-lg border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+                className="rounded-full border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
               >
                 카카오 공유하기
               </button>
@@ -413,6 +516,45 @@ export function TeamMatchesTab({
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      {!loadingList && seasonSummary.total > 0 ? (
+        <div className="mb-8 flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+          <div className="flex shrink-0 items-center gap-3 sm:border-r sm:border-zinc-100 sm:pr-6">
+            {teamLogo ? (
+              <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-12 w-12 shrink-0" rounded="lg" />
+            ) : (
+              <div className="h-12 w-12 shrink-0 rounded-lg bg-zinc-100" />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-zinc-900">{teamName}</p>
+              <p className="text-xs text-zinc-400">이번 시즌 성적</p>
+            </div>
+          </div>
+
+          <div className="flex flex-1 items-center gap-5 sm:gap-6">
+            <div className="flex shrink-0 flex-col items-center">
+              <span className="text-3xl font-extrabold tabular-nums text-emerald-600">{seasonSummary.winRate}%</span>
+              <span className="mt-1 text-xs font-medium text-zinc-400">승률</span>
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                <span className="text-sm font-bold tabular-nums text-emerald-700">{seasonSummary.wins}승</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-zinc-400" aria-hidden="true" />
+                <span className="text-sm font-bold tabular-nums text-zinc-600">{seasonSummary.draws}무</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" aria-hidden="true" />
+                <span className="text-sm font-bold tabular-nums text-rose-700">{seasonSummary.losses}패</span>
+              </div>
+              <span className="ml-1 text-xs text-zinc-400">총 {seasonSummary.total}경기</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mb-6 flex justify-center">
         <input
           value={searchQuery}
@@ -429,43 +571,88 @@ export function TeamMatchesTab({
           {matches.length === 0 ? "진행한 매치가 없어요" : "검색 결과가 없습니다"}
         </div>
       ) : (
-        <ul className="space-y-3">
-          {filteredMatches.map((match) => {
-            const accent = resultAccent(match.totalResult, teamColor);
-            return (
-              <li key={match.id}>
-                <button
-                  type="button"
-                  onClick={() => openDetail(match.id)}
-                  className="w-full rounded-xl border-2 bg-white p-4 text-left transition hover:shadow-md"
-                  style={{ borderColor: accent.borderColor, backgroundColor: accent.backgroundColor }}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-lg font-semibold" style={{ color: accent.textColor }}>
-                        VS {match.opponentName}
-                      </h3>
-                      <p className="mt-1 text-xs text-zinc-600">
-                        {formatMatchDate(match.date)} · {opponentLevelLabel(match.opponentLevel)}
-                      </p>
-                    </div>
-                    <div className="text-right text-sm">
-                      <p className="font-medium text-zinc-800">
-                        {match.countWin}승 {match.countDraw}무 {match.countLoss}패
-                      </p>
-                      <p className="text-zinc-700">
-                        {match.totalScoreUs} : {match.totalScoreThem}
-                      </p>
-                    </div>
+        <div className="space-y-12">
+          {yearGroups.map((yearGroup) => (
+            <div key={yearGroup.year}>
+              <h2 className="mb-5 px-1 text-2xl font-bold text-zinc-900">{yearGroup.year}년</h2>
+              <div className="space-y-5">
+                {yearGroup.monthGroups.map((group) => (
+                  <div key={group.key}>
+                    <h3 className="mb-3 px-1 text-lg font-semibold text-zinc-700">{group.month}월</h3>
+                    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {group.items.map((match) => {
+                        const accent = matchCardAccent(match.totalResult);
+                        return (
+                          <li key={match.id}>
+                            <button
+                              type="button"
+                              onClick={() => openDetail(match.id)}
+                              className="relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            >
+                              <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="truncate text-base font-bold text-zinc-900">
+                                  <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                                  {match.opponentName}
+                                </h4>
+                                <span
+                                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                                >
+                                  {matchResultLabel(match.totalResult)}
+                                </span>
+                              </div>
+
+                              <p className="flex items-baseline gap-1.5">
+                                <span className="text-2xl font-bold tabular-nums text-zinc-900">
+                                  {match.totalScoreUs}
+                                </span>
+                                <span className="text-lg font-bold text-zinc-300">:</span>
+                                <span className="text-2xl font-bold tabular-nums text-zinc-900">
+                                  {match.totalScoreThem}
+                                </span>
+                              </p>
+
+                              <div className="flex items-center justify-between gap-2 text-xs text-zinc-500">
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <span className="truncate">{formatMatchDate(match.date)}</span>
+                                  <span
+                                    className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
+                                  >
+                                    상대팀 수준: {opponentLevelLabel(match.opponentLevel)}
+                                  </span>
+                                </div>
+                                <span className="shrink-0">
+                                  {match.countWin}승 {match.countDraw}무 {match.countLoss}패
+                                </span>
+                              </div>
+
+                              {match.momName ? (
+                                <div className="flex items-center gap-1.5">
+                                  <svg
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                                  >
+                                    <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+                                  </svg>
+                                  <p className="truncate text-xs text-zinc-500">
+                                    MOM <span className="font-semibold text-zinc-800">{match.momName}</span>
+                                  </p>
+                                </div>
+                              ) : null}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
-                  {match.momName ? (
-                    <p className="mt-2 text-xs text-zinc-600">MOM {match.momName}</p>
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </section>
   );

@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatMatchDate, matchResultLabel, opponentLevelLabel, type OpponentLevelValue } from "@/lib/player-display";
+import {
+  formatMatchDate,
+  matchResultLabel,
+  opponentLevelBadgeClass,
+  opponentLevelLabel,
+  type OpponentLevelValue,
+} from "@/lib/player-display";
 import { periodTypeLabel, type PeriodOption, type PeriodType } from "@/lib/player-period";
 
 type StatsView = "TEAM" | "PLAYER";
@@ -118,9 +124,9 @@ const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "attendanceRate", label: "출석률" },
 ];
 
-function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
+function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initial = name.trim().charAt(0) || "?";
-  const cls = size === "sm" ? "h-8 w-8 text-sm" : "h-10 w-10 text-base";
+  const cls = size === "sm" ? "h-8 w-8 text-sm" : size === "lg" ? "h-20 w-20 text-2xl" : "h-10 w-10 text-base";
   return (
     <div className={`flex shrink-0 items-center justify-center rounded-full bg-zinc-200 font-semibold text-zinc-500 ${cls}`}>
       {initial}
@@ -128,11 +134,13 @@ function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" |
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string | number }) {
+function StatBox({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
+    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-center shadow-sm">
       <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
+      <p className={`mt-1 text-lg font-bold tabular-nums ${highlight ? "text-emerald-600" : "text-zinc-900"}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -160,13 +168,13 @@ function PeriodFilters({
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-3">
-      <div className="flex rounded-lg border border-zinc-200 p-0.5">
+      <div className="flex rounded-full border border-zinc-200 p-0.5">
         {PERIOD_TAB_ORDER.map((p) => (
           <button
             key={p}
             type="button"
             onClick={() => onPeriodChange(p)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
+            className={`rounded-full px-3 py-1.5 text-sm transition ${
               period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
             }`}
           >
@@ -207,16 +215,14 @@ function PeriodFilters({
   );
 }
 
-function resultRowClass(result: "WIN" | "DRAW" | "LOSS") {
-  if (result === "WIN") return "border-emerald-200 bg-emerald-50";
-  if (result === "DRAW") return "border-zinc-200 bg-zinc-50";
-  return "border-red-200 bg-red-50";
-}
-
-function resultTextClass(result: "WIN" | "DRAW" | "LOSS") {
-  if (result === "WIN") return "text-emerald-600";
-  if (result === "DRAW") return "text-zinc-500";
-  return "text-red-600";
+function matchCardAccent(result: "WIN" | "DRAW" | "LOSS") {
+  if (result === "WIN") {
+    return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  }
+  if (result === "DRAW") {
+    return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
+  }
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
 function formatRankingValue(key: string, value: number) {
@@ -241,6 +247,32 @@ function formatRankingTitle(title: string) {
   return title.replace(/경기당/g, "매치당");
 }
 
+const MEDAL_COLORS: Record<number, { disc: string; discDark: string }> = {
+  1: { disc: "#fbbf24", discDark: "#b45309" },
+  2: { disc: "#d4d4d8", discDark: "#71717a" },
+  3: { disc: "#d0824a", discDark: "#92400e" },
+};
+
+function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) {
+  const colors = MEDAL_COLORS[rank];
+  if (!colors) return null;
+
+  return (
+    <svg
+      viewBox="0 0 24 28"
+      className={`shrink-0 ${size === "lg" ? "h-9 w-9" : "h-6 w-6"}`}
+      aria-hidden="true"
+    >
+      <path d="M8 1 L4 12 L9 12.5 Z" fill="#ef4444" />
+      <path d="M16 1 L20 12 L15 12.5 Z" fill="#3b82f6" />
+      <circle cx="12" cy="17" r="8" fill={colors.disc} stroke={colors.discDark} strokeWidth="1" />
+      <text x="12" y="20.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="white">
+        {rank}
+      </text>
+    </svg>
+  );
+}
+
 function TeamStatsContent({
   data,
   loading,
@@ -262,7 +294,7 @@ function TeamStatsContent({
         <h3 className="mb-4 text-lg font-semibold text-zinc-900">매치 결과 종합</h3>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
           <StatBox label="진행한 매치" value={summary?.matchCount ?? 0} />
-          <StatBox label="승률" value={`${summary?.winRate ?? 0}%`} />
+          <StatBox label="승률" value={`${summary?.winRate ?? 0}%`} highlight />
           <StatBox label="득점" value={summary?.goalsScored ?? 0} />
           <StatBox label="실점" value={summary?.goalsConceded ?? 0} />
           <StatBox label="골 득실차" value={summary?.goalDifference ?? 0} />
@@ -276,9 +308,13 @@ function TeamStatsContent({
         <h3 className="mb-4 text-lg font-semibold text-zinc-900">상대팀 수준별 통계</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {byLevel.map((row) => (
-            <div key={row.level} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-              <p className="mb-2 text-sm font-semibold text-zinc-800">{opponentLevelLabel(row.level)}</p>
-              <dl className="space-y-1 text-sm">
+            <div key={row.level} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+              <span
+                className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${opponentLevelBadgeClass(row.level)}`}
+              >
+                {opponentLevelLabel(row.level)}
+              </span>
+              <dl className="mt-3 space-y-1 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-zinc-500">진행한 매치</dt>
                   <dd className="font-medium text-zinc-900">{row.matchCount}</dd>
@@ -289,7 +325,7 @@ function TeamStatsContent({
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-zinc-500">승률</dt>
-                  <dd className="font-medium text-zinc-900">{row.winRate}%</dd>
+                  <dd className="font-bold text-zinc-900">{row.winRate}%</dd>
                 </div>
               </dl>
             </div>
@@ -304,29 +340,42 @@ function TeamStatsContent({
             해당 기간 진행한 매치가 없습니다
           </p>
         ) : (
-          <ul className="space-y-2">
-            {recent.map((m) => (
-              <li
-                key={m.id}
-                className={`flex items-center justify-between rounded-lg border px-4 py-3 ${resultRowClass(m.totalResult)}`}
-              >
-                <div>
-                  <p className="font-semibold text-zinc-900">VS {m.opponentName}</p>
-                  <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
-                </div>
-                <div className="text-right text-sm">
-                  <p className="font-medium text-zinc-800">
-                    {m.totalScoreUs} : {m.totalScoreThem}
-                  </p>
-                  <p className="text-zinc-600">
-                    {m.countWin}승 {m.countDraw}무 {m.countLoss}패
-                  </p>
-                  <p className={`font-semibold ${resultTextClass(m.totalResult)}`}>
-                    {matchResultLabel(m.totalResult)}
-                  </p>
-                </div>
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {recent.map((m) => {
+              const accent = matchCardAccent(m.totalResult);
+              return (
+                <li
+                  key={m.id}
+                  className="relative flex items-center justify-between gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 shadow-sm"
+                >
+                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="truncate text-base font-bold text-zinc-900">
+                        <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                        {m.opponentName}
+                      </h4>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                      >
+                        {matchResultLabel(m.totalResult)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                  </div>
+
+                  <div className="flex shrink-0 items-baseline gap-1.5">
+                    <span className="text-xl font-bold tabular-nums text-zinc-900">{m.totalScoreUs}</span>
+                    <span className="text-base font-bold text-zinc-300">:</span>
+                    <span className="text-xl font-bold tabular-nums text-zinc-900">{m.totalScoreThem}</span>
+                    <span className="ml-2 text-xs text-zinc-500">
+                      {m.countWin}승 {m.countDraw}무 {m.countLoss}패
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -337,23 +386,29 @@ function TeamStatsContent({
 function PlayerStatsContent({
   data,
   loading,
-  accent,
 }: {
   data: PlayerStatsResponse | null;
   loading: boolean;
-  accent: string;
 }) {
   const [sortKey, setSortKey] = useState<TableSortKey>("goals");
+  const [tableSearch, setTableSearch] = useState("");
 
-  const sortedTable = useMemo(() => {
+  const rankedTable = useMemo(() => {
     const rows = data?.table ?? [];
-    return [...rows].sort((a, b) => {
+    const sorted = [...rows].sort((a, b) => {
       const av = a[sortKey];
       const bv = b[sortKey];
       if (typeof av === "number" && typeof bv === "number") return bv - av;
       return 0;
     });
+    return sorted.map((row, index) => ({ ...row, rank: index + 1 }));
   }, [data?.table, sortKey]);
+
+  const filteredTable = useMemo(() => {
+    const q = tableSearch.trim();
+    if (!q) return rankedTable;
+    return rankedTable.filter((row) => row.name.includes(q));
+  }, [rankedTable, tableSearch]);
 
   if (loading) {
     return <p className="text-sm text-zinc-500">선수 스탯을 불러오는 중...</p>;
@@ -381,40 +436,79 @@ function PlayerStatsContent({
                 {cat.items.length === 0 ? (
                   <p className="text-xs text-zinc-400">데이터 없음</p>
                 ) : (
-                  <ul className="space-y-3">
-                    {cat.items.map((item) => {
+                  <>
+                    {(() => {
+                      const top = cat.items[0];
                       const hideValue = cat.key === "attack" || cat.key === "defense";
-
                       return (
-                        <li key={item.id} className="flex items-center gap-2">
-                          <span
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                            style={{ backgroundColor: accent }}
-                          >
-                            {item.rank}
-                          </span>
-                          {item.photo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={item.photo} alt={item.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
-                          ) : (
-                            <DefaultPlayerPhoto name={item.name} size="sm" />
-                          )}
-                          {hideValue ? (
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                            </div>
-                          ) : (
-                            <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                              <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                              <p className="shrink-0 text-xs font-semibold text-zinc-600">
-                                {formatRankingValue(cat.key, item.value)}
-                              </p>
-                            </div>
-                          )}
-                        </li>
+                        <div className="mb-3 flex flex-col items-center rounded-lg bg-white p-3 text-center shadow-sm">
+                          <div className="relative">
+                            {top.photo ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={top.photo}
+                                alt={top.name}
+                                className="h-20 w-20 rounded-full object-cover ring-4 ring-amber-300"
+                              />
+                            ) : (
+                              <DefaultPlayerPhoto name={top.name} size="lg" />
+                            )}
+                            <span className="absolute -bottom-2 -right-2">
+                              <MedalIcon rank={1} size="lg" />
+                            </span>
+                          </div>
+                          <p className="mt-3 truncate text-base font-bold text-zinc-900">{top.name}</p>
+                          {!hideValue ? (
+                            <p className="text-xs font-semibold text-amber-600">
+                              {formatRankingValue(cat.key, top.value)}
+                            </p>
+                          ) : null}
+                        </div>
                       );
-                    })}
-                  </ul>
+                    })()}
+
+                    {cat.items.length > 1 ? (
+                      <ul className="space-y-3">
+                        {cat.items.slice(1).map((item) => {
+                          const hideValue = cat.key === "attack" || cat.key === "defense";
+
+                          return (
+                            <li key={item.id} className="flex items-center gap-2">
+                              {item.rank <= 3 ? (
+                                <MedalIcon rank={item.rank} />
+                              ) : (
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">
+                                  {item.rank}
+                                </span>
+                              )}
+                              {item.photo ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.photo}
+                                  alt={item.name}
+                                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                                />
+                              ) : (
+                                <DefaultPlayerPhoto name={item.name} size="sm" />
+                              )}
+                              {hideValue ? (
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                                </div>
+                              ) : (
+                                <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                                  <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
+                                  <p className="shrink-0 text-xs font-semibold text-zinc-600">
+                                    {formatRankingValue(cat.key, item.value)}
+                                  </p>
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null}
+                  </>
                 )}
               </div>
             ))}
@@ -423,7 +517,17 @@ function PlayerStatsContent({
       </section>
 
       <section>
-        <h3 className="mb-4 text-lg font-semibold text-zinc-900">세부 선수 통계</h3>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold text-zinc-900">세부 선수 통계</h3>
+          {hasMatches ? (
+            <input
+              value={tableSearch}
+              onChange={(e) => setTableSearch(e.target.value)}
+              placeholder="선수 이름 검색"
+              className="h-9 w-full max-w-[200px] rounded-lg border border-zinc-300 px-3 text-sm shadow-sm"
+            />
+          ) : null}
+        </div>
         {!hasMatches ? (
           <p className="rounded-lg border border-dashed border-zinc-200 py-8 text-center text-sm text-zinc-500">
             진행한 매치가 없어요
@@ -433,29 +537,40 @@ function PlayerStatsContent({
             <table className="min-w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-100">
-                  <th className="sticky left-0 z-10 min-w-[140px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-left font-semibold text-zinc-700">
+                  <th className="sticky left-0 z-10 min-w-[160px] border-r border-zinc-200 bg-zinc-100 px-3 py-2 text-center font-semibold text-zinc-700">
                     선수
                   </th>
                   {TABLE_COLUMNS.map((col) => (
-                    <th key={col.key} className="whitespace-nowrap px-3 py-2 text-right">
+                    <th key={col.key} className="whitespace-nowrap px-3 py-2 text-center">
                       <button
                         type="button"
                         onClick={() => setSortKey(col.key)}
-                        className={`font-semibold transition hover:text-zinc-900 ${
-                          sortKey === col.key ? "text-zinc-900 underline" : "text-zinc-600"
+                        className={`inline-flex items-center gap-1 font-semibold transition hover:text-zinc-900 ${
+                          sortKey === col.key ? "text-zinc-900" : "text-zinc-500"
                         }`}
                       >
                         {col.label}
+                        {sortKey === col.key ? <span aria-hidden="true">▼</span> : null}
                       </button>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {sortedTable.map((row) => (
+                {filteredTable.length === 0 ? (
+                  <tr>
+                    <td colSpan={TABLE_COLUMNS.length + 1} className="px-3 py-8 text-center text-sm text-zinc-500">
+                      검색 결과가 없습니다
+                    </td>
+                  </tr>
+                ) : null}
+                {filteredTable.map((row) => (
                   <tr key={row.id} className="border-b border-zinc-100 hover:bg-zinc-50">
                     <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="w-5 shrink-0 text-center text-xs font-semibold text-zinc-400">
+                          {row.rank}
+                        </span>
                         {row.photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={row.photo} alt={row.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
@@ -465,16 +580,16 @@ function PlayerStatsContent({
                         <span className="font-medium text-zinc-900">{row.name}</span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.matchCount}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.goals}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.assists}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.attackPoints}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.goalsPerMatch.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.assistsPerMatch.toFixed(2)}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.matchCount}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.goals}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.assists}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.attackPoints}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.goalsPerMatch.toFixed(2)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.assistsPerMatch.toFixed(2)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">
                       {row.attackPointsPerMatch.toFixed(2)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{row.attendanceRate}%</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums">{row.attendanceRate}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -586,11 +701,11 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="mb-6 flex rounded-lg border border-zinc-200 p-0.5 w-fit">
+      <div className="mb-6 flex w-fit rounded-full border border-zinc-200 p-0.5">
         <button
           type="button"
           onClick={() => setView("TEAM")}
-          className={`rounded-md px-4 py-2 text-sm font-medium ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             view === "TEAM" ? "text-white" : "text-zinc-600 hover:bg-zinc-100"
           }`}
           style={view === "TEAM" ? { backgroundColor: accent } : undefined}
@@ -600,7 +715,7 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
         <button
           type="button"
           onClick={() => setView("PLAYER")}
-          className={`rounded-md px-4 py-2 text-sm font-medium ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             view === "PLAYER" ? "text-white" : "text-zinc-600 hover:bg-zinc-100"
           }`}
           style={view === "PLAYER" ? { backgroundColor: accent } : undefined}
@@ -624,7 +739,7 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
         {view === "TEAM" ? (
           <TeamStatsContent data={teamData} loading={loadingTeam} />
         ) : (
-          <PlayerStatsContent data={playerData} loading={loadingPlayer} accent={accent} />
+          <PlayerStatsContent data={playerData} loading={loadingPlayer} />
         )}
       </div>
     </section>

@@ -832,7 +832,7 @@ export function TournamentMatchRecordForm({
                   key={playerId}
                   type="button"
                   onClick={() => toggleAttendee(playerId)}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
                     selected ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"
                   }`}
                 >
@@ -846,7 +846,7 @@ export function TournamentMatchRecordForm({
             <button
               type="button"
               onClick={addGame}
-              className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+              className="rounded-full bg-zinc-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
             >
               경기 추가
             </button>
@@ -916,7 +916,7 @@ export function TournamentMatchRecordForm({
                                 : [...game.playersAll, player.id],
                             })
                           }
-                          className={`rounded-md border px-3 py-1.5 text-sm ${
+                          className={`rounded-full border px-3 py-1.5 text-sm transition ${
                             selected ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"
                           }`}
                         >
@@ -1114,7 +1114,7 @@ export function TournamentMatchRecordForm({
         <button
           type="button"
           onClick={handleRegisterClick}
-          className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+          className="h-11 w-full rounded-full bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
         >
           {submitting ? "등록 중..." : "등록 완료"}
         </button>
@@ -1142,7 +1142,7 @@ export function TournamentMatchRecordForm({
               <button
                 type="button"
                 onClick={() => setConfirmSubmitOpen(false)}
-                className="h-10 flex-1 rounded-lg border border-zinc-300 text-sm font-semibold text-zinc-700"
+                className="h-10 flex-1 rounded-full border border-zinc-300 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
               >
                 취소
               </button>
@@ -1152,7 +1152,7 @@ export function TournamentMatchRecordForm({
                   setConfirmSubmitOpen(false);
                   void submitMatch();
                 }}
-                className="h-10 flex-1 rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+                className="h-10 flex-1 rounded-full bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
               >
                 등록
               </button>

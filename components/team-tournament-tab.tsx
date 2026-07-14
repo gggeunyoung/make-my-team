@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { shortYear } from "@/lib/player-period";
-import type { OpponentLevelValue } from "@/lib/player-display";
+import { opponentLevelBadgeClass, type OpponentLevelValue } from "@/lib/player-display";
 
 type TournamentView = "LIST" | "DETAIL";
 
@@ -135,16 +135,16 @@ function formatTournamentPeriod(start: string | null, finish: string | null) {
   return `${formatTournamentDate(start)} ~ ${formatTournamentDate(finish)}`;
 }
 
-function resultAccentClass(result: MatchResult) {
-  if (result === "WIN") return "text-emerald-600";
-  if (result === "DRAW") return "text-zinc-500";
-  return "text-red-600";
+function matchCardAccent(result: MatchResult) {
+  if (result === "WIN") return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  if (result === "DRAW") return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
-function psoResultAccentClass(result: PsoResult) {
-  if (result === "WIN") return "text-emerald-600";
-  if (result === "LOSS") return "text-red-600";
-  return "text-zinc-500";
+function psoCardAccent(result: PsoResult) {
+  if (result === "WIN") return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  if (result === "LOSS") return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
+  return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
 }
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
@@ -166,28 +166,39 @@ function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" |
 
 function StatBox({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
+    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-center shadow-sm">
       <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
+      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{value}</p>
     </div>
   );
 }
 
 function MatchCard({ match }: { match: TournamentMatchItem }) {
   const resultText = match.isPso ? psoResultLabel(match.psoResult) : matchResultLabel(match.totalResult);
-  const resultClass = match.isPso ? psoResultAccentClass(match.psoResult) : resultAccentClass(match.totalResult);
+  const accent = match.isPso ? psoCardAccent(match.psoResult) : matchCardAccent(match.totalResult);
 
   return (
-    <article className="rounded-lg border border-zinc-200 bg-white p-4">
+    <article className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 shadow-sm">
+      <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-xs font-medium text-zinc-500">{tournamentStageLabel(match.stage)}</p>
-          <h4 className="font-semibold text-zinc-900">VS {match.opponentName}</h4>
-          <p className="text-xs text-zinc-500">{opponentLevelLabel(match.opponentLevel)}</p>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-zinc-900">VS {match.opponentName}</h4>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+            >
+              {resultText}
+            </span>
+          </div>
+          <span
+            className={`mt-1 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponentLevel)}`}
+          >
+            상대팀 수준: {opponentLevelLabel(match.opponentLevel)}
+          </span>
         </div>
         <div className="text-right">
-          <p className={`text-lg font-bold ${resultClass}`}>{resultText}</p>
-          <p className="font-medium text-zinc-800">
+          <p className="font-bold tabular-nums text-zinc-800">
             {match.totalScoreUs} : {match.totalScoreThem}
           </p>
           {match.gameCount >= 2 ? (
@@ -258,7 +269,7 @@ function TournamentListScreen({
               <button
                 type="button"
                 onClick={() => onSelect(item.id)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-zinc-300 hover:bg-white"
+                className="w-full rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="min-w-0">
                   <p className="text-lg font-bold" style={{ color: accent }}>
@@ -309,7 +320,7 @@ function TournamentDetailScreen({
       <button
         type="button"
         onClick={onBack}
-        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
+        className="rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
       >
         ← 뒤로가기
       </button>
@@ -320,7 +331,7 @@ function TournamentDetailScreen({
         </h2>
       </div>
 
-      <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-5">
+      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
         <p className="text-xl font-bold" style={{ color: accent }}>
           {tournamentResultLabel(tournament.tournamentResult)}
         </p>
@@ -370,7 +381,7 @@ function TournamentDetailScreen({
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {playerRecords.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3">
+              <li key={p.id} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
                 {p.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.photo} alt={p.name} className="h-10 w-10 rounded-full object-cover" />
