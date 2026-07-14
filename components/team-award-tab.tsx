@@ -604,13 +604,13 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5">
+        <div className="flex rounded-full border border-zinc-200 bg-white p-0.5">
           {PERIOD_TAB_ORDER.map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setPeriod(p)}
-              className={`rounded-md px-3 py-1.5 text-sm ${period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              className={`rounded-full px-3 py-1.5 text-sm transition ${period === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
                 }`}
             >
               {periodTypeLabel(p)}

@@ -214,10 +214,10 @@ function resetPlayerFormsToOriginal(forms: PlayerFormItem[]): PlayerFormItem[] {
 }
 
 function getPlayerCardClass(item: PlayerFormItem, sportType: SportType): string {
-  if (item.errorMessage) return "border-red-400 bg-zinc-50";
-  if (isPlayerFormNew(item)) return "border-blue-300 bg-blue-50";
-  if (isPlayerFormModified(item, sportType)) return "border-amber-400 bg-zinc-50";
-  return "border-zinc-300 bg-zinc-50";
+  if (item.errorMessage) return "border-red-400 bg-white shadow-sm";
+  if (isPlayerFormNew(item)) return "border-blue-300 bg-blue-50 shadow-sm";
+  if (isPlayerFormModified(item, sportType)) return "border-amber-400 bg-white shadow-sm";
+  return "border-zinc-300 bg-white shadow-sm";
 }
 
 function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamManagerContentProps) {
@@ -803,7 +803,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
             <button
               type="submit"
               disabled={logoUploading}
-              className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white disabled:opacity-60"
+              className="h-11 w-full rounded-full bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60"
             >
               {submitting ? "저장 중..." : "저장"}
             </button>
@@ -830,7 +830,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
             <button
               type="button"
               onClick={onAddPlayerContainer}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              className="rounded-full border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
             >
               선수 추가
             </button>
@@ -843,8 +843,8 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
               disabled={!hasUnsavedChanges || playerSubmitting}
               className={
                 hasUnsavedChanges
-                  ? "h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                  : "h-10 cursor-not-allowed rounded-lg bg-zinc-200 px-4 text-sm font-semibold text-zinc-400"
+                  ? "h-10 rounded-full bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                  : "h-10 cursor-not-allowed rounded-full bg-zinc-200 px-4 text-sm font-semibold text-zinc-400"
               }
             >
               {playerSubmitting ? "저장 중..." : "저장하기"}
@@ -1036,7 +1036,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
         onClick={() => {
           window.location.href = `/team/${teamId}`;
         }}
-        className="mb-4 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+        className="mb-4 rounded-full border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
       >
         ← 뒤로가기
       </button>
@@ -1050,7 +1050,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
                   key={menu.key}
                   type="button"
                   onClick={() => onSelectMenu(menu.key)}
-                  className={`rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                  className={`rounded-full px-3 py-2 text-left text-sm font-medium transition ${
                     isActive ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >

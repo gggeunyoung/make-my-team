@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { opponentLevelBadgeClass } from "@/lib/player-display";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -110,10 +111,10 @@ function resultLabel(result: MatchListItem["total_result"]) {
   return "패";
 }
 
-function resultAccentClass(result: MatchListItem["total_result"]) {
-  if (result === "WIN") return "text-emerald-600 font-bold text-lg";
-  if (result === "DRAW") return "text-zinc-500 font-bold text-lg";
-  return "text-red-600 font-bold text-lg";
+function matchCardAccent(result: MatchListItem["total_result"]) {
+  if (result === "WIN") return { bar: "bg-emerald-500", badgeBg: "bg-emerald-50", badgeText: "text-emerald-600" };
+  if (result === "DRAW") return { bar: "bg-zinc-300", badgeBg: "bg-zinc-100", badgeText: "text-zinc-600" };
+  return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
 function futsalFormatLabel(format: MatchFormatFutsal | null) {
@@ -750,7 +751,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
           <button
             type="button"
             onClick={goToForm}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
           >
             매치 기록
           </button>
@@ -762,37 +763,57 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         <div className="max-h-[70vh] overflow-y-auto pr-1">
           {!loading && matches.length === 0 ? <p className="text-sm text-zinc-500">등록된 매치가 없습니다.</p> : null}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {matches.map((match) => (
-              <article key={match.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-zinc-900">VS {match.opponent_name}</p>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteMatchId(match.id)}
-                      className="shrink-0 rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-                    >
-                      삭제
-                    </button>
+            {matches.map((match) => {
+              const accent = matchCardAccent(match.total_result);
+              return (
+                <article
+                  key={match.id}
+                  className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 pl-4 shadow-sm"
+                >
+                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-zinc-900">VS {match.opponent_name}</p>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                        >
+                          {resultLabel(match.total_result)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteMatchId(match.id)}
+                        className="shrink-0 rounded-full border border-red-300 px-2 py-1 text-xs text-red-600 transition hover:bg-red-50"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                    <div className="space-y-0.5 text-xs text-zinc-600">
+                      <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span>상대팀 수준:</span>
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${opponentLevelBadgeClass(match.opponent_level)}`}
+                        >
+                          {levelLabel(match.opponent_level)}
+                        </span>
+                      </div>
+                      {sportType === "FUTSAL" ? <p>매치 유형: {futsalFormatLabel(match.match_format_futsal)}</p> : null}
+                      <p className="text-lg font-bold text-zinc-900">
+                        스코어:{" "}
+                        <span className="text-xl">
+                          {match.total_score_us} : {match.total_score_them}
+                        </span>
+                      </p>
+                      <p>
+                        종합 승무패: {match.count_win}승 {match.count_draw}무 {match.count_loss}패
+                      </p>
+                    </div>
                   </div>
-                  <p className={resultAccentClass(match.total_result)}>{resultLabel(match.total_result)}</p>
-                  <div className="space-y-0.5 text-xs text-zinc-600">
-                    <p>매치 날짜: {new Date(match.date).toLocaleDateString("ko-KR")}</p>
-                    <p>상대팀 수준: {levelLabel(match.opponent_level)}</p>
-                    {sportType === "FUTSAL" ? <p>매치 유형: {futsalFormatLabel(match.match_format_futsal)}</p> : null}
-                    <p className="text-lg font-bold text-zinc-900">
-                      스코어:{" "}
-                      <span className="text-xl">
-                        {match.total_score_us} : {match.total_score_them}
-                      </span>
-                    </p>
-                    <p>
-                      종합 승무패: {match.count_win}승 {match.count_draw}무 {match.count_loss}패
-                    </p>
-                  </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
 
@@ -830,7 +851,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
               <button
                 type="button"
                 onClick={() => setMatchInfoOpen(false)}
-                className="mt-4 h-10 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+                className="mt-4 h-10 w-full rounded-full bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
               >
                 확인
               </button>
@@ -917,7 +938,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                   key={player.id}
                   type="button"
                   onClick={() => toggleAttendee(player.id)}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
                     selected ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"
                   }`}
                 >
@@ -931,7 +952,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
             <button
               type="button"
               onClick={addGame}
-              className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+              className="rounded-full bg-zinc-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
             >
               경기 추가
             </button>
@@ -1001,7 +1022,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                                 : [...game.playersAll, player.id],
                             })
                           }
-                          className={`rounded-md border px-3 py-1.5 text-sm ${
+                          className={`rounded-full border px-3 py-1.5 text-sm transition ${
                             selected ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"
                           }`}
                         >
@@ -1196,7 +1217,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
         <button
           type="button"
           onClick={handleRegisterClick}
-          className="h-11 w-full rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+          className="h-11 w-full rounded-full bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
         >
           {submitting ? "등록 중..." : "등록 완료"}
         </button>
@@ -1224,7 +1245,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
               <button
                 type="button"
                 onClick={() => setConfirmSubmitOpen(false)}
-                className="h-10 flex-1 rounded-lg border border-zinc-300 text-sm font-semibold text-zinc-700"
+                className="h-10 flex-1 rounded-full border border-zinc-300 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
               >
                 취소
               </button>
@@ -1234,7 +1255,7 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
                   setConfirmSubmitOpen(false);
                   void submitMatch();
                 }}
-                className="h-10 flex-1 rounded-lg bg-zinc-900 text-sm font-semibold text-white"
+                className="h-10 flex-1 rounded-full bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800"
               >
                 등록
               </button>
