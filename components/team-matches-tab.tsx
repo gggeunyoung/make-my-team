@@ -367,7 +367,7 @@ export function TeamMatchesTab({
                 </span>
               </div>
 
-              <div className="mt-5 flex items-center justify-center gap-4 sm:gap-10">
+              <div className="mt-5 flex items-start justify-center gap-4 sm:gap-10">
                 <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
                   {teamLogo ? (
                     <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-14 w-14" rounded="lg" />
@@ -379,7 +379,7 @@ export function TeamMatchesTab({
                   </span>
                 </div>
 
-                <div className="flex shrink-0 items-baseline gap-2 text-4xl font-extrabold tabular-nums sm:text-5xl">
+                <div className="flex shrink-0 items-baseline gap-2 self-center text-4xl font-extrabold tabular-nums sm:text-5xl">
                   <span>{m.totalScoreUs}</span>
                   <span className="text-2xl text-white/40">:</span>
                   <span>{m.totalScoreThem}</span>
