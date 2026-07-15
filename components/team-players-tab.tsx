@@ -596,7 +596,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                         >
                           <span className="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true" />
                           <div className="flex items-center justify-between gap-2">
-                            <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
+                            <p className="min-w-0 flex-1 truncate font-medium text-zinc-800">
+                              {AWARD_INFO[award.category].name}
+                            </p>
                             <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">
                               1위
                             </span>
@@ -683,7 +685,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                             >
                               <span className="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true" />
                               <div className="flex items-center justify-between gap-2">
-                                <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
+                                <p className="min-w-0 flex-1 truncate font-medium text-zinc-800">
+                              {AWARD_INFO[award.category].name}
+                            </p>
                                 <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">
                                   1위
                                 </span>
