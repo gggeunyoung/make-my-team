@@ -497,30 +497,30 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
           ) : (
             <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
               <div className="flex items-center gap-3 md:hidden">
-                <div className="flex h-16 w-16 shrink-0 overflow-hidden rounded-full bg-zinc-200">
+                <div className="flex h-20 w-20 shrink-0 overflow-hidden rounded-full bg-zinc-200">
                   {info.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={info.photo} alt={info.name} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-zinc-500">
+                    <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-500">
                       {info.name.trim().charAt(0) || "?"}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-zinc-900">{info.name}</h2>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <h2 className="text-xl font-bold text-zinc-900">{info.name}</h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${playerStyleBadgeClass(info.style)}`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-bold ${playerStyleBadgeClass(info.style)}`}
                     >
                       {playerStyleLabel(info.style)}
                     </span>
                     {sportType === "SOCCER" && showPosition ? (
-                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-600">
+                      <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-sm font-semibold text-zinc-600">
                         {positionLabels(info.position)}
                       </span>
                     ) : null}
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
+                    <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-600">
                       출석률 {playerInfo?.attendanceRate ?? 0}%
                     </span>
                   </div>
