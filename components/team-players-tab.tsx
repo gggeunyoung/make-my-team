@@ -8,6 +8,7 @@ import {
   matchResultLabel,
   opponentLevelBadgeClass,
   opponentLevelLabel,
+  playerStyleBadgeClass,
   playerStyleLabel,
   positionLabels,
   psoResultLabel,
@@ -154,9 +155,36 @@ function matchCardAccent(result: "WIN" | "DRAW" | "LOSS") {
 function DefaultPlayerPhoto({ name }: { name: string }) {
   const initial = name.trim().charAt(0) || "?";
   return (
-    <div className="flex h-20 w-16 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-2xl font-semibold text-zinc-500 md:h-28 md:w-24 md:text-3xl">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-2xl font-semibold text-zinc-500">
       {initial}
     </div>
+  );
+}
+
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M10 1.5l2.46 4.99 5.5.8-3.98 3.88.94 5.48L10 13.98l-4.92 2.67.94-5.48L2.04 7.29l5.5-.8L10 1.5z" />
+    </svg>
+  );
+}
+
+function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 5H4v1a3 3 0 0 0 3 3M17 5h3v1a3 3 0 0 1-3 3M9 15v2M15 15v2M8 21h8M9.5 17h5a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1z"
+      />
+    </svg>
   );
 }
 
@@ -239,7 +267,7 @@ function StatBox({
   twoLineLabel?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5 text-center md:px-3 md:py-2">
+    <div className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-center shadow-sm md:px-3 md:py-2">
       <div className="flex min-h-[2.5rem] flex-col items-center justify-center">
         {twoLineLabel ? (
           <>
@@ -250,7 +278,7 @@ function StatBox({
           <p className="text-xs text-zinc-500">{label}</p>
         )}
       </div>
-      <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
+      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{value}</p>
     </div>
   );
 }
@@ -440,13 +468,46 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-3 md:py-6">
-      <div className="mb-4 md:hidden">
+      <div className="mb-4 space-y-3 md:hidden">
         <PlayerSearchInput
           players={players}
           value={searchQuery}
           onChange={setSearchQuery}
           onSelectByName={selectPlayerByName}
         />
+        <ul className="flex gap-3 overflow-x-auto pb-1">
+          {players.map((player) => {
+            const selected = player.id === selectedPlayerId;
+            return (
+              <li key={player.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => selectPlayer(player.id)}
+                  className="flex w-16 flex-col items-center gap-1"
+                >
+                  <span
+                    className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-lg font-semibold text-zinc-500"
+                    style={selected ? { boxShadow: `0 0 0 2.5px ${accent}` } : undefined}
+                  >
+                    {player.photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+                    ) : (
+                      player.name.trim().charAt(0) || "?"
+                    )}
+                  </span>
+                  <span
+                    className={`w-full truncate text-center text-xs ${
+                      selected ? "font-bold text-zinc-900" : "text-zinc-500"
+                    }`}
+                  >
+                    {player.name}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       <div className="flex gap-4">
@@ -457,7 +518,7 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
             onChange={setSearchQuery}
             onSelectByName={selectPlayerByName}
           />
-          <ul className="rounded-xl border border-zinc-200 bg-white py-2">
+          <ul className="space-y-1 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm">
             {players.map((player) => {
               const selected = player.id === selectedPlayerId;
               return (
@@ -465,7 +526,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                   <button
                     type="button"
                     onClick={() => selectPlayer(player.id)}
-                    className="w-full px-3 py-2.5 text-left text-sm transition"
+                    className={`w-full rounded-full px-3 py-2 text-left text-sm transition ${
+                      selected ? "" : "hover:bg-zinc-100"
+                    }`}
                     style={
                       selected
                         ? { backgroundColor: accent, color: "#fff", fontWeight: 600 }
@@ -484,42 +547,34 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
           {loadingInfo || !info ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">선수 정보를 불러오는 중...</div>
           ) : (
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 md:p-6">
-              <div className="flex items-stretch gap-3 md:hidden">
-                <div className="flex w-20 shrink-0 flex-col">
-                  <div className="flex flex-1 overflow-hidden rounded-lg bg-zinc-200">
-                    {info.photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={info.photo} alt={info.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-500">
-                        {info.name.trim().charAt(0) || "?"}
-                      </div>
-                    )}
-                  </div>
-                  <h2 className="mt-2 text-center text-base font-bold text-zinc-900">{info.name}</h2>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3">
-                  <div>
-                    <span className="text-sm font-medium text-zinc-500">성향</span>
-                    <p className="mt-1 text-base font-semibold text-zinc-900">
-                      {playerStyleLabel(info.style)}
-                    </p>
-                  </div>
-                  {sportType === "SOCCER" && showPosition ? (
-                    <div>
-                      <span className="text-sm font-medium text-zinc-500">포지션</span>
-                      <p className="mt-1 text-base font-semibold text-zinc-900">
-                        {positionLabels(info.position)}
-                      </p>
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
+              <div className="flex items-center gap-3 md:hidden">
+                <div className="flex h-20 w-20 shrink-0 overflow-hidden rounded-full bg-zinc-200">
+                  {info.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={info.photo} alt={info.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-500">
+                      {info.name.trim().charAt(0) || "?"}
                     </div>
-                  ) : null}
-                  <div>
-                    <span className="text-sm font-medium text-zinc-500">출석률</span>
-                    <p className="mt-1 text-2xl font-bold text-zinc-900">
-                      {playerInfo?.attendanceRate ?? 0}%
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-zinc-900">{info.name}</h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1.5 text-sm font-bold ${playerStyleBadgeClass(info.style)}`}
+                    >
+                      {playerStyleLabel(info.style)}
+                    </span>
+                    {sportType === "SOCCER" && showPosition ? (
+                      <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-sm font-semibold text-zinc-600">
+                        {positionLabels(info.position)}
+                      </span>
+                    ) : null}
+                    <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-600">
+                      출석률 {playerInfo?.attendanceRate ?? 0}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -527,18 +582,29 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
               <div className="mt-4 space-y-4 md:hidden">
                 <div className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                  <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                  <ul className="mt-2 flex min-h-[90px] max-h-[130px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                     {(playerInfo?.awards ?? []).length === 0 ? (
-                      <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
+                      <li className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-zinc-400">
+                        <TrophyIcon className="h-5 w-5 text-zinc-300" />
+                        수상 이력이 없습니다
+                      </li>
                     ) : (
                       playerInfo?.awards.map((award) => (
                         <li
                           key={`${award.period}-${award.subPeriod}-${award.category}`}
-                          className="rounded border border-zinc-100 bg-white px-3 py-2"
+                          className="relative shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-white p-3 pl-4 shadow-sm"
                         >
-                          <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
-                          <p className="text-xs text-zinc-500">
-                            {formatAwardPeriodLabel(award.period, award.subPeriod)} · 1위
+                          <span className="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true" />
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="min-w-0 flex-1 truncate font-medium text-zinc-800">
+                              {AWARD_INFO[award.category].name}
+                            </p>
+                            <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">
+                              1위
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-zinc-500">
+                            {formatAwardPeriodLabel(award.period, award.subPeriod)}
                           </p>
                         </li>
                       ))
@@ -547,14 +613,26 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 </div>
                 <div className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium text-zinc-600">MOM 받은 경기</span>
-                  <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                  <ul className="mt-2 flex min-h-[90px] max-h-[130px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                     {(playerInfo?.momMatches.length ?? 0) === 0 ? (
-                      <li className="px-1 py-2 text-zinc-400">없음</li>
+                      <li className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-zinc-400">
+                        <StarIcon className="h-5 w-5 text-zinc-300" />
+                        MOM 받은 경기가 없습니다
+                      </li>
                     ) : (
                       playerInfo?.momMatches.map((m) => (
-                        <li key={m.id} className="rounded border border-zinc-100 bg-white px-3 py-2">
-                          <p className="font-medium text-zinc-800">VS {m.opponentName}</p>
-                          <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                        <li
+                          key={m.id}
+                          className="flex shrink-0 items-center gap-2 rounded-lg border border-zinc-100 bg-white p-3 shadow-sm"
+                        >
+                          <StarIcon className="h-4 w-4 shrink-0 text-amber-400" />
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-zinc-900">
+                              <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                              {m.opponentName}
+                            </p>
+                            <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                          </div>
                         </li>
                       ))
                     )}
@@ -562,53 +640,60 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 </div>
               </div>
 
-              <div className="hidden md:flex md:gap-4 md:items-start">
-                {info.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={info.photo} alt={info.name} className="h-28 w-24 shrink-0 rounded-lg object-cover" />
-                ) : (
-                  <DefaultPlayerPhoto name={info.name} />
-                )}
-                <div className="flex min-w-0 flex-1 flex-col gap-4">
-                  <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
-                  <div className="flex min-w-0 items-stretch gap-5">
-                    <div className="flex w-36 shrink-0 flex-col gap-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 lg:w-44">
-                      <div>
-                        <span className="text-sm font-medium text-zinc-500">성향</span>
-                        <p className="mt-1 text-base font-semibold text-zinc-900">
-                          {playerStyleLabel(info.style)}
-                        </p>
-                      </div>
+              <div className="hidden md:flex md:flex-col md:gap-4">
+                <div className="flex items-center gap-4">
+                  {info.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={info.photo} alt={info.name} className="h-20 w-20 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <DefaultPlayerPhoto name={info.name} />
+                  )}
+                  <div className="min-w-0">
+                    <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-bold ${playerStyleBadgeClass(info.style)}`}
+                      >
+                        {playerStyleLabel(info.style)}
+                      </span>
                       {sportType === "SOCCER" && showPosition ? (
-                        <div>
-                          <span className="text-sm font-medium text-zinc-500">포지션</span>
-                          <p className="mt-1 text-base font-semibold text-zinc-900">
-                            {positionLabels(info.position)}
-                          </p>
-                        </div>
+                        <span className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold text-zinc-600">
+                          {positionLabels(info.position)}
+                        </span>
                       ) : null}
-                      <div>
-                        <span className="text-sm font-medium text-zinc-500">출석률</span>
-                        <p className="mt-1 text-2xl font-bold text-zinc-900">
-                          {playerInfo?.attendanceRate ?? 0}%
-                        </p>
-                        <p className="mt-1 text-sm text-zinc-500">{playerInfo?.quarterLabel}</p>
-                      </div>
+                      <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-600">
+                        출석률 {playerInfo?.attendanceRate ?? 0}%
+                        <span className="font-normal text-emerald-500/80">({playerInfo?.quarterLabel})</span>
+                      </span>
                     </div>
-                    <div className="flex min-w-0 flex-[1.2] flex-col">
+                  </div>
+                </div>
+                <div className="flex min-w-0 items-stretch gap-5">
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                      <ul className="mt-2 flex min-h-[200px] max-h-[260px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                         {(playerInfo?.awards ?? []).length === 0 ? (
-                          <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
+                          <li className="flex flex-1 flex-col items-center justify-center gap-1.5 text-center text-zinc-400">
+                            <TrophyIcon className="h-6 w-6 text-zinc-300" />
+                            수상 이력이 없습니다
+                          </li>
                         ) : (
                           playerInfo?.awards.map((award) => (
                             <li
                               key={`${award.period}-${award.subPeriod}-${award.category}`}
-                              className="rounded border border-zinc-100 bg-white px-3 py-2"
+                              className="relative shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-white p-3 pl-4 shadow-sm"
                             >
-                              <p className="font-medium text-zinc-800">{AWARD_INFO[award.category].name}</p>
-                              <p className="text-xs text-zinc-500">
-                                {formatAwardPeriodLabel(award.period, award.subPeriod)} · 1위
+                              <span className="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true" />
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="min-w-0 flex-1 truncate font-medium text-zinc-800">
+                              {AWARD_INFO[award.category].name}
+                            </p>
+                                <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">
+                                  1위
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-xs text-zinc-500">
+                                {formatAwardPeriodLabel(award.period, award.subPeriod)}
                               </p>
                             </li>
                           ))
@@ -617,14 +702,26 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-sm font-medium text-zinc-600">MOM 받은 경기</span>
-                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/80 p-2 pr-1 text-sm">
+                      <ul className="mt-2 flex min-h-[200px] max-h-[260px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                         {(playerInfo?.momMatches.length ?? 0) === 0 ? (
-                          <li className="px-1 py-2 text-zinc-400">없음</li>
+                          <li className="flex flex-1 flex-col items-center justify-center gap-1.5 text-center text-zinc-400">
+                            <StarIcon className="h-6 w-6 text-zinc-300" />
+                            MOM 받은 경기가 없습니다
+                          </li>
                         ) : (
                           playerInfo?.momMatches.map((m) => (
-                            <li key={m.id} className="rounded border border-zinc-100 bg-white px-3 py-2">
-                              <p className="font-medium text-zinc-800">VS {m.opponentName}</p>
-                              <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                            <li
+                              key={m.id}
+                              className="flex shrink-0 items-center gap-2 rounded-lg border border-zinc-100 bg-white p-3 shadow-sm"
+                            >
+                              <StarIcon className="h-4 w-4 shrink-0 text-amber-400" />
+                              <div className="min-w-0">
+                                <p className="truncate font-semibold text-zinc-900">
+                                  <span className="mr-1 text-xs font-semibold text-zinc-400">VS</span>
+                                  {m.opponentName}
+                                </p>
+                                <p className="text-xs text-zinc-500">{formatMatchDate(m.date)}</p>
+                              </div>
                             </li>
                           ))
                         )}
@@ -633,10 +730,9 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                   </div>
                 </div>
               </div>
-            </div>
           )}
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 md:p-6">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">기간별 스탯</h3>
 
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">

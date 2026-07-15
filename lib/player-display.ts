@@ -7,6 +7,13 @@ export function playerStyleLabel(style: PlayerStyleValue) {
   return "골키퍼";
 }
 
+export function playerStyleBadgeClass(style: PlayerStyleValue) {
+  if (style === "OFFENSIVE") return "bg-rose-50 text-rose-600";
+  if (style === "BALANCED") return "bg-amber-50 text-amber-600";
+  if (style === "DEFENSIVE") return "bg-sky-50 text-sky-600";
+  return "bg-violet-50 text-violet-600";
+}
+
 export function positionLabels(positions: PositionValue[]) {
   return positions.join(" / ");
 }
