@@ -256,7 +256,11 @@ function AwardCategoryCard({
   const hasAny = rank1.length + rank2.length + rank3.length > 0;
 
   return (
-    <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <div className="relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <span
+        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300"
+        aria-hidden="true"
+      />
       <div className="flex items-start gap-2 border-l-2 pl-3" style={{ borderColor: accentColor }}>
         <div>
           <h3 className="text-base font-bold text-zinc-900">{info.name}</h3>
@@ -270,8 +274,12 @@ function AwardCategoryCard({
         </p>
       ) : (
         <>
-          <div className="mt-4 flex flex-col items-center rounded-xl bg-zinc-50 p-4 text-center">
+          <div className="mt-4 flex flex-col items-center rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50 to-white p-4 text-center">
             <div className="relative">
+              <span
+                className="absolute inset-0 -z-10 rounded-full bg-amber-300/40 blur-lg"
+                aria-hidden="true"
+              />
               <RankAvatars entries={rank1} size={rank1.length > 1 ? "md" : "lg"} />
               <span className="absolute -bottom-1.5 -right-1.5">
                 <MedalIcon rank={1} size="lg" />
@@ -323,6 +331,78 @@ function AwardCategoryCard({
   );
 }
 
+function BestPlayerHero({ ranks }: { ranks: AwardRankEntry[] }) {
+  const info = AWARD_INFO.BEST_PLAYER;
+  const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
+  const rank1 = ranksByNumber.get(1) ?? [];
+  const rank2 = ranksByNumber.get(2) ?? [];
+  const rank3 = ranksByNumber.get(3) ?? [];
+  const hasAny = rank1.length + rank2.length + rank3.length > 0;
+
+  return (
+    <div className="relative mb-4 overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-b from-amber-50 via-white to-white p-6 shadow-sm sm:p-8">
+      <span
+        className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300"
+        aria-hidden="true"
+      />
+      <div className="text-center">
+        <p className="text-xs font-bold tracking-[0.2em] text-amber-500">MVP</p>
+        <h3 className="mt-1 text-xl font-bold text-zinc-900">{info.name}</h3>
+        <p className="mt-1 text-sm text-zinc-500">{info.description}</p>
+      </div>
+
+      {!hasAny ? (
+        <p className="mt-6 rounded-lg border border-dashed border-zinc-200 py-10 text-center text-sm text-zinc-400">
+          수상자 없음
+        </p>
+      ) : (
+        <div className="mt-6 flex flex-wrap items-end justify-center gap-6 sm:gap-10">
+          {rank2.length > 0 ? (
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <RankAvatars entries={rank2} size="md" />
+                <span className="absolute -bottom-1 -right-1">
+                  <MedalIcon rank={2} />
+                </span>
+              </div>
+              <p className="mt-2 max-w-[8rem] truncate text-sm font-semibold text-zinc-700">
+                {rankEntryLabel(rank2)}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <span className="absolute inset-0 -z-10 rounded-full bg-amber-300/50 blur-xl" aria-hidden="true" />
+              <RankAvatars entries={rank1} size="lg" />
+              <span className="absolute -bottom-2 -right-2">
+                <MedalIcon rank={1} size="lg" />
+              </span>
+            </div>
+            <p className="mt-3 max-w-[10rem] truncate text-base font-bold text-zinc-900">
+              {rankEntryLabel(rank1)}
+            </p>
+          </div>
+
+          {rank3.length > 0 ? (
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <RankAvatars entries={rank3} size="md" />
+                <span className="absolute -bottom-1 -right-1">
+                  <MedalIcon rank={3} />
+                </span>
+              </div>
+              <p className="mt-2 max-w-[8rem] truncate text-sm font-semibold text-zinc-700">
+                {rankEntryLabel(rank3)}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AwardTabContent({
   data,
   loading,
@@ -356,20 +436,24 @@ function AwardTabContent({
     period === "MONTHLY"
       ? ALWAYS_CATEGORIES
       : [...ALWAYS_CATEGORIES, ...QUARTERLY_PLUS_CATEGORIES];
+  const gridCategories = categories.filter((category) => category !== "BEST_PLAYER");
 
   const awardsByCategory = new Map(data.awards.map((award) => [award.category, award.ranks]));
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {categories.map((category) => (
-        <AwardCategoryCard
-          key={category}
-          category={category}
-          ranks={awardsByCategory.get(category) ?? []}
-          accentColor={accentColor}
-        />
-      ))}
-    </div>
+    <>
+      <BestPlayerHero ranks={awardsByCategory.get("BEST_PLAYER") ?? []} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {gridCategories.map((category) => (
+          <AwardCategoryCard
+            key={category}
+            category={category}
+            ranks={awardsByCategory.get(category) ?? []}
+            accentColor={accentColor}
+          />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -461,8 +545,9 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-zinc-900">🏆 시상식</h2>
+      <div className="relative mb-6 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 px-6 py-6 text-center shadow-sm">
+        <p className="text-xs font-bold tracking-[0.3em] text-amber-500">TEAM AWARDS</p>
+        <h2 className="mt-2 text-2xl font-bold text-zinc-900">🏆 시상식</h2>
         <p className="mt-1 text-sm text-zinc-500">기간별 팀 시상 부문 수상자를 확인하세요</p>
       </div>
 
