@@ -257,10 +257,6 @@ function AwardCategoryCard({
 
   return (
     <div className="relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <span
-        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300"
-        aria-hidden="true"
-      />
       <div className="flex items-start gap-2 border-l-2 pl-3" style={{ borderColor: accentColor }}>
         <div>
           <h3 className="text-base font-bold text-zinc-900">{info.name}</h3>
@@ -274,12 +270,8 @@ function AwardCategoryCard({
         </p>
       ) : (
         <>
-          <div className="mt-4 flex flex-col items-center rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50 to-white p-4 text-center">
+          <div className="mt-4 flex flex-col items-center rounded-xl bg-zinc-50 p-4 text-center">
             <div className="relative">
-              <span
-                className="absolute inset-0 -z-10 rounded-full bg-amber-300/40 blur-lg"
-                aria-hidden="true"
-              />
               <RankAvatars entries={rank1} size={rank1.length > 1 ? "md" : "lg"} />
               <span className="absolute -bottom-1.5 -right-1.5">
                 <MedalIcon rank={1} size="lg" />
@@ -331,7 +323,7 @@ function AwardCategoryCard({
   );
 }
 
-function BestPlayerHero({ ranks }: { ranks: AwardRankEntry[] }) {
+function BestPlayerHero({ ranks, accentColor }: { ranks: AwardRankEntry[]; accentColor: string }) {
   const info = AWARD_INFO.BEST_PLAYER;
   const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
   const rank1 = ranksByNumber.get(1) ?? [];
@@ -340,19 +332,18 @@ function BestPlayerHero({ ranks }: { ranks: AwardRankEntry[] }) {
   const hasAny = rank1.length + rank2.length + rank3.length > 0;
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-b from-amber-50 via-white to-white p-6 shadow-sm sm:p-8">
-      <span
-        className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300"
-        aria-hidden="true"
-      />
+    <div
+      className="relative mb-4 overflow-hidden rounded-3xl p-6 text-white shadow-sm sm:p-8"
+      style={{ background: `linear-gradient(135deg, ${accentColor} 0%, #18181b 100%)` }}
+    >
       <div className="text-center">
-        <p className="text-xs font-bold tracking-[0.2em] text-amber-500">MVP</p>
-        <h3 className="mt-1 text-xl font-bold text-zinc-900">{info.name}</h3>
-        <p className="mt-1 text-sm text-zinc-500">{info.description}</p>
+        <p className="text-xs font-bold tracking-[0.2em] text-white/60">MVP</p>
+        <h3 className="mt-1 text-xl font-bold">{info.name}</h3>
+        <p className="mt-1 text-sm text-white/70">{info.description}</p>
       </div>
 
       {!hasAny ? (
-        <p className="mt-6 rounded-lg border border-dashed border-zinc-200 py-10 text-center text-sm text-zinc-400">
+        <p className="mt-6 rounded-lg border border-dashed border-white/20 py-10 text-center text-sm text-white/50">
           수상자 없음
         </p>
       ) : (
@@ -365,7 +356,7 @@ function BestPlayerHero({ ranks }: { ranks: AwardRankEntry[] }) {
                   <MedalIcon rank={2} />
                 </span>
               </div>
-              <p className="mt-2 max-w-[8rem] truncate text-sm font-semibold text-zinc-700">
+              <p className="mt-2 max-w-[8rem] truncate text-sm font-semibold text-white/90">
                 {rankEntryLabel(rank2)}
               </p>
             </div>
@@ -373,15 +364,13 @@ function BestPlayerHero({ ranks }: { ranks: AwardRankEntry[] }) {
 
           <div className="flex flex-col items-center">
             <div className="relative">
-              <span className="absolute inset-0 -z-10 rounded-full bg-amber-300/50 blur-xl" aria-hidden="true" />
+              <span className="absolute inset-0 -z-10 rounded-full bg-white/20 blur-xl" aria-hidden="true" />
               <RankAvatars entries={rank1} size="lg" />
               <span className="absolute -bottom-2 -right-2">
                 <MedalIcon rank={1} size="lg" />
               </span>
             </div>
-            <p className="mt-3 max-w-[10rem] truncate text-base font-bold text-zinc-900">
-              {rankEntryLabel(rank1)}
-            </p>
+            <p className="mt-3 max-w-[10rem] truncate text-base font-bold">{rankEntryLabel(rank1)}</p>
           </div>
 
           {rank3.length > 0 ? (
@@ -392,7 +381,7 @@ function BestPlayerHero({ ranks }: { ranks: AwardRankEntry[] }) {
                   <MedalIcon rank={3} />
                 </span>
               </div>
-              <p className="mt-2 max-w-[8rem] truncate text-sm font-semibold text-zinc-700">
+              <p className="mt-2 max-w-[8rem] truncate text-sm font-semibold text-white/90">
                 {rankEntryLabel(rank3)}
               </p>
             </div>
@@ -442,7 +431,7 @@ function AwardTabContent({
 
   return (
     <>
-      <BestPlayerHero ranks={awardsByCategory.get("BEST_PLAYER") ?? []} />
+      <BestPlayerHero ranks={awardsByCategory.get("BEST_PLAYER") ?? []} accentColor={accentColor} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {gridCategories.map((category) => (
           <AwardCategoryCard
@@ -545,9 +534,8 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="relative mb-6 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 px-6 py-6 text-center shadow-sm">
-        <p className="text-xs font-bold tracking-[0.3em] text-amber-500">TEAM AWARDS</p>
-        <h2 className="mt-2 text-2xl font-bold text-zinc-900">🏆 시상식</h2>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-zinc-900">🏆 시상식</h2>
         <p className="mt-1 text-sm text-zinc-500">기간별 팀 시상 부문 수상자를 확인하세요</p>
       </div>
 
