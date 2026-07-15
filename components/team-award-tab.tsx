@@ -178,18 +178,21 @@ function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) 
 
 function TrophyIcon({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      aria-hidden="true"
-      className={className}
-    >
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M7 2h10a1 1 0 0 1 1 1v3a5 5 0 0 1-4 4.9V13h1.5a1 1 0 1 1 0 2H14v4h2.5a1 1 0 1 1 0 2h-9a1 1 0 1 1 0-2H10v-4H8.5a1 1 0 1 1 0-2H10v-2.1A5 5 0 0 1 6 6V3a1 1 0 0 1 1-1z" />
       <path
+        d="M4 4H2.5A1.5 1.5 0 0 0 1 5.5v1A3.5 3.5 0 0 0 4.5 10H5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.6}
         strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 5H4v1a3 3 0 0 0 3 3M17 5h3v1a3 3 0 0 1-3 3M9 15v2M15 15v2M8 21h8M9.5 17h5a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1z"
+      />
+      <path
+        d="M20 4h1.5A1.5 1.5 0 0 1 23 5.5v1A3.5 3.5 0 0 1 19.5 10H19"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
       />
     </svg>
   );
