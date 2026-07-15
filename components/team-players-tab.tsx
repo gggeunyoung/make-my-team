@@ -169,6 +169,25 @@ function StarIcon({ className }: { className?: string }) {
   );
 }
 
+function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 5H4v1a3 3 0 0 0 3 3M17 5h3v1a3 3 0 0 1-3 3M9 15v2M15 15v2M8 21h8M9.5 17h5a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1z"
+      />
+    </svg>
+  );
+}
+
 function PlayerSearchInput({
   players,
   value,
@@ -449,13 +468,46 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-3 md:py-6">
-      <div className="mb-4 md:hidden">
+      <div className="mb-4 space-y-3 md:hidden">
         <PlayerSearchInput
           players={players}
           value={searchQuery}
           onChange={setSearchQuery}
           onSelectByName={selectPlayerByName}
         />
+        <ul className="flex gap-3 overflow-x-auto pb-1">
+          {players.map((player) => {
+            const selected = player.id === selectedPlayerId;
+            return (
+              <li key={player.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => selectPlayer(player.id)}
+                  className="flex w-16 flex-col items-center gap-1"
+                >
+                  <span
+                    className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-lg font-semibold text-zinc-500"
+                    style={selected ? { boxShadow: `0 0 0 2.5px ${accent}` } : undefined}
+                  >
+                    {player.photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+                    ) : (
+                      player.name.trim().charAt(0) || "?"
+                    )}
+                  </span>
+                  <span
+                    className={`w-full truncate text-center text-xs ${
+                      selected ? "font-bold text-zinc-900" : "text-zinc-500"
+                    }`}
+                  >
+                    {player.name}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       <div className="flex gap-4">
@@ -530,9 +582,12 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
               <div className="mt-4 space-y-4 md:hidden">
                 <div className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                  <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
+                  <ul className="mt-2 flex min-h-[90px] max-h-[130px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                     {(playerInfo?.awards ?? []).length === 0 ? (
-                      <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
+                      <li className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-zinc-400">
+                        <TrophyIcon className="h-5 w-5 text-zinc-300" />
+                        수상 이력이 없습니다
+                      </li>
                     ) : (
                       playerInfo?.awards.map((award) => (
                         <li
@@ -556,9 +611,12 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 </div>
                 <div className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium text-zinc-600">MOM 받은 경기</span>
-                  <ul className="mt-2 max-h-[130px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
+                  <ul className="mt-2 flex min-h-[90px] max-h-[130px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                     {(playerInfo?.momMatches.length ?? 0) === 0 ? (
-                      <li className="px-1 py-2 text-zinc-400">없음</li>
+                      <li className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-zinc-400">
+                        <StarIcon className="h-5 w-5 text-zinc-300" />
+                        MOM 받은 경기가 없습니다
+                      </li>
                     ) : (
                       playerInfo?.momMatches.map((m) => (
                         <li
@@ -611,9 +669,12 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 <div className="flex min-w-0 items-stretch gap-5">
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-sm font-medium text-zinc-600">수상 이력</span>
-                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
+                      <ul className="mt-2 flex min-h-[200px] max-h-[260px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                         {(playerInfo?.awards ?? []).length === 0 ? (
-                          <li className="px-1 py-2 text-zinc-400">수상 이력이 없습니다</li>
+                          <li className="flex flex-1 flex-col items-center justify-center gap-1.5 text-center text-zinc-400">
+                            <TrophyIcon className="h-6 w-6 text-zinc-300" />
+                            수상 이력이 없습니다
+                          </li>
                         ) : (
                           playerInfo?.awards.map((award) => (
                             <li
@@ -637,9 +698,12 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-sm font-medium text-zinc-600">MOM 받은 경기</span>
-                      <ul className="mt-2 min-h-[200px] max-h-[260px] space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
+                      <ul className="mt-2 flex min-h-[200px] max-h-[260px] flex-col space-y-2 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50 p-2 pr-1 text-sm">
                         {(playerInfo?.momMatches.length ?? 0) === 0 ? (
-                          <li className="px-1 py-2 text-zinc-400">없음</li>
+                          <li className="flex flex-1 flex-col items-center justify-center gap-1.5 text-center text-zinc-400">
+                            <StarIcon className="h-6 w-6 text-zinc-300" />
+                            MOM 받은 경기가 없습니다
+                          </li>
                         ) : (
                           playerInfo?.momMatches.map((m) => (
                             <li
