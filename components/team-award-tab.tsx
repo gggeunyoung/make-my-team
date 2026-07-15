@@ -118,21 +118,12 @@ function filterCompletedSubPeriodOptions(period: PeriodType, options: PeriodOpti
   });
 }
 
-function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" | "xl" }) {
+function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initial = name.trim().charAt(0) || "?";
-  const cls =
-    size === "xl"
-      ? "h-24 w-24 text-2xl"
-      : size === "lg"
-        ? "h-20 w-20 text-2xl"
-        : size === "sm"
-          ? "h-10 w-10 text-sm"
-          : "h-14 w-14 text-lg";
+  const cls = size === "lg" ? "h-20 w-20 text-2xl" : size === "sm" ? "h-8 w-8 text-sm" : "h-12 w-12 text-base";
 
   return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-zinc-700 font-semibold text-zinc-200 ${cls}`}
-    >
+    <div className={`flex shrink-0 items-center justify-center rounded-full bg-zinc-200 font-semibold text-zinc-500 ${cls}`}>
       {initial}
     </div>
   );
@@ -145,47 +136,63 @@ function PlayerAvatar({
 }: {
   name: string;
   photo: string | null;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg";
 }) {
-  const cls =
-    size === "xl"
-      ? "h-24 w-24"
-      : size === "lg"
-        ? "h-20 w-20"
-        : size === "sm"
-          ? "h-10 w-10"
-          : "h-14 w-14";
+  const cls = size === "lg" ? "h-20 w-20" : size === "sm" ? "h-8 w-8" : "h-12 w-12";
 
   if (photo) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={photo} alt={name} className={`shrink-0 rounded-full object-cover ${cls}`} />
+      <img src={photo} alt={name} className={`shrink-0 rounded-full border-2 border-white object-cover shadow-sm ${cls}`} />
     );
   }
 
   return <DefaultPlayerPhoto name={name} size={size} />;
 }
 
-function medalStyles(rank: 1 | 2 | 3) {
-  if (rank === 1) {
-    return {
-      ring: "ring-2 ring-amber-300/80",
-      badge: "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-amber-950",
-      label: "🥇 1위",
-    };
-  }
-  if (rank === 2) {
-    return {
-      ring: "ring-1 ring-zinc-300/70",
-      badge: "bg-gradient-to-br from-zinc-200 via-zinc-300 to-zinc-400 text-zinc-800",
-      label: "🥈 2위",
-    };
-  }
-  return {
-    ring: "ring-1 ring-orange-400/60",
-    badge: "bg-gradient-to-br from-orange-300 via-amber-600 to-orange-700 text-orange-950",
-    label: "🥉 3위",
-  };
+const MEDAL_COLORS: Record<number, { disc: string; discDark: string }> = {
+  1: { disc: "#fbbf24", discDark: "#b45309" },
+  2: { disc: "#d4d4d8", discDark: "#71717a" },
+  3: { disc: "#d0824a", discDark: "#92400e" },
+};
+
+function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) {
+  const colors = MEDAL_COLORS[rank];
+  if (!colors) return null;
+
+  return (
+    <svg
+      viewBox="0 0 24 28"
+      className={`shrink-0 ${size === "lg" ? "h-9 w-9" : "h-6 w-6"}`}
+      aria-hidden="true"
+    >
+      <path d="M8 1 L4 12 L9 12.5 Z" fill="#ef4444" />
+      <path d="M16 1 L20 12 L15 12.5 Z" fill="#3b82f6" />
+      <circle cx="12" cy="17" r="8" fill={colors.disc} stroke={colors.discDark} strokeWidth="1" />
+      <text x="12" y="20.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="white">
+        {rank}
+      </text>
+    </svg>
+  );
+}
+
+function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 5H4v1a3 3 0 0 0 3 3M17 5h3v1a3 3 0 0 1-3 3M9 15v2M15 15v2M8 21h8M9.5 17h5a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1z"
+      />
+    </svg>
+  );
 }
 
 function shouldShowStatValue(category: AwardCategory) {
@@ -216,204 +223,17 @@ function groupEntriesByRank(entries: AwardRankEntry[]) {
   return map;
 }
 
-function RankBadge({ rank }: { rank: 1 | 2 | 3 }) {
-  const styles = medalStyles(rank);
-  return (
-    <span
-      className={`absolute left-3 top-3 rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}
-    >
-      {styles.label}
-    </span>
-  );
+function rankEntryLabel(entries: AwardRankEntry[]) {
+  return entries.map((e) => e.playerName).join(" & ");
 }
 
-function SinglePlayerRankContent({
-  entry,
-  category,
-}: {
-  entry: AwardRankEntry;
-  category: AwardCategory;
-}) {
-  const showValue = shouldShowStatValue(category);
-
+function RankAvatars({ entries, size }: { entries: AwardRankEntry[]; size: "sm" | "md" | "lg" }) {
+  if (entries.length === 0) return null;
   return (
-    <div className="flex flex-col items-center text-center">
-      <PlayerAvatar name={entry.playerName} photo={entry.playerPhoto} size="md" />
-      <p className="mt-2 text-sm font-semibold text-white">{entry.playerName}</p>
-      {showValue ? (
-        <p className="mt-1 text-xs font-medium text-amber-200/90">
-          {formatStatValue(category, entry.statValue)}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function ComboRankContent({
-  entries,
-  statValue,
-}: {
-  entries: AwardRankEntry[];
-  statValue: number;
-}) {
-  const [playerA, playerB] = entries;
-  const comboLabel =
-    playerA && playerB
-      ? `${playerA.playerName} & ${playerB.playerName} 조합`
-      : playerA
-        ? `${playerA.playerName} 조합`
-        : "수상자 없음";
-
-  return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex items-center justify-center gap-2">
-        {playerA ? <PlayerAvatar name={playerA.playerName} photo={playerA.playerPhoto} size="md" /> : null}
-        {playerB ? <PlayerAvatar name={playerB.playerName} photo={playerB.playerPhoto} size="md" /> : null}
-      </div>
-      <p className="mt-2 text-sm font-semibold text-white">{comboLabel}</p>
-      {entries.length > 0 ? (
-        <p className="mt-1 text-xs font-medium text-amber-200/90">{formatStatValue("ATTACK_COMBO", statValue)}</p>
-      ) : null}
-    </div>
-  );
-}
-
-function AwardCardHeader({
-  name,
-  description,
-  accentColor,
-  variant = "default",
-}: {
-  name: string;
-  description: string;
-  accentColor: string;
-  variant?: "default" | "podium";
-}) {
-  return (
-    <header
-      className={`border-b border-white/10 px-4 py-4 ${
-        variant === "default" ? "min-h-[112px]" : ""
-      }`}
-      style={
-        variant === "podium"
-          ? { background: `linear-gradient(135deg, ${accentColor}66 0%, rgba(251,191,36,0.18) 100%)` }
-          : { background: `linear-gradient(135deg, ${accentColor}33 0%, transparent 100%)` }
-      }
-    >
-      <h3 className="text-base font-bold text-white">{name}</h3>
-      <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{description}</p>
-    </header>
-  );
-}
-
-function PodiumSlot({
-  rank,
-  entry,
-  avatarSize,
-  pedestalHeightClass,
-  pedestalColorClass,
-}: {
-  rank: 1 | 2 | 3;
-  entry: AwardRankEntry | undefined;
-  avatarSize: "md" | "lg" | "xl";
-  pedestalHeightClass: string;
-  pedestalColorClass: string;
-}) {
-  const styles = medalStyles(rank);
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col items-center justify-end">
-      <div className="flex w-full flex-col items-center px-1">
-        <span className={`mb-2 rounded-full px-2 py-0.5 text-xs font-semibold ${styles.badge}`}>
-          {styles.label}
-        </span>
-        {entry ? (
-          <>
-            <PlayerAvatar name={entry.playerName} photo={entry.playerPhoto} size={avatarSize} />
-            <p className="mt-2 line-clamp-2 text-center text-sm font-semibold text-white">{entry.playerName}</p>
-          </>
-        ) : (
-          <p className="mb-2 text-center text-sm text-zinc-500">수상자 없음</p>
-        )}
-      </div>
-      <div
-        className={`mt-3 w-full shrink-0 rounded-t-md border border-white/10 ${pedestalHeightClass} ${pedestalColorClass}`}
-      />
-    </div>
-  );
-}
-
-function BestPlayerPodiumCard({
-  ranks,
-  accentColor,
-}: {
-  ranks: AwardRankEntry[];
-  accentColor: string;
-}) {
-  const info = AWARD_INFO.BEST_PLAYER;
-  const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
-
-  return (
-    <article className="overflow-hidden rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-950 via-zinc-900 to-amber-900/70 shadow-[0_24px_48px_-24px_rgba(251,191,36,0.45)]">
-      <AwardCardHeader
-        name={info.name}
-        description={info.description}
-        accentColor={accentColor}
-        variant="podium"
-      />
-
-      <div className="flex min-h-[280px] items-end justify-center gap-2 px-3 pb-4 pt-4 sm:gap-4 sm:px-6">
-        <PodiumSlot
-          rank={2}
-          entry={ranksByNumber.get(2)?.[0]}
-          avatarSize="md"
-          pedestalHeightClass="h-16"
-          pedestalColorClass="bg-gradient-to-t from-zinc-500 via-zinc-300 to-zinc-200"
-        />
-        <PodiumSlot
-          rank={1}
-          entry={ranksByNumber.get(1)?.[0]}
-          avatarSize="xl"
-          pedestalHeightClass="h-24"
-          pedestalColorClass="bg-gradient-to-t from-amber-700 via-yellow-400 to-amber-200"
-        />
-        <PodiumSlot
-          rank={3}
-          entry={ranksByNumber.get(3)?.[0]}
-          avatarSize="md"
-          pedestalHeightClass="h-12"
-          pedestalColorClass="bg-gradient-to-t from-orange-800 via-amber-700 to-orange-300"
-        />
-      </div>
-    </article>
-  );
-}
-
-function RankSlot({
-  rank,
-  entries,
-  category,
-}: {
-  rank: 1 | 2 | 3;
-  entries: AwardRankEntry[];
-  category: AwardCategory;
-}) {
-  const styles = medalStyles(rank);
-  const isCombo = category === "ATTACK_COMBO";
-  const statValue = entries[0]?.statValue ?? 0;
-
-  return (
-    <div
-      className={`relative flex min-h-[132px] flex-1 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 pb-4 pt-10 ${styles.ring}`}
-    >
-      <RankBadge rank={rank} />
-      {entries.length === 0 ? (
-        <p className="text-sm text-zinc-500">수상자 없음</p>
-      ) : isCombo ? (
-        <ComboRankContent entries={entries} statValue={statValue} />
-      ) : (
-        <SinglePlayerRankContent entry={entries[0]!} category={category} />
-      )}
+    <div className="flex items-center justify-center -space-x-3">
+      {entries.map((e) => (
+        <PlayerAvatar key={e.playerId} name={e.playerName} photo={e.playerPhoto} size={size} />
+      ))}
     </div>
   );
 }
@@ -427,27 +247,79 @@ function AwardCategoryCard({
   ranks: AwardRankEntry[];
   accentColor: string;
 }) {
-  const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
-
-  if (category === "BEST_PLAYER") {
-    return <BestPlayerPodiumCard ranks={ranks} accentColor={accentColor} />;
-  }
-
   const info = AWARD_INFO[category];
+  const showValue = shouldShowStatValue(category);
+  const ranksByNumber = useMemo(() => groupEntriesByRank(ranks), [ranks]);
+  const rank1 = ranksByNumber.get(1) ?? [];
+  const rank2 = ranksByNumber.get(2) ?? [];
+  const rank3 = ranksByNumber.get(3) ?? [];
+  const hasAny = rank1.length + rank2.length + rank3.length > 0;
 
   return (
-    <article
-      className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-xl"
-      style={{ boxShadow: `0 20px 40px -20px ${accentColor}55` }}
-    >
-      <AwardCardHeader name={info.name} description={info.description} accentColor={accentColor} />
-
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <RankSlot rank={1} entries={ranksByNumber.get(1) ?? []} category={category} />
-        <RankSlot rank={2} entries={ranksByNumber.get(2) ?? []} category={category} />
-        <RankSlot rank={3} entries={ranksByNumber.get(3) ?? []} category={category} />
+    <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start gap-2 border-l-2 pl-3" style={{ borderColor: accentColor }}>
+        <div>
+          <h3 className="text-base font-bold text-zinc-900">{info.name}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500">{info.description}</p>
+        </div>
       </div>
-    </article>
+
+      {!hasAny ? (
+        <p className="mt-4 flex-1 rounded-lg border border-dashed border-zinc-200 py-8 text-center text-sm text-zinc-400">
+          수상자 없음
+        </p>
+      ) : (
+        <>
+          <div className="mt-4 flex flex-col items-center rounded-xl bg-zinc-50 p-4 text-center">
+            <div className="relative">
+              <RankAvatars entries={rank1} size={rank1.length > 1 ? "md" : "lg"} />
+              <span className="absolute -bottom-1.5 -right-1.5">
+                <MedalIcon rank={1} size="lg" />
+              </span>
+            </div>
+            <p className="mt-3 truncate text-sm font-bold text-zinc-900">{rankEntryLabel(rank1)}</p>
+            {showValue ? (
+              <p className="mt-0.5 text-xs font-semibold text-amber-600">
+                {formatStatValue(category, rank1[0]!.statValue)}
+              </p>
+            ) : null}
+          </div>
+
+          {rank2.length > 0 || rank3.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {rank2.length > 0 ? (
+                <li className="flex items-center gap-2">
+                  <MedalIcon rank={2} />
+                  <RankAvatars entries={rank2} size="sm" />
+                  <p className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900">
+                    {rankEntryLabel(rank2)}
+                  </p>
+                  {showValue ? (
+                    <span className="shrink-0 text-xs font-semibold text-zinc-600">
+                      {formatStatValue(category, rank2[0]!.statValue)}
+                    </span>
+                  ) : null}
+                </li>
+              ) : null}
+              {rank3.length > 0 ? (
+                <li className="flex items-center gap-2">
+                  <MedalIcon rank={3} />
+                  <RankAvatars entries={rank3} size="sm" />
+                  <p className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900">
+                    {rankEntryLabel(rank3)}
+                  </p>
+                  {showValue ? (
+                    <span className="shrink-0 text-xs font-semibold text-zinc-600">
+                      {formatStatValue(category, rank3[0]!.statValue)}
+                    </span>
+                  ) : null}
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -463,19 +335,19 @@ function AwardTabContent({
   accentColor: string;
 }) {
   if (loading) {
-    return <p className="text-sm text-zinc-400">시상식 데이터를 불러오는 중...</p>;
+    return <p className="text-sm text-zinc-500">시상식 데이터를 불러오는 중...</p>;
   }
 
   if (!data) {
-    return <p className="text-sm text-zinc-400">시상식 데이터를 불러오지 못했습니다.</p>;
+    return <p className="text-sm text-zinc-500">시상식 데이터를 불러오지 못했습니다.</p>;
   }
 
   if (data.insufficient) {
     return (
-      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-8 py-12 text-center">
-        <p className="text-2xl">🏟️</p>
-        <p className="mt-4 text-lg font-semibold text-amber-100">경기 부족으로 시상식이 열리지 않습니다</p>
-        <p className="mt-2 text-sm text-amber-200/70">해당 기간 팀 매치가 3경기 이상 필요합니다.</p>
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-8 py-12 text-center shadow-sm">
+        <TrophyIcon className="mx-auto h-8 w-8 text-zinc-300" />
+        <p className="mt-3 text-sm font-semibold text-zinc-700">경기 부족으로 시상식이 열리지 않습니다</p>
+        <p className="mt-1 text-xs text-zinc-500">해당 기간 팀 매치가 3경기 이상 필요합니다.</p>
       </div>
     );
   }
@@ -486,25 +358,17 @@ function AwardTabContent({
       : [...ALWAYS_CATEGORIES, ...QUARTERLY_PLUS_CATEGORIES];
 
   const awardsByCategory = new Map(data.awards.map((award) => [award.category, award.ranks]));
-  const gridCategories = categories.filter((category) => category !== "BEST_PLAYER");
 
   return (
-    <div className="space-y-4">
-      <AwardCategoryCard
-        category="BEST_PLAYER"
-        ranks={awardsByCategory.get("BEST_PLAYER") ?? []}
-        accentColor={accentColor}
-      />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {gridCategories.map((category) => (
-          <AwardCategoryCard
-            key={category}
-            category={category}
-            ranks={awardsByCategory.get(category) ?? []}
-            accentColor={accentColor}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {categories.map((category) => (
+        <AwardCategoryCard
+          key={category}
+          category={category}
+          ranks={awardsByCategory.get(category) ?? []}
+          accentColor={accentColor}
+        />
+      ))}
     </div>
   );
 }
@@ -596,11 +460,10 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
   );
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="mb-8 text-center">
-        <p className="text-sm font-medium tracking-[0.3em] text-amber-400/80">TEAM AWARDS</p>
-        <h2 className="mt-2 text-3xl font-bold text-zinc-900">🏆 시상식</h2>
-        <p className="mt-2 text-sm text-zinc-500">기간별 팀 시상 부문 수상자를 확인하세요</p>
+    <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-zinc-900">🏆 시상식</h2>
+        <p className="mt-1 text-sm text-zinc-500">기간별 팀 시상 부문 수상자를 확인하세요</p>
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -621,7 +484,7 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
           value={subPeriod}
           onChange={(e) => setSubPeriod(e.target.value)}
           disabled={loadingPeriods || subPeriodOptions.length === 0}
-          className="h-9 rounded-lg border border-zinc-300 bg-white px-2 text-sm"
+          className="h-9 rounded-lg border border-zinc-300 bg-white px-2 text-sm shadow-sm"
         >
           {subPeriodOptions.length === 0 ? (
             <option value="">경기 데이터가 없습니다</option>
@@ -635,18 +498,18 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
         </select>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
-        {!loadingPeriods && subPeriodOptions.length === 0 ? (
-          <p className="text-center text-sm text-zinc-400">경기 데이터가 없습니다</p>
-        ) : (
-          <AwardTabContent
-            data={awardsData}
-            loading={loadingAwards || loadingPeriods}
-            period={period}
-            accentColor={accentColor}
-          />
-        )}
-      </div>
+      {!loadingPeriods && subPeriodOptions.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-zinc-200 bg-white py-12 text-center text-sm text-zinc-500 shadow-sm">
+          경기 데이터가 없습니다
+        </div>
+      ) : (
+        <AwardTabContent
+          data={awardsData}
+          loading={loadingAwards || loadingPeriods}
+          period={period}
+          accentColor={accentColor}
+        />
+      )}
     </section>
   );
 }
