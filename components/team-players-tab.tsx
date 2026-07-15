@@ -8,6 +8,7 @@ import {
   matchResultLabel,
   opponentLevelBadgeClass,
   opponentLevelLabel,
+  playerStyleBadgeClass,
   playerStyleLabel,
   positionLabels,
   psoResultLabel,
@@ -508,21 +509,20 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg font-bold text-zinc-900">{info.name}</h2>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                    <p className="text-xs text-zinc-600">
-                      <span className="text-zinc-400">성향</span>{" "}
-                      <span className="font-semibold text-zinc-900">{playerStyleLabel(info.style)}</span>
-                    </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${playerStyleBadgeClass(info.style)}`}
+                    >
+                      {playerStyleLabel(info.style)}
+                    </span>
                     {sportType === "SOCCER" && showPosition ? (
-                      <p className="text-xs text-zinc-600">
-                        <span className="text-zinc-400">포지션</span>{" "}
-                        <span className="font-semibold text-zinc-900">{positionLabels(info.position)}</span>
-                      </p>
+                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-600">
+                        {positionLabels(info.position)}
+                      </span>
                     ) : null}
-                    <p className="text-xs text-zinc-600">
-                      <span className="text-zinc-400">출석률</span>{" "}
-                      <span className="font-bold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</span>
-                    </p>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
+                      출석률 {playerInfo?.attendanceRate ?? 0}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -590,22 +590,21 @@ export function TeamPlayersTab({ teamId, teamColor }: TeamPlayersTabProps) {
                   )}
                   <div className="min-w-0">
                     <h2 className="text-2xl font-bold text-zinc-900">{info.name}</h2>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-                      <p className="text-sm text-zinc-600">
-                        <span className="text-zinc-400">성향</span>{" "}
-                        <span className="font-semibold text-zinc-900">{playerStyleLabel(info.style)}</span>
-                      </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-bold ${playerStyleBadgeClass(info.style)}`}
+                      >
+                        {playerStyleLabel(info.style)}
+                      </span>
                       {sportType === "SOCCER" && showPosition ? (
-                        <p className="text-sm text-zinc-600">
-                          <span className="text-zinc-400">포지션</span>{" "}
-                          <span className="font-semibold text-zinc-900">{positionLabels(info.position)}</span>
-                        </p>
+                        <span className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold text-zinc-600">
+                          {positionLabels(info.position)}
+                        </span>
                       ) : null}
-                      <p className="text-sm text-zinc-600">
-                        <span className="text-zinc-400">출석률</span>{" "}
-                        <span className="font-bold text-zinc-900">{playerInfo?.attendanceRate ?? 0}%</span>{" "}
-                        <span className="text-xs text-zinc-400">({playerInfo?.quarterLabel})</span>
-                      </p>
+                      <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-600">
+                        출석률 {playerInfo?.attendanceRate ?? 0}%
+                        <span className="font-normal text-emerald-500/80">({playerInfo?.quarterLabel})</span>
+                      </span>
                     </div>
                   </div>
                 </div>
