@@ -227,6 +227,42 @@ function rankEntryLabel(entries: AwardRankEntry[]) {
   return entries.map((e) => e.playerName).join(" & ");
 }
 
+const CONFETTI_PIECES = [
+  { left: "6%", top: "18%", size: 8, color: "#fbbf24", rotate: 15, shape: "square" as const },
+  { left: "14%", top: "62%", size: 6, color: "#f472b6", rotate: -20, shape: "circle" as const },
+  { left: "22%", top: "30%", size: 5, color: "#38bdf8", rotate: 40, shape: "square" as const },
+  { left: "9%", top: "82%", size: 7, color: "#ffffff", rotate: -10, shape: "circle" as const },
+  { left: "30%", top: "12%", size: 6, color: "#a78bfa", rotate: 25, shape: "square" as const },
+  { left: "88%", top: "20%", size: 8, color: "#fbbf24", rotate: -25, shape: "circle" as const },
+  { left: "80%", top: "70%", size: 6, color: "#38bdf8", rotate: 10, shape: "square" as const },
+  { left: "92%", top: "55%", size: 5, color: "#ffffff", rotate: 30, shape: "circle" as const },
+  { left: "70%", top: "14%", size: 7, color: "#f472b6", rotate: -15, shape: "square" as const },
+  { left: "95%", top: "85%", size: 6, color: "#a78bfa", rotate: 20, shape: "circle" as const },
+  { left: "45%", top: "8%", size: 5, color: "#ffffff", rotate: -30, shape: "square" as const },
+  { left: "55%", top: "90%", size: 7, color: "#fbbf24", rotate: 12, shape: "circle" as const },
+];
+
+function ConfettiDecoration() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      {CONFETTI_PIECES.map((piece, i) => (
+        <span
+          key={i}
+          className={`absolute opacity-40 ${piece.shape === "circle" ? "rounded-full" : "rounded-[2px]"}`}
+          style={{
+            left: piece.left,
+            top: piece.top,
+            width: piece.size,
+            height: piece.size,
+            backgroundColor: piece.color,
+            transform: `rotate(${piece.rotate}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function RankAvatars({ entries, size }: { entries: AwardRankEntry[]; size: "sm" | "md" | "lg" }) {
   if (entries.length === 0) return null;
   return (
@@ -336,18 +372,20 @@ function BestPlayerHero({ ranks, accentColor }: { ranks: AwardRankEntry[]; accen
       className="relative mb-4 overflow-hidden rounded-3xl p-6 text-white shadow-sm sm:p-8"
       style={{ background: `linear-gradient(135deg, ${accentColor} 0%, #18181b 100%)` }}
     >
-      <div className="text-center">
+      <ConfettiDecoration />
+
+      <div className="relative z-10 text-center">
         <p className="text-xs font-bold tracking-[0.2em] text-white/60">MVP</p>
         <h3 className="mt-1 text-xl font-bold">{info.name}</h3>
         <p className="mt-1 text-sm text-white/70">{info.description}</p>
       </div>
 
       {!hasAny ? (
-        <p className="mt-6 rounded-lg border border-dashed border-white/20 py-10 text-center text-sm text-white/50">
+        <p className="relative z-10 mt-6 rounded-lg border border-dashed border-white/20 py-10 text-center text-sm text-white/50">
           수상자 없음
         </p>
       ) : (
-        <div className="mt-6 flex flex-wrap items-end justify-center gap-6 sm:gap-10">
+        <div className="relative z-10 mt-6 flex flex-wrap items-end justify-center gap-6 sm:gap-10">
           {rank2.length > 0 ? (
             <div className="flex flex-col items-center">
               <div className="relative">
@@ -413,10 +451,10 @@ function AwardTabContent({
 
   if (data.insufficient) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-8 py-12 text-center shadow-sm">
-        <TrophyIcon className="mx-auto h-8 w-8 text-zinc-300" />
-        <p className="mt-3 text-sm font-semibold text-zinc-700">경기 부족으로 시상식이 열리지 않습니다</p>
-        <p className="mt-1 text-xs text-zinc-500">해당 기간 팀 매치가 3경기 이상 필요합니다.</p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 py-10 text-center">
+        <TrophyIcon className="h-8 w-8 text-zinc-300" />
+        <p className="text-sm font-medium text-zinc-500">경기 부족으로 이번 기간엔 시상식이 열리지 않아요</p>
+        <p className="text-xs text-zinc-400">해당 기간 팀 매치가 3경기 이상 모이면 시상식이 열려요</p>
       </div>
     );
   }
@@ -572,8 +610,10 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
       </div>
 
       {!loadingPeriods && subPeriodOptions.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-200 bg-white py-12 text-center text-sm text-zinc-500 shadow-sm">
-          경기 데이터가 없습니다
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 py-10 text-center">
+          <TrophyIcon className="h-8 w-8 text-zinc-300" />
+          <p className="text-sm font-medium text-zinc-500">해당 기간엔 진행한 매치가 없어요</p>
+          <p className="text-xs text-zinc-400">매치를 등록하면 여기에 시상식이 표시돼요</p>
         </div>
       ) : (
         <AwardTabContent
