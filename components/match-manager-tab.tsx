@@ -138,6 +138,9 @@ function matchDraftKey(teamId: string) {
   return `match-form-draft:${teamId}`;
 }
 
+/** Synced by match/tournament forms so manager chrome can gate the top back button. */
+export const managerFormUnsavedRef = { current: false };
+
 function saveDraft(key: string, data: MatchFormDraft) {
   if (typeof window === "undefined") return;
   try {
@@ -365,6 +368,13 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     [view, opponentName, attendees, games],
   );
 
+  useEffect(() => {
+    managerFormUnsavedRef.current = hasUnsavedChanges;
+    return () => {
+      managerFormUnsavedRef.current = false;
+    };
+  }, [hasUnsavedChanges]);
+
   const fetchMatches = useCallback(async () => {
     setLoading(true);
     setErrorMessage("");
@@ -426,6 +436,11 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
   useEffect(() => {
     if (!hasUnsavedChanges) return;
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      try {
+        if (sessionStorage.getItem("intentional-leave")) return;
+      } catch {
+        // ignore
+      }
       e.preventDefault();
       e.returnValue = "";
     };
@@ -474,6 +489,11 @@ export function MatchManagerTab({ teamId, sportType, players }: MatchManagerTabP
     leaveActionRef.current = null;
     allowLeaveRef.current = true;
     historyGuardPushedRef.current = false;
+    try {
+      sessionStorage.setItem("intentional-leave", "1");
+    } catch {
+      // ignore
+    }
     if (action === "popstate") {
       window.history.back();
       return;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { managerFormUnsavedRef } from "@/components/match-manager-tab";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -283,6 +284,13 @@ export function TournamentMatchRecordForm({
     [opponentName, games, isPso],
   );
 
+  useEffect(() => {
+    managerFormUnsavedRef.current = hasUnsavedChanges;
+    return () => {
+      managerFormUnsavedRef.current = false;
+    };
+  }, [hasUnsavedChanges]);
+
   const playerMap = useMemo(() => new Map(players.map((player) => [player.id, player.name])), [players]);
 
   const attendeePlayers = useMemo(
@@ -398,6 +406,11 @@ export function TournamentMatchRecordForm({
   useEffect(() => {
     if (!hasUnsavedChanges) return;
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      try {
+        if (sessionStorage.getItem("intentional-leave")) return;
+      } catch {
+        // ignore
+      }
       e.preventDefault();
       e.returnValue = "";
     };
@@ -446,6 +459,11 @@ export function TournamentMatchRecordForm({
     leaveActionRef.current = null;
     allowLeaveRef.current = true;
     historyGuardPushedRef.current = false;
+    try {
+      sessionStorage.setItem("intentional-leave", "1");
+    } catch {
+      // ignore
+    }
     if (action === "popstate") {
       window.history.back();
       return;

@@ -187,6 +187,16 @@ export function TeamPageTabs({
   }, [highlightManager, updateManagerTooltipPosition]);
 
   useEffect(() => {
+    try {
+      if (sessionStorage.getItem("intentional-leave")) {
+        sessionStorage.removeItem("intentional-leave");
+        draftRedirectDoneRef.current = true;
+        return;
+      }
+    } catch {
+      // sessionStorage unavailable — fall through to normal draft redirect
+    }
+
     if (draftRedirectDoneRef.current) return;
     draftRedirectDoneRef.current = true;
 

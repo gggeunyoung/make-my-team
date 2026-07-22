@@ -6,7 +6,7 @@ import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState 
 import { calculateTeamNameUnits } from "@/lib/team";
 import { PLAYER_STYLE_OPTIONS, POSITION_OPTIONS, type PlayerStyleValue, type PositionValue } from "@/lib/player";
 import { ConfirmModal } from "@/components/confirm-modal";
-import { MatchManagerTab } from "@/components/match-manager-tab";
+import { MatchManagerTab, managerFormUnsavedRef } from "@/components/match-manager-tab";
 import { TournamentManagerTab } from "@/components/tournament-manager-tab";
 import { PlayerPhotoCropModal } from "@/components/player-photo-crop-modal";
 import { TeamLogo } from "@/components/team-logo";
@@ -292,6 +292,7 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
   const [cropState, setCropState] = useState<{ clientId: string; imageSrc: string } | null>(null);
   const [removePlayerClientId, setRemovePlayerClientId] = useState<string | null>(null);
   const [pendingMenuTab, setPendingMenuTab] = useState<ManagerTab | null>(null);
+  const [homeLeaveConfirmOpen, setHomeLeaveConfirmOpen] = useState(false);
 
   const hasUnsavedChanges = useMemo(
     () => hasPlayerUnsavedChanges(playerForms, initialTeam.sportType),
@@ -1034,6 +1035,10 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
       <button
         type="button"
         onClick={() => {
+          if (managerFormUnsavedRef.current) {
+            setHomeLeaveConfirmOpen(true);
+            return;
+          }
           window.location.href = `/team/${teamId}`;
         }}
         className="mb-4 rounded-full border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
@@ -1063,6 +1068,25 @@ function TeamManagerContentInner({ teamId, initialTeam, initialPlayers }: TeamMa
 
         <div>{content}</div>
       </div>
+
+      <ConfirmModal
+        open={homeLeaveConfirmOpen}
+        title="나가시겠습니까?"
+        message="저장되지 않은 기록이 있습니다. 나가시겠습니까?"
+        confirmLabel="나가기"
+        cancelLabel="취소"
+        confirmVariant="primary"
+        onConfirm={() => {
+          setHomeLeaveConfirmOpen(false);
+          try {
+            sessionStorage.setItem("intentional-leave", "1");
+          } catch {
+            // ignore
+          }
+          window.location.href = `/team/${teamId}`;
+        }}
+        onCancel={() => setHomeLeaveConfirmOpen(false)}
+      />
 
       <ConfirmModal
         open={removePlayerClientId !== null}
