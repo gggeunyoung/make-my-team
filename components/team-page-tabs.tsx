@@ -23,6 +23,7 @@ type TeamPageTabsProps = {
 type TeamTab = "HOME" | "PLAYERS" | "MATCHES" | "STATS" | "TOURNAMENT" | "AWARD";
 
 const tabs: Array<{ key: TeamTab; label: string }> = [
+  { key: "HOME", label: "Home" },
   { key: "PLAYERS", label: "Players" },
   { key: "MATCHES", label: "Matches" },
   { key: "STATS", label: "Stats" },
@@ -240,6 +241,8 @@ export function TeamPageTabs({
       return (
         <TeamHomeTab
           teamId={teamId}
+          teamName={teamName}
+          teamLogo={teamLogo}
           teamColor={teamColor}
           onMatchClick={(matchId) => replaceUrl("MATCHES", matchId)}
         />

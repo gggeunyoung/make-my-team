@@ -8,6 +8,7 @@ import {
   opponentLevelLabel,
   type OpponentLevelValue,
 } from "@/lib/player-display";
+import { TeamLogo } from "@/components/team-logo";
 
 type MatchResult = "WIN" | "DRAW" | "LOSS";
 
@@ -48,9 +49,19 @@ type HomeResponse = {
 
 type TeamHomeTabProps = {
   teamId: string;
+  teamName: string;
+  teamLogo: string | null;
   teamColor: string | null;
   onMatchClick: (matchId: string) => void;
 };
+
+function Toast({ message }: { message: string }) {
+  return (
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">
+      {message}
+    </div>
+  );
+}
 
 function DefaultPlayerPhoto({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
   const initial = name.trim().charAt(0) || "?";
@@ -96,10 +107,16 @@ function resultAccent(result: MatchResult) {
   return { bar: "bg-rose-500", badgeBg: "bg-rose-50", badgeText: "text-rose-600" };
 }
 
-export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProps) {
+function getTeamHomeUrl(teamId: string) {
+  return `${window.location.origin}/team/${teamId}`;
+}
+
+export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClick }: TeamHomeTabProps) {
   const accent = teamColor ?? "#3f3f46";
   const [data, setData] = useState<HomeResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,10 +143,77 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
     };
   }, [teamId]);
 
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
+  const handleShareHome = async () => {
+    if (sharing) return;
+    const url = getTeamHomeUrl(teamId);
+    setSharing(true);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({
+          title: teamName,
+          text: `${teamName} 홈페이지입니다`,
+          url,
+        });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setToastMessage("링크가 복사되었습니다");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(url);
+        setToastMessage("링크가 복사되었습니다");
+      } catch {
+        setToastMessage("공유에 실패했습니다. 다시 시도해주세요.");
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const shareHeader = (
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+      <div className="flex min-w-0 items-center gap-3">
+        {teamLogo ? (
+          <TeamLogo src={teamLogo} alt={`${teamName} 로고`} className="h-11 w-11 shrink-0" rounded="lg" />
+        ) : (
+          <div className="h-11 w-11 shrink-0 rounded-lg bg-zinc-100" />
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-zinc-900">{teamName}</p>
+          <p className="text-xs text-zinc-500">팀 홈페이지</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => void handleShareHome()}
+        disabled={sharing}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
+          />
+        </svg>
+        팀 홈페이지 공유하기
+      </button>
+    </div>
+  );
+
   if (loading) {
     return (
       <section className="mx-auto w-full max-w-6xl px-4 py-10">
+        {shareHeader}
         <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">홈 정보를 불러오는 중...</div>
+        {toastMessage ? <Toast message={toastMessage} /> : null}
       </section>
     );
   }
@@ -137,15 +221,19 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
   if (!data) {
     return (
       <section className="mx-auto w-full max-w-6xl px-4 py-10">
+        {shareHeader}
         <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">
           홈 정보를 불러오지 못했습니다.
         </div>
+        {toastMessage ? <Toast message={toastMessage} /> : null}
       </section>
     );
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-6 space-y-10">
+    <section className="mx-auto w-full max-w-6xl space-y-10 px-4 py-6">
+      {shareHeader}
+
       <div>
         <h2 className="mb-1 text-lg font-semibold text-zinc-900">이번 분기 선수 스탯 순위</h2>
         <p className="mb-4 text-sm text-zinc-500">{data.quarterLabel}</p>
@@ -234,7 +322,7 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
         ) : (
           <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-2">
             {data.recentMatches.map((match) => {
-              const accent = resultAccent(match.totalResult);
+              const matchAccent = resultAccent(match.totalResult);
               return (
                 <button
                   key={match.id}
@@ -242,7 +330,7 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                   onClick={() => onMatchClick(match.id)}
                   className="relative w-72 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 pl-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <span className={`absolute inset-y-0 left-0 w-1 ${accent.bar}`} aria-hidden="true" />
+                  <span className={`absolute inset-y-0 left-0 w-1 ${matchAccent.bar}`} aria-hidden="true" />
 
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="truncate text-lg font-bold text-zinc-900">
@@ -250,7 +338,7 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
                       {match.opponentName}
                     </h3>
                     <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${accent.badgeBg} ${accent.badgeText}`}
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${matchAccent.badgeBg} ${matchAccent.badgeText}`}
                     >
                       {matchResultLabel(match.totalResult)}
                     </span>
@@ -294,6 +382,8 @@ export function TeamHomeTab({ teamId, teamColor, onMatchClick }: TeamHomeTabProp
           </div>
         )}
       </div>
+
+      {toastMessage ? <Toast message={toastMessage} /> : null}
     </section>
   );
 }
