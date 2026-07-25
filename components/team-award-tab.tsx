@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
 import { getPeriodDateRange } from "@/lib/award-calculation";
-import { formatAwardPeriodKorean } from "@/lib/award-period-label";
+import { awardShareButtonLabel, formatAwardPeriodKorean } from "@/lib/award-period-label";
 import {
   PERIOD_TYPES,
   periodTypeLabel,
@@ -632,8 +632,15 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
     [period, periods],
   );
 
+  const canShareAwards =
+    Boolean(subPeriod) &&
+    !loadingAwards &&
+    !loadingPeriods &&
+    awardsData !== null &&
+    !awardsData.insufficient;
+
   const handleShareAwards = async () => {
-    if (sharing || !subPeriod) return;
+    if (sharing || !canShareAwards || !subPeriod) return;
     const url = getAwardShareUrl(teamId, period, subPeriod);
     const periodLabel = formatAwardPeriodKorean(period, subPeriod);
     const title = `${teamName} ${periodLabel} 시상식`;
@@ -697,21 +704,23 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
             ))
           )}
         </select>
-        <button
-          type="button"
-          onClick={() => void handleShareAwards()}
-          disabled={sharing || !subPeriod}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
-            />
-          </svg>
-          이 분기 시상식 공유하기
-        </button>
+        {canShareAwards ? (
+          <button
+            type="button"
+            onClick={() => void handleShareAwards()}
+            disabled={sharing}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
+              />
+            </svg>
+            {awardShareButtonLabel(period)}
+          </button>
+        ) : null}
       </div>
 
       {!loadingPeriods && subPeriodOptions.length === 0 ? (

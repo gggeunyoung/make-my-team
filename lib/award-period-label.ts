@@ -40,3 +40,17 @@ export function formatAwardPeriodKorean(period: AwardPeriodLike, subPeriod: stri
 
   return subPeriod;
 }
+
+/**
+ * 시상식 공유 버튼 라벨.
+ * 예: QUARTERLY → "이 분기 시상식 공유하기"
+ */
+export function awardShareButtonLabel(period: AwardPeriodLike): string {
+  const normalized = period === "YEARLY" ? "ANNUAL" : period;
+
+  if (normalized === "MONTHLY") return "이번 달 시상식 공유하기";
+  if (normalized === "QUARTERLY") return "이 분기 시상식 공유하기";
+  if (normalized === "SEMIANNUAL") return "이번 반기 시상식 공유하기";
+  if (normalized === "ANNUAL") return "올해 시상식 공유하기";
+  return "시상식 공유하기";
+}
