@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
 import { getPeriodDateRange } from "@/lib/award-calculation";
+import { formatAwardPeriodKorean } from "@/lib/award-period-label";
 import {
+  PERIOD_TYPES,
   periodTypeLabel,
   type PeriodOption,
   type PeriodType,
@@ -11,6 +14,7 @@ import {
 
 type TeamAwardTabProps = {
   teamId: string;
+  teamName: string;
   teamColor: string | null;
 };
 
@@ -105,6 +109,28 @@ const QUARTERLY_PLUS_CATEGORIES: AwardCategory[] = [
 
 function toAwardPeriod(period: PeriodType): AwardPeriod {
   return period === "YEARLY" ? "ANNUAL" : period;
+}
+
+function Toast({ message }: { message: string }) {
+  return (
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">
+      {message}
+    </div>
+  );
+}
+
+function parsePeriodParam(value: string | null): PeriodType | null {
+  if (!value) return null;
+  return PERIOD_TYPES.includes(value as PeriodType) ? (value as PeriodType) : null;
+}
+
+function getAwardShareUrl(teamId: string, period: PeriodType, subPeriod: string) {
+  const params = new URLSearchParams({
+    tab: "award",
+    period,
+    subPeriod,
+  });
+  return `${window.location.origin}/team/${teamId}?${params.toString()}`;
 }
 
 function filterCompletedSubPeriodOptions(period: PeriodType, options: PeriodOption[]): PeriodOption[] {
@@ -491,14 +517,22 @@ function AwardTabContent({
   );
 }
 
-export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
+export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps) {
   const accentColor = teamColor ?? "#3f3f46";
-  const [period, setPeriod] = useState<PeriodType>("MONTHLY");
-  const [subPeriod, setSubPeriod] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [period, setPeriod] = useState<PeriodType>(() => {
+    return parsePeriodParam(searchParams.get("period")) ?? "MONTHLY";
+  });
+  const [subPeriod, setSubPeriod] = useState(() => searchParams.get("subPeriod")?.trim() ?? "");
   const [periods, setPeriods] = useState<PeriodsResponse["periods"] | null>(null);
   const [awardsData, setAwardsData] = useState<AwardsResponse | null>(null);
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [loadingAwards, setLoadingAwards] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -538,6 +572,21 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
   }, [period, periods, subPeriod]);
 
   useEffect(() => {
+    if (!subPeriod) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "award");
+    params.set("period", period);
+    params.set("subPeriod", subPeriod);
+
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery === currentQuery) return;
+
+    router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+  }, [period, subPeriod, pathname, router, searchParams]);
+
+  useEffect(() => {
     if (!subPeriod) {
       setAwardsData(null);
       return;
@@ -572,10 +621,44 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
     };
   }, [teamId, period, subPeriod]);
 
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
   const subPeriodOptions = useMemo(
     () => filterCompletedSubPeriodOptions(period, periods?.[period] ?? []),
     [period, periods],
   );
+
+  const handleShareAwards = async () => {
+    if (sharing || !subPeriod) return;
+    const url = getAwardShareUrl(teamId, period, subPeriod);
+    const periodLabel = formatAwardPeriodKorean(period, subPeriod);
+    const title = `${teamName} ${periodLabel} 시상식`;
+    const text = `${periodLabel} 시상식 결과 나왔습니다!!`;
+
+    setSharing(true);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title, text, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setToastMessage("링크가 복사되었습니다");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(url);
+        setToastMessage("링크가 복사되었습니다");
+      } catch {
+        setToastMessage("공유에 실패했습니다. 다시 시도해주세요.");
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -614,6 +697,21 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
             ))
           )}
         </select>
+        <button
+          type="button"
+          onClick={() => void handleShareAwards()}
+          disabled={sharing || !subPeriod}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
+            />
+          </svg>
+          이 분기 시상식 공유하기
+        </button>
       </div>
 
       {!loadingPeriods && subPeriodOptions.length === 0 ? (
@@ -630,6 +728,8 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
           accentColor={accentColor}
         />
       )}
+
+      {toastMessage ? <Toast message={toastMessage} /> : null}
     </section>
   );
 }

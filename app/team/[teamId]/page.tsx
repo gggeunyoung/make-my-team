@@ -3,10 +3,13 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { TeamPageTabs } from "@/components/team-page-tabs";
+import { formatAwardPeriodKorean } from "@/lib/award-period-label";
+import { PERIOD_TYPES, type PeriodType } from "@/lib/player-period";
 import { prisma } from "@/lib/prisma";
 
 type TeamPageProps = {
   params: Promise<{ teamId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 function getSiteOrigin() {
@@ -26,8 +29,14 @@ function resolveOgImage(logo: string | null, origin: string) {
   return `${origin}/og-default.png`;
 }
 
-export async function generateMetadata({ params }: TeamPageProps): Promise<Metadata> {
+function firstParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0]?.trim() ?? "";
+  return value?.trim() ?? "";
+}
+
+export async function generateMetadata({ params, searchParams }: TeamPageProps): Promise<Metadata> {
   const { teamId } = await params;
+  const query = await searchParams;
   const team = await prisma.team.findUnique({
     where: { id: teamId },
     select: { name: true, logo: true },
@@ -41,6 +50,41 @@ export async function generateMetadata({ params }: TeamPageProps): Promise<Metad
   }
 
   const origin = getSiteOrigin();
+  const tab = firstParam(query.tab).toLowerCase();
+  const period = firstParam(query.period);
+  const subPeriod = firstParam(query.subPeriod);
+
+  if (tab === "award" && PERIOD_TYPES.includes(period as PeriodType) && subPeriod) {
+    const periodLabel = formatAwardPeriodKorean(period as PeriodType, subPeriod);
+    const title = `${team.name} ${periodLabel} 시상식`;
+    const description = `${periodLabel} 시상식 결과 나왔습니다!!`;
+    const ogImage = `${origin}/awards-og-default.png`;
+    const pageUrl = `${origin}/team/${teamId}?tab=award&period=${encodeURIComponent(period)}&subPeriod=${encodeURIComponent(subPeriod)}`;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        url: pageUrl,
+        type: "website",
+        images: [
+          {
+            url: ogImage,
+            alt: `${team.name} 시상식`,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImage],
+      },
+    };
+  }
+
   const title = team.name;
   const description = `${team.name} 홈페이지입니다`;
   const ogImage = resolveOgImage(team.logo, origin);
