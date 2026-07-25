@@ -31,7 +31,7 @@ export default async function Home() {
           <h1 className="text-center text-2xl font-semibold text-zinc-900 sm:text-3xl">
             ⚽️ 동네프로 ⚽️
           </h1>
-          <p className="mt-6 max-w-2xl text-center text-xl font-bold leading-snug text-zinc-900 sm:text-2xl md:text-3xl">
+          <p className="mt-6 max-w-5xl text-center text-lg font-bold leading-snug text-zinc-900 sm:text-2xl md:text-3xl">
             우리 팀도 EPL처럼
             <br />
             우리 팀만의 홈페이지를 만들고 경기와 스탯을 기록하세요
