@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { managerFormUnsavedRef } from "@/components/match-manager-tab";
+import {
+  SCORE_HARD_LIMIT,
+  SCORE_HARD_LIMIT_MESSAGE,
+  isScoreNeedingConfirm,
+  isScoreOverHardLimit,
+} from "@/lib/match-score-limits";
 
 type SportType = "FUTSAL" | "SOCCER";
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -150,6 +156,7 @@ function persistTournamentMatchDraft(key: string, data: TournamentMatchFormDraft
 
 function sanitizeDraftGames(games: GameForm[], validAttendeeIds: Set<string>): GameForm[] {
   const keep = (ids: string[]) => ids.filter((id) => validAttendeeIds.has(id));
+  const maxGoals = SCORE_HARD_LIMIT - 1;
   return games.map((game) => ({
     ...game,
     playersAll: keep(game.playersAll),
@@ -157,6 +164,7 @@ function sanitizeDraftGames(games: GameForm[], validAttendeeIds: Set<string>): G
     playersMf: keep(game.playersMf),
     playersDf: keep(game.playersDf),
     playersGk: keep(game.playersGk),
+    goals: game.goals.length > maxGoals ? game.goals.slice(0, maxGoals) : game.goals,
   }));
 }
 
@@ -245,6 +253,24 @@ function toInt(value: string) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 }
 
+function scoreInputKey(gameId: string, field: "scoreUs" | "scoreThem") {
+  return `${gameId}:${field}`;
+}
+
+function findScoreNeedingConfirm(games: GameForm[]) {
+  let best: { score: number; gameId: string; field: "scoreUs" | "scoreThem" } | null = null;
+  for (const game of games) {
+    for (const field of ["scoreUs", "scoreThem"] as const) {
+      const score = toInt(game[field]);
+      if (score === null || !isScoreNeedingConfirm(score)) continue;
+      if (!best || score > best.score) {
+        best = { score, gameId: game.id, field };
+      }
+    }
+  }
+  return best;
+}
+
 export function TournamentMatchRecordForm({
   teamId,
   tournamentId,
@@ -274,6 +300,12 @@ export function TournamentMatchRecordForm({
   const [formMessage, setFormMessage] = useState("");
   const [formIsError, setFormIsError] = useState(false);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const [highScoreConfirm, setHighScoreConfirm] = useState<{
+    score: number;
+    gameId: string;
+    field: "scoreUs" | "scoreThem";
+  } | null>(null);
+  const scoreInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const historyGuardPushedRef = useRef(false);
   const allowLeaveRef = useRef(false);
@@ -519,6 +551,10 @@ export function TournamentMatchRecordForm({
         const prevScore = toInt(game.scoreUs) ?? 0;
         const nextScore = toInt(digitsOnly);
         let nextGoals = game.goals;
+        // 하드 리밋 이상은 골 이벤트 대량 생성을 막고 값만 반영 (저장 시 검증에서 차단)
+        if (nextScore !== null && isScoreOverHardLimit(nextScore)) {
+          return { ...game, scoreUs: digitsOnly, goals: nextGoals };
+        }
         if (nextScore !== null && nextScore > prevScore) {
           const toAdd = nextScore - game.goals.length;
           if (toAdd > 0) {
@@ -617,6 +653,9 @@ export function TournamentMatchRecordForm({
       const scoreUs = toInt(game.scoreUs);
       const scoreThem = toInt(game.scoreThem);
       if (scoreUs === null || scoreThem === null) return `${gameIdx + 1}경기 스코어를 입력해주세요.`;
+      if (isScoreOverHardLimit(scoreUs) || isScoreOverHardLimit(scoreThem)) {
+        return SCORE_HARD_LIMIT_MESSAGE;
+      }
       if (scoreUs !== game.goals.length) return `${gameIdx + 1}경기: ${GOAL_COUNT_MISMATCH_MSG}`;
 
       if (sportType === "SOCCER") {
@@ -643,7 +682,21 @@ export function TournamentMatchRecordForm({
       setFormMessage(validationError);
       return;
     }
+    const highScore = findScoreNeedingConfirm(games);
+    if (highScore) {
+      setHighScoreConfirm(highScore);
+      return;
+    }
     setConfirmSubmitOpen(true);
+  };
+
+  const cancelHighScoreConfirm = () => {
+    const hit = highScoreConfirm;
+    setHighScoreConfirm(null);
+    if (!hit) return;
+    requestAnimationFrame(() => {
+      scoreInputRefs.current.get(scoreInputKey(hit.gameId, hit.field))?.focus();
+    });
   };
 
   const submitMatch = async () => {
@@ -896,6 +949,11 @@ export function TournamentMatchRecordForm({
                 <div>
                   <label className="mb-1 block text-xs font-medium text-zinc-600">우리팀 득점</label>
                   <input
+                    ref={(el) => {
+                      const key = scoreInputKey(game.id, "scoreUs");
+                      if (el) scoreInputRefs.current.set(key, el);
+                      else scoreInputRefs.current.delete(key);
+                    }}
                     type="text"
                     inputMode="numeric"
                     value={game.scoreUs}
@@ -907,6 +965,11 @@ export function TournamentMatchRecordForm({
                 <div>
                   <label className="mb-1 block text-xs font-medium text-zinc-600">상대팀 득점</label>
                   <input
+                    ref={(el) => {
+                      const key = scoreInputKey(game.id, "scoreThem");
+                      if (el) scoreInputRefs.current.set(key, el);
+                      else scoreInputRefs.current.delete(key);
+                    }}
                     type="text"
                     inputMode="numeric"
                     value={game.scoreThem}
@@ -1178,6 +1241,20 @@ export function TournamentMatchRecordForm({
           </div>
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={highScoreConfirm !== null}
+        title="득점 확인"
+        message={`${highScoreConfirm?.score ?? 0}골을 입력하셨어요. 맞나요?`}
+        confirmLabel="확인"
+        cancelLabel="다시 입력"
+        confirmVariant="primary"
+        onConfirm={() => {
+          setHighScoreConfirm(null);
+          setConfirmSubmitOpen(true);
+        }}
+        onCancel={cancelHighScoreConfirm}
+      />
 
       <ConfirmModal
         open={leaveConfirmOpen}

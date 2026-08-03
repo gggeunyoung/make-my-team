@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { SCORE_HARD_LIMIT_MESSAGE, isScoreOverHardLimit } from "@/lib/match-score-limits";
 import { prisma } from "@/lib/prisma";
 
 type OpponentLevel = "TOP" | "HIGH" | "MID" | "LOW";
@@ -131,6 +132,10 @@ export async function POST(req: Request) {
     }
     const scoreUs = game.scoreUs as number;
     const scoreThem = game.scoreThem as number;
+
+    if (isScoreOverHardLimit(scoreUs) || isScoreOverHardLimit(scoreThem)) {
+      return Response.json({ message: SCORE_HARD_LIMIT_MESSAGE }, { status: 400 });
+    }
 
     const goals = game.goals ?? [];
     if (goals.length !== scoreUs) {
