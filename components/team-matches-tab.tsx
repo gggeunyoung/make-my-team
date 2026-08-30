@@ -345,13 +345,25 @@ export function TeamMatchesTab({
           strategy="lazyOnload"
           onLoad={initKakaoSdk}
         />
-        <button
-          type="button"
-          onClick={backToList}
-          className="mb-4 rounded-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50"
-        >
-          ← 목록으로
-        </button>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={backToList}
+            className="rounded-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50"
+          >
+            ← 목록으로
+          </button>
+
+          {!loadingDetail && m ? (
+            <button
+              type="button"
+              onClick={() => void handleShare()}
+              className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+            >
+              카카오 공유하기
+            </button>
+          ) : null}
+        </div>
 
         {loadingDetail || !m ? (
           <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">매치 정보를 불러오는 중...</div>
@@ -496,16 +508,6 @@ export function TeamMatchesTab({
                   </table>
                 </div>
               )}
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => void handleShare()}
-                className="rounded-full border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
-              >
-                카카오 공유하기
-              </button>
             </div>
           </div>
         )}
