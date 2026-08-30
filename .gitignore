@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .claude/
+
+# DB 백업 덤프 (개인정보 포함 — 절대 커밋 금지)
+*.dump
+*.sql.gz
