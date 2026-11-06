@@ -1,9 +1,18 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
+import type { AwardShareCardData } from "@/components/award-share-card";
+import { AwardShareDialog, type AwardShareDraft } from "@/components/award-share-dialog";
+import {
+  CONFETTI_PIECES,
+  MEDAL_COLORS,
+  MEDAL_RIBBONS,
+  TROPHY_CUP_PATH,
+  TROPHY_HANDLE_PATHS,
+} from "@/components/award-theme";
 import { KAKAO_SDK_SRC, KAKAO_TEXT_MAX_LENGTH, initKakaoSdk } from "@/components/kakao-sdk";
 import { getPeriodDateRange } from "@/lib/award-calculation";
 import { awardShareButtonLabel, formatAwardPeriodKorean } from "@/lib/award-period-label";
@@ -16,6 +25,7 @@ import {
 
 type TeamAwardTabProps = {
   teamId: string;
+  teamName: string;
   teamColor: string | null;
 };
 
@@ -181,12 +191,6 @@ function PlayerAvatar({
   return <DefaultPlayerPhoto name={name} size={size} />;
 }
 
-const MEDAL_COLORS: Record<number, { disc: string; discDark: string }> = {
-  1: { disc: "#fbbf24", discDark: "#b45309" },
-  2: { disc: "#d4d4d8", discDark: "#71717a" },
-  3: { disc: "#d0824a", discDark: "#92400e" },
-};
-
 function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) {
   const colors = MEDAL_COLORS[rank];
   if (!colors) return null;
@@ -197,8 +201,9 @@ function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) 
       className={`shrink-0 ${size === "lg" ? "h-9 w-9" : "h-6 w-6"}`}
       aria-hidden="true"
     >
-      <path d="M8 1 L4 12 L9 12.5 Z" fill="#ef4444" />
-      <path d="M16 1 L20 12 L15 12.5 Z" fill="#3b82f6" />
+      {MEDAL_RIBBONS.map((ribbon) => (
+        <path key={ribbon.d} d={ribbon.d} fill={ribbon.fill} />
+      ))}
       <circle cx="12" cy="17" r="8" fill={colors.disc} stroke={colors.discDark} strokeWidth="1" />
       <text x="12" y="20.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="white">
         {rank}
@@ -210,21 +215,10 @@ function MedalIcon({ rank, size = "sm" }: { rank: number; size?: "sm" | "lg" }) 
 function TrophyIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
-      <path d="M7 2h10a1 1 0 0 1 1 1v3a5 5 0 0 1-4 4.9V13h1.5a1 1 0 1 1 0 2H14v4h2.5a1 1 0 1 1 0 2h-9a1 1 0 1 1 0-2H10v-4H8.5a1 1 0 1 1 0-2H10v-2.1A5 5 0 0 1 6 6V3a1 1 0 0 1 1-1z" />
-      <path
-        d="M4 4H2.5A1.5 1.5 0 0 0 1 5.5v1A3.5 3.5 0 0 0 4.5 10H5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
-      <path
-        d="M20 4h1.5A1.5 1.5 0 0 1 23 5.5v1A3.5 3.5 0 0 1 19.5 10H19"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-      />
+      <path d={TROPHY_CUP_PATH} />
+      {TROPHY_HANDLE_PATHS.map((d) => (
+        <path key={d} d={d} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
+      ))}
     </svg>
   );
 }
@@ -261,20 +255,69 @@ function rankEntryLabel(entries: AwardRankEntry[]) {
   return entries.map((e) => e.playerName).join(" & ");
 }
 
-function awardShareLine(category: AwardCategory, ranks: AwardRankEntry[]) {
-  const winners = ranks.filter((entry) => entry.rank === 1);
-  if (winners.length === 0) return null;
-  const label = category === "BEST_PLAYER" ? "MVP" : AWARD_INFO[category].name;
-  const value = shouldShowStatValue(category) ? ` ${formatStatValue(category, winners[0]!.statValue)}` : "";
-  return `${label} : ${rankEntryLabel(winners)}${value}`;
+function ranksByCategoryOf(awards: AwardCategoryResult[]) {
+  return new Map(awards.map((award) => [award.category, award.ranks]));
 }
 
-/** 카카오톡 텍스트 메시지 본문. 200자 제한을 넘는 부문은 잘라낸다(전체 결과는 자세히 보기 링크). */
+/** 부문 1위(공동 수상은 " & "로 묶음)와 화면에 보여주는 기록 */
+function categoryWinner(category: AwardCategory, ranks: AwardRankEntry[]) {
+  const winners = ranks.filter((entry) => entry.rank === 1);
+  if (winners.length === 0) return null;
+  return {
+    names: rankEntryLabel(winners),
+    value: shouldShowStatValue(category) ? formatStatValue(category, winners[0]!.statValue) : null,
+  };
+}
+
+function shareLabel(category: AwardCategory) {
+  return category === "BEST_PLAYER" ? "MVP" : AWARD_INFO[category].name;
+}
+
+/** 카카오톡 메시지 설명(최대 2줄 표시): 대표 부문 수상자만 */
+function buildAwardShareSummary(awards: AwardCategoryResult[]) {
+  const ranksByCategory = ranksByCategoryOf(awards);
+  return (["BEST_PLAYER", "TOP_SCORER", "TOP_ASSIST"] as const)
+    .flatMap((category) => {
+      const winner = categoryWinner(category, ranksByCategory.get(category) ?? []);
+      return winner ? [`${shareLabel(category)} ${winner.names}`] : [];
+    })
+    .join(" · ");
+}
+
+/** 공유 이미지에 그릴 내용: 그 기간 MVP 1~3위와 부문별 1위 */
+function buildAwardShareCard(
+  teamName: string,
+  periodLabel: string,
+  accentColor: string,
+  period: PeriodType,
+  awards: AwardCategoryResult[],
+): AwardShareCardData {
+  const ranksByCategory = ranksByCategoryOf(awards);
+  const mvpByRank = groupEntriesByRank(ranksByCategory.get("BEST_PLAYER") ?? []);
+  return {
+    teamName,
+    periodLabel,
+    accentColor,
+    podium: ([1, 2, 3] as const).map((rank) => ({
+      rank,
+      players: (mvpByRank.get(rank) ?? []).map((entry) => ({ name: entry.playerName, photo: entry.playerPhoto })),
+    })),
+    winners: categoriesForPeriod(period)
+      .filter((category) => category !== "BEST_PLAYER")
+      .map((category) => {
+        const winner = categoryWinner(category, ranksByCategory.get(category) ?? []);
+        return { label: AWARD_INFO[category].name, names: winner?.names ?? null, value: winner?.value ?? null };
+      }),
+  };
+}
+
+/** 이미지를 못 올렸을 때 보내는 텍스트 메시지. 200자 제한을 넘는 부문은 잘라낸다(전체 결과는 자세히 보기 링크). */
 function buildAwardShareMessage(periodLabel: string, period: PeriodType, awards: AwardCategoryResult[]) {
-  const ranksByCategory = new Map(awards.map((award) => [award.category, award.ranks]));
-  const lines = categoriesForPeriod(period)
-    .map((category) => awardShareLine(category, ranksByCategory.get(category) ?? []))
-    .filter((line): line is string => line !== null);
+  const ranksByCategory = ranksByCategoryOf(awards);
+  const lines = categoriesForPeriod(period).flatMap((category) => {
+    const winner = categoryWinner(category, ranksByCategory.get(category) ?? []);
+    return winner ? [`${shareLabel(category)} : ${winner.names}${winner.value ? ` ${winner.value}` : ""}`] : [];
+  });
 
   let message = `${periodLabel} 시상식 결과 나왔습니다!!`;
   if (lines.length === 0) return message;
@@ -287,21 +330,6 @@ function buildAwardShareMessage(periodLabel: string, period: PeriodType, awards:
   }
   return message;
 }
-
-const CONFETTI_PIECES = [
-  { left: "6%", top: "18%", size: 8, color: "#fbbf24", rotate: 15, shape: "square" as const },
-  { left: "14%", top: "62%", size: 6, color: "#f472b6", rotate: -20, shape: "circle" as const },
-  { left: "22%", top: "30%", size: 5, color: "#38bdf8", rotate: 40, shape: "square" as const },
-  { left: "9%", top: "82%", size: 7, color: "#ffffff", rotate: -10, shape: "circle" as const },
-  { left: "30%", top: "12%", size: 6, color: "#a78bfa", rotate: 25, shape: "square" as const },
-  { left: "88%", top: "20%", size: 8, color: "#fbbf24", rotate: -25, shape: "circle" as const },
-  { left: "80%", top: "70%", size: 6, color: "#38bdf8", rotate: 10, shape: "square" as const },
-  { left: "92%", top: "55%", size: 5, color: "#ffffff", rotate: 30, shape: "circle" as const },
-  { left: "70%", top: "14%", size: 7, color: "#f472b6", rotate: -15, shape: "square" as const },
-  { left: "95%", top: "85%", size: 6, color: "#a78bfa", rotate: 20, shape: "circle" as const },
-  { left: "45%", top: "8%", size: 5, color: "#ffffff", rotate: -30, shape: "square" as const },
-  { left: "55%", top: "90%", size: 7, color: "#fbbf24", rotate: 12, shape: "circle" as const },
-];
 
 function ConfettiDecoration() {
   return (
@@ -545,7 +573,7 @@ function AwardTabContent({
   );
 }
 
-export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
+export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps) {
   const accentColor = teamColor ?? "#3f3f46";
   const router = useRouter();
   const pathname = usePathname();
@@ -560,7 +588,7 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [loadingAwards, setLoadingAwards] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [sharing, setSharing] = useState(false);
+  const [shareDraft, setShareDraft] = useState<AwardShareDraft | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -667,41 +695,20 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
     awardsData !== null &&
     !awardsData.insufficient;
 
-  const handleShareAwards = async () => {
-    if (sharing || !canShareAwards || !subPeriod || !awardsData) return;
-    const url = getAwardShareUrl(teamId, period, subPeriod);
-    const message = buildAwardShareMessage(
-      formatAwardPeriodKorean(period, subPeriod),
-      period,
-      awardsData.awards,
-    );
-
-    if (window.Kakao?.isInitialized()) {
-      try {
-        window.Kakao.Share.sendDefault({
-          objectType: "text",
-          text: message,
-          link: {
-            mobileWebUrl: url,
-            webUrl: url,
-          },
-        });
-        return;
-      } catch {
-        // SDK 오류 시 아래 클립보드 복사로 대체
-      }
-    }
-
-    setSharing(true);
-    try {
-      await navigator.clipboard.writeText(`${message}\n\n${url}`);
-      setToastMessage("메세지가 복사됐어요! 카카오톡에 붙여넣기 해주세요");
-    } catch {
-      setToastMessage("공유에 실패했습니다. 다시 시도해주세요.");
-    } finally {
-      setSharing(false);
-    }
+  const openShareDialog = () => {
+    if (!canShareAwards || !subPeriod || !awardsData) return;
+    const periodLabel = formatAwardPeriodKorean(period, subPeriod);
+    setShareDraft({
+      url: getAwardShareUrl(teamId, period, subPeriod),
+      card: buildAwardShareCard(teamName, periodLabel, accentColor, period, awardsData.awards),
+      title: `${periodLabel} 시상식 결과 나왔습니다!!`,
+      description: buildAwardShareSummary(awardsData.awards),
+      fallbackText: buildAwardShareMessage(periodLabel, period, awardsData.awards),
+      fileName: `${teamName} ${periodLabel} 시상식.jpg`.replace(/[\\/:*?"<>|]/g, ""),
+    });
   };
+
+  const closeShareDialog = useCallback(() => setShareDraft(null), []);
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -744,9 +751,8 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
         {canShareAwards ? (
           <button
             type="button"
-            onClick={() => void handleShareAwards()}
-            disabled={sharing}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
+            onClick={openShareDialog}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
               <path
@@ -775,6 +781,9 @@ export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
         />
       )}
 
+      {shareDraft ? (
+        <AwardShareDialog draft={shareDraft} onClose={closeShareDialog} onToast={setToastMessage} />
+      ) : null}
       {toastMessage ? <Toast message={toastMessage} /> : null}
     </section>
   );
