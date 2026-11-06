@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
+import { KAKAO_SDK_SRC, initKakaoSdk } from "@/components/kakao-sdk";
 import { TeamLogo } from "@/components/team-logo";
 import {
   formatMatchDate,
@@ -81,32 +82,6 @@ type TeamMatchesTabProps = {
   onMatchOpen?: (matchId: string) => void;
   onMatchBack?: () => void;
 };
-
-declare global {
-  interface Window {
-    Kakao?: {
-      init: (key: string) => void;
-      isInitialized: () => boolean;
-      Share: {
-        sendDefault: (options: {
-          objectType: "text";
-          text: string;
-          link: {
-            mobileWebUrl: string;
-            webUrl: string;
-          };
-        }) => void;
-      };
-    };
-  }
-}
-
-const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? "";
-
-function initKakaoSdk() {
-  if (!window.Kakao || !KAKAO_JS_KEY || window.Kakao.isInitialized()) return;
-  window.Kakao.init(KAKAO_JS_KEY);
-}
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "md" | "sm" }) {
   const initial = name.trim().charAt(0) || "?";
@@ -341,7 +316,7 @@ export function TeamMatchesTab({
     return (
       <section className="mx-auto w-full max-w-6xl px-4 py-6">
         <Script
-          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+          src={KAKAO_SDK_SRC}
           strategy="lazyOnload"
           onLoad={initKakaoSdk}
         />

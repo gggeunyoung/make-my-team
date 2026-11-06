@@ -1,8 +1,10 @@
 "use client";
 
+import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
+import { KAKAO_SDK_SRC, KAKAO_TEXT_MAX_LENGTH, initKakaoSdk } from "@/components/kakao-sdk";
 import { getPeriodDateRange } from "@/lib/award-calculation";
 import { awardShareButtonLabel, formatAwardPeriodKorean } from "@/lib/award-period-label";
 import {
@@ -14,7 +16,6 @@ import {
 
 type TeamAwardTabProps = {
   teamId: string;
-  teamName: string;
   teamColor: string | null;
 };
 
@@ -106,6 +107,10 @@ const QUARTERLY_PLUS_CATEGORIES: AwardCategory[] = [
   "STRONG_VS_LOW",
   "ATTENDANCE",
 ];
+
+function categoriesForPeriod(period: PeriodType): AwardCategory[] {
+  return period === "MONTHLY" ? ALWAYS_CATEGORIES : [...ALWAYS_CATEGORIES, ...QUARTERLY_PLUS_CATEGORIES];
+}
 
 function toAwardPeriod(period: PeriodType): AwardPeriod {
   return period === "YEARLY" ? "ANNUAL" : period;
@@ -254,6 +259,33 @@ function groupEntriesByRank(entries: AwardRankEntry[]) {
 
 function rankEntryLabel(entries: AwardRankEntry[]) {
   return entries.map((e) => e.playerName).join(" & ");
+}
+
+function awardShareLine(category: AwardCategory, ranks: AwardRankEntry[]) {
+  const winners = ranks.filter((entry) => entry.rank === 1);
+  if (winners.length === 0) return null;
+  const label = category === "BEST_PLAYER" ? "MVP" : AWARD_INFO[category].name;
+  const value = shouldShowStatValue(category) ? ` ${formatStatValue(category, winners[0]!.statValue)}` : "";
+  return `${label} : ${rankEntryLabel(winners)}${value}`;
+}
+
+/** 카카오톡 텍스트 메시지 본문. 200자 제한을 넘는 부문은 잘라낸다(전체 결과는 자세히 보기 링크). */
+function buildAwardShareMessage(periodLabel: string, period: PeriodType, awards: AwardCategoryResult[]) {
+  const ranksByCategory = new Map(awards.map((award) => [award.category, award.ranks]));
+  const lines = categoriesForPeriod(period)
+    .map((category) => awardShareLine(category, ranksByCategory.get(category) ?? []))
+    .filter((line): line is string => line !== null);
+
+  let message = `${periodLabel} 시상식 결과 나왔습니다!!`;
+  if (lines.length === 0) return message;
+
+  message += "\n----------------";
+  for (const line of lines) {
+    const next = `${message}\n${line}`;
+    if (next.length > KAKAO_TEXT_MAX_LENGTH) break;
+    message = next;
+  }
+  return message;
 }
 
 const CONFETTI_PIECES = [
@@ -492,11 +524,7 @@ function AwardTabContent({
     );
   }
 
-  const categories =
-    period === "MONTHLY"
-      ? ALWAYS_CATEGORIES
-      : [...ALWAYS_CATEGORIES, ...QUARTERLY_PLUS_CATEGORIES];
-  const gridCategories = categories.filter((category) => category !== "BEST_PLAYER");
+  const gridCategories = categoriesForPeriod(period).filter((category) => category !== "BEST_PLAYER");
 
   const awardsByCategory = new Map(data.awards.map((award) => [award.category, award.ranks]));
 
@@ -517,7 +545,7 @@ function AwardTabContent({
   );
 }
 
-export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps) {
+export function TeamAwardTab({ teamId, teamColor }: TeamAwardTabProps) {
   const accentColor = teamColor ?? "#3f3f46";
   const router = useRouter();
   const pathname = usePathname();
@@ -640,28 +668,36 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
     !awardsData.insufficient;
 
   const handleShareAwards = async () => {
-    if (sharing || !canShareAwards || !subPeriod) return;
+    if (sharing || !canShareAwards || !subPeriod || !awardsData) return;
     const url = getAwardShareUrl(teamId, period, subPeriod);
-    const periodLabel = formatAwardPeriodKorean(period, subPeriod);
-    const title = `${teamName} ${periodLabel} 시상식`;
-    const text = `${periodLabel} 시상식 결과 나왔습니다!!`;
+    const message = buildAwardShareMessage(
+      formatAwardPeriodKorean(period, subPeriod),
+      period,
+      awardsData.awards,
+    );
+
+    if (window.Kakao?.isInitialized()) {
+      try {
+        window.Kakao.Share.sendDefault({
+          objectType: "text",
+          text: message,
+          link: {
+            mobileWebUrl: url,
+            webUrl: url,
+          },
+        });
+        return;
+      } catch {
+        // SDK 오류 시 아래 클립보드 복사로 대체
+      }
+    }
 
     setSharing(true);
     try {
-      if (typeof navigator.share === "function") {
-        await navigator.share({ title, text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setToastMessage("링크가 복사되었습니다");
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      try {
-        await navigator.clipboard.writeText(url);
-        setToastMessage("링크가 복사되었습니다");
-      } catch {
-        setToastMessage("공유에 실패했습니다. 다시 시도해주세요.");
-      }
+      await navigator.clipboard.writeText(`${message}\n\n${url}`);
+      setToastMessage("메세지가 복사됐어요! 카카오톡에 붙여넣기 해주세요");
+    } catch {
+      setToastMessage("공유에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setSharing(false);
     }
@@ -669,6 +705,7 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <Script src={KAKAO_SDK_SRC} strategy="afterInteractive" onReady={initKakaoSdk} />
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-zinc-900">🏆 시상식</h2>
         <p className="mt-1 text-sm text-zinc-500">기간별 팀 시상 부문 수상자를 확인하세요</p>

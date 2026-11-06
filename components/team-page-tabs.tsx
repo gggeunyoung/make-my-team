@@ -262,8 +262,7 @@ export function TeamPageTabs({
       );
     if (activeTab === "STATS") return <TeamStatsTab teamId={teamId} teamColor={teamColor} />;
     if (activeTab === "TOURNAMENT") return <TeamTournamentTab teamId={teamId} teamColor={teamColor} />;
-    if (activeTab === "AWARD")
-      return <TeamAwardTab teamId={teamId} teamName={teamName} teamColor={teamColor} />;
+    if (activeTab === "AWARD") return <TeamAwardTab teamId={teamId} teamColor={teamColor} />;
     return null;
   })();
 
