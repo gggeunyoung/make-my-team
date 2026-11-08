@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  AWARD_SHARE_CARD_SIZE,
-  renderAwardShareCard,
-  type AwardShareCardData,
-} from "@/components/award-share-card";
 import { uploadKakaoImage } from "@/components/kakao-sdk";
+import { SHARE_CARD_SIZE } from "@/components/share-card-canvas";
 
-export type AwardShareDraft = {
-  /** 시상식 링크. 같은 기간을 다시 공유할 때 업로드한 이미지를 재사용하는 키로도 쓴다. */
+export type KakaoShareDraft = {
+  /** 창 제목 (예: 시상식 공유) */
+  heading: string;
+  /** 카카오톡 메시지의 자세히 보기 링크 */
   url: string;
-  card: AwardShareCardData;
+  /** 같은 내용을 다시 공유할 때 이미 올린 이미지를 재사용하는 키 */
+  imageKey: string;
+  /** 1080×1080 공유 카드를 그린다 */
+  renderImage: () => Promise<Blob>;
   /** 카카오톡 메시지 제목/설명 (각각 최대 2줄 표시) */
   title: string;
   description: string;
@@ -27,13 +28,13 @@ type CardState =
   | { status: "ready"; previewUrl: string; imageUrl: string }
   | { status: "failed"; previewUrl: string | null };
 
-/** 같은 시상식을 여러 번 공유해도 카카오 서버에는 한 번만 올린다. */
+/** 같은 카드를 여러 번 공유해도 카카오 서버에는 한 번만 올린다. */
 const kakaoImageUploads = new Map<string, Promise<string>>();
 
 function uploadOnce(key: string, image: Blob) {
   let upload = kakaoImageUploads.get(key);
   if (!upload) {
-    upload = uploadKakaoImage(image, "award-share.jpg");
+    upload = uploadKakaoImage(image, "share-card.jpg");
     kakaoImageUploads.set(key, upload);
     upload.catch(() => kakaoImageUploads.delete(key));
   }
@@ -48,12 +49,13 @@ function KakaoSymbol() {
   );
 }
 
-export function AwardShareDialog({
+/** 공유 카드 미리보기 → 카카오톡 피드 메시지(이미지 + 제목 + 설명)로 보내는 창 */
+export function KakaoShareDialog({
   draft,
   onClose,
   onToast,
 }: {
-  draft: AwardShareDraft;
+  draft: KakaoShareDraft;
   onClose: () => void;
   onToast: (message: string) => void;
 }) {
@@ -66,11 +68,11 @@ export function AwardShareDialog({
 
     void (async () => {
       try {
-        const image = await renderAwardShareCard(draft.card);
+        const image = await draft.renderImage();
         if (cancelled) return;
         previewUrl = URL.createObjectURL(image);
         setCard({ status: "uploading", previewUrl });
-        const imageUrl = await uploadOnce(draft.url, image);
+        const imageUrl = await uploadOnce(draft.imageKey, image);
         if (!cancelled) setCard({ status: "ready", previewUrl, imageUrl });
       } catch {
         if (!cancelled) setCard({ status: "failed", previewUrl });
@@ -113,8 +115,8 @@ export function AwardShareDialog({
               title: draft.title,
               description: draft.description || undefined,
               imageUrl: card.imageUrl,
-              imageWidth: AWARD_SHARE_CARD_SIZE,
-              imageHeight: AWARD_SHARE_CARD_SIZE,
+              imageWidth: SHARE_CARD_SIZE,
+              imageHeight: SHARE_CARD_SIZE,
               link,
             },
           });
@@ -150,13 +152,13 @@ export function AwardShareDialog({
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="award-share-dialog-title"
+        aria-labelledby="kakao-share-dialog-title"
         className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-xl sm:max-w-sm sm:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h3 id="award-share-dialog-title" className="text-base font-bold text-zinc-900">
-            시상식 공유
+          <h3 id="kakao-share-dialog-title" className="text-base font-bold text-zinc-900">
+            {draft.heading}
           </h3>
           <button
             ref={closeButtonRef}

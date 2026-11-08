@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   formatMatchDate,
   matchResultLabel,
@@ -8,7 +9,7 @@ import {
   opponentLevelLabel,
   type OpponentLevelValue,
 } from "@/lib/player-display";
-import { periodTypeLabel, type PeriodOption, type PeriodType } from "@/lib/player-period";
+import { PERIOD_TYPES, periodTypeLabel, type PeriodOption, type PeriodType } from "@/lib/player-period";
 
 type StatsView = "TEAM" | "PLAYER";
 
@@ -123,6 +124,19 @@ const TABLE_COLUMNS: Array<{ key: TableSortKey; label: string }> = [
   { key: "attackPointsPerMatch", label: "매치당 공격포인트" },
   { key: "attendanceRate", label: "출석률" },
 ];
+
+/** 순위 카드가 강조된 채로 보이는 시간 */
+const FOCUS_HIGHLIGHT_MS = 2400;
+
+function parsePeriodParam(value: string | null): PeriodType | null {
+  if (!value) return null;
+  return PERIOD_TYPES.includes(value as PeriodType) ? (value as PeriodType) : null;
+}
+
+/** 홈에서 누른 순위 부문으로 표를 정렬한다 (공격수/수비수 랭킹은 표에 없는 부문) */
+function toTableSortKey(key: string | null): TableSortKey | null {
+  return TABLE_COLUMNS.find((column) => column.key === key)?.key ?? null;
+}
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initial = name.trim().charAt(0) || "?";
@@ -386,12 +400,29 @@ function TeamStatsContent({
 function PlayerStatsContent({
   data,
   loading,
+  accent,
+  focusKey,
+  onFocusShown,
 }: {
   data: PlayerStatsResponse | null;
   loading: boolean;
+  accent: string;
+  /** 홈의 순위 카드에서 넘어왔을 때 그 부문 */
+  focusKey: string | null;
+  onFocusShown: () => void;
 }) {
-  const [sortKey, setSortKey] = useState<TableSortKey>("goals");
+  const [sortKey, setSortKey] = useState<TableSortKey>(() => toTableSortKey(focusKey) ?? "goals");
   const [tableSearch, setTableSearch] = useState("");
+  const focusCardRef = useRef<HTMLDivElement>(null);
+
+  // 데이터가 오면 그 부문 카드를 화면에 보이게 하고 잠깐 강조한다
+  useEffect(() => {
+    if (!focusKey || loading || !data) return;
+    const card = focusCardRef.current;
+    card?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const timer = window.setTimeout(onFocusShown, card ? FOCUS_HIGHLIGHT_MS : 0);
+    return () => window.clearTimeout(timer);
+  }, [focusKey, loading, data, onFocusShown]);
 
   const rankedTable = useMemo(() => {
     const rows = data?.table ?? [];
@@ -426,11 +457,17 @@ function PlayerStatsContent({
             진행한 매치가 없어요
           </p>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-2">
             {rankings.map((cat) => (
               <div
                 key={cat.key}
-                className="w-56 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+                ref={cat.key === focusKey ? focusCardRef : undefined}
+                className="w-56 shrink-0 scroll-mt-24 rounded-xl border border-zinc-200 bg-zinc-50 p-4 transition-[border-color,box-shadow,background-color] duration-700"
+                style={
+                  cat.key === focusKey
+                    ? { borderColor: accent, boxShadow: `inset 0 0 0 1px ${accent}`, backgroundColor: "#ffffff" }
+                    : undefined
+                }
               >
                 <p className="mb-3 text-sm font-semibold text-zinc-900">{formatRankingTitle(cat.title)}</p>
                 {cat.items.length === 0 ? (
@@ -603,11 +640,17 @@ function PlayerStatsContent({
 
 export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
   const accent = teamColor ?? "#3f3f46";
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [view, setView] = useState<StatsView>("PLAYER");
   const [periods, setPeriods] = useState<PeriodsResponse["periods"] | null>(null);
-  const [period, setPeriod] = useState<PeriodType>("MONTHLY");
-  const [subPeriod, setSubPeriod] = useState("");
+  // 주소에 기간이 있으면 그 기간으로 연다 (홈 순위 카드, 카카오톡 공유 링크)
+  const [period, setPeriod] = useState<PeriodType>(() => parsePeriodParam(searchParams.get("period")) ?? "MONTHLY");
+  const [subPeriod, setSubPeriod] = useState(() => searchParams.get("subPeriod")?.trim() ?? "");
+  const [focusKey, setFocusKey] = useState(() => searchParams.get("focus")?.trim() || null);
+  const clearFocus = useCallback(() => setFocusKey(null), []);
   const [opponentLevel, setOpponentLevel] = useState<"ALL" | OpponentLevelValue>("ALL");
   const [teamData, setTeamData] = useState<TeamStatsResponse | null>(null);
   const [playerData, setPlayerData] = useState<PlayerStatsResponse | null>(null);
@@ -631,7 +674,8 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
       const data = (await res.json()) as PeriodsResponse;
       setPeriods(data.periods);
       const firstMonth = data.periods.MONTHLY[0]?.value ?? "";
-      setSubPeriod(firstMonth);
+      // 주소로 정해진 기간은 두고, 기간 목록에 없으면 아래에서 바로잡는다
+      setSubPeriod((current) => current || firstMonth);
       setLoadingPeriods(false);
     };
     void load();
@@ -648,6 +692,21 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
       setSubPeriod(options[0].value);
     }
   }, [period, periods, subPeriod]);
+
+  // 보고 있는 기간을 주소에 남겨 새로고침해도 같은 기간이 열리게 한다 (focus는 한 번만 쓰고 지운다)
+  useEffect(() => {
+    if (!subPeriod) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "stats");
+    params.set("period", period);
+    params.set("subPeriod", subPeriod);
+    params.delete("focus");
+
+    const nextQuery = params.toString();
+    if (nextQuery === searchParams.toString()) return;
+    router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+  }, [period, subPeriod, pathname, router, searchParams]);
 
   useEffect(() => {
     if (!subPeriod || view !== "TEAM") return;
@@ -739,7 +798,13 @@ export function TeamStatsTab({ teamId, teamColor }: TeamStatsTabProps) {
         {view === "TEAM" ? (
           <TeamStatsContent data={teamData} loading={loadingTeam} />
         ) : (
-          <PlayerStatsContent data={playerData} loading={loadingPlayer} />
+          <PlayerStatsContent
+            data={playerData}
+            loading={loadingPlayer}
+            accent={accent}
+            focusKey={focusKey}
+            onFocusShown={clearFocus}
+          />
         )}
       </div>
     </section>

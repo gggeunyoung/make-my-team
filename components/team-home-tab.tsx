@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Script from "next/script";
+import { useCallback, useEffect, useState } from "react";
+import { formatAwardPeriodKorean } from "@/lib/award-period-label";
 import {
   formatMatchDate,
   matchResultLabel,
@@ -8,6 +10,10 @@ import {
   opponentLevelLabel,
   type OpponentLevelValue,
 } from "@/lib/player-display";
+import { getCurrentQuarterInfo } from "@/lib/player-period";
+import { KAKAO_SDK_SRC, KAKAO_TEXT_MAX_LENGTH, initKakaoSdk } from "@/components/kakao-sdk";
+import { KakaoShareDialog, type KakaoShareDraft } from "@/components/kakao-share-dialog";
+import { renderStatsShareCard, type StatsShareCardData } from "@/components/stats-share-card";
 import { TeamLogo } from "@/components/team-logo";
 
 type MatchResult = "WIN" | "DRAW" | "LOSS";
@@ -53,7 +59,20 @@ type TeamHomeTabProps = {
   teamLogo: string | null;
   teamColor: string | null;
   onMatchClick: (matchId: string) => void;
+  /** 순위 카드를 누르면 그 분기·부문의 선수 스탯으로 이동 */
+  onRankingClick: (categoryKey: string, quarter: string) => void;
 };
+
+/** 카카오톡으로 공유할 부문 (위에서부터 카드 한 줄씩) */
+const SHARE_RANKINGS = [
+  { key: "goals", label: "골" },
+  { key: "assists", label: "도움" },
+  { key: "attackPoints", label: "공격포인트" },
+  { key: "attack", label: "공격수 랭킹" },
+  { key: "defense", label: "수비수 랭킹" },
+] as const;
+
+const SHARE_TOP_COUNT = 3;
 
 function Toast({ message }: { message: string }) {
   return (
@@ -77,6 +96,11 @@ function DefaultPlayerPhoto({ name, size = "sm" }: { name: string; size?: "sm" |
 
 function formatRankingTitle(title: string) {
   return title.replace(/경기당/g, "매치당");
+}
+
+/** 공격수/수비수 랭킹은 점수를 보여주지 않는다 */
+function isScoreHidden(key: string) {
+  return key === "attack" || key === "defense";
 }
 
 function formatRankingValue(key: string, value: number) {
@@ -111,12 +135,108 @@ function getTeamHomeUrl(teamId: string) {
   return `${window.location.origin}/team/${teamId}`;
 }
 
-export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClick }: TeamHomeTabProps) {
+/** 홈 순위는 서버 기준 이번 분기라, 라벨(예: 26년 4분기)에서 기간 값(2026-Q4)을 되살린다. */
+function quarterFromLabel(quarterLabel: string) {
+  const match = /^(\d{2})년 ([1-4])분기$/.exec(quarterLabel.trim());
+  if (match) return `20${match[1]}-Q${match[2]}`;
+  const { year, quarter } = getCurrentQuarterInfo();
+  return `${year}-Q${quarter}`;
+}
+
+function getQuarterStatsUrl(teamId: string, quarter: string) {
+  const params = new URLSearchParams({ tab: "stats", period: "QUARTERLY", subPeriod: quarter });
+  return `${window.location.origin}/team/${teamId}?${params.toString()}`;
+}
+
+function topRankingsByKey(rankings: RankingCategory[]) {
+  return new Map(rankings.map((cat) => [cat.key, cat.items.slice(0, SHARE_TOP_COUNT)]));
+}
+
+/** 공유 이미지에 그릴 내용: 부문별 1~3위 */
+function buildRankingShareCard(
+  teamName: string,
+  periodLabel: string,
+  asOfLabel: string,
+  accentColor: string,
+  rankings: RankingCategory[],
+): StatsShareCardData {
+  const topByKey = topRankingsByKey(rankings);
+  return {
+    teamName,
+    periodLabel,
+    asOfLabel,
+    accentColor,
+    rows: SHARE_RANKINGS.map(({ key, label }) => ({
+      label,
+      entries: (topByKey.get(key) ?? []).map((item) => ({
+        rank: item.rank,
+        name: item.name,
+        photo: item.photo,
+        value: isScoreHidden(key) ? null : formatRankingValue(key, item.value),
+      })),
+    })),
+  };
+}
+
+/** 카카오톡 메시지 설명(최대 2줄 표시): 기록이 있는 부문의 1위만 */
+function buildRankingShareSummary(rankings: RankingCategory[]) {
+  const topByKey = topRankingsByKey(rankings);
+  return SHARE_RANKINGS.filter(({ key }) => !isScoreHidden(key))
+    .flatMap(({ key, label }) => {
+      const first = topByKey.get(key)?.[0];
+      return first ? [`${label} ${first.name}`] : [];
+    })
+    .join(" · ");
+}
+
+/** 이미지를 올리지 못했을 때 보낼 텍스트 메시지 (카카오 텍스트 템플릿 200자 제한) */
+function buildRankingShareMessage(periodLabel: string, asOfLabel: string, rankings: RankingCategory[]) {
+  const topByKey = topRankingsByKey(rankings);
+  const lines = SHARE_RANKINGS.flatMap(({ key, label }) => {
+    const top = topByKey.get(key) ?? [];
+    if (top.length === 0) return [];
+    const names = top.map((item) => (isScoreHidden(key) ? item.name : `${item.name} ${item.value}`));
+    return [`${label} : ${names.join(" · ")}`];
+  });
+
+  let message = `${periodLabel} 선수 스탯 순위 (${asOfLabel})`;
+  if (lines.length === 0) return message;
+
+  message += "\n----------------";
+  for (const line of lines) {
+    const next = `${message}\n${line}`;
+    if (next.length > KAKAO_TEXT_MAX_LENGTH) break;
+    message = next;
+  }
+  return message;
+}
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
+      />
+    </svg>
+  );
+}
+
+export function TeamHomeTab({
+  teamId,
+  teamName,
+  teamLogo,
+  teamColor,
+  onMatchClick,
+  onRankingClick,
+}: TeamHomeTabProps) {
   const accent = teamColor ?? "#3f3f46";
   const [data, setData] = useState<HomeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [rankingShareDraft, setRankingShareDraft] = useState<KakaoShareDraft | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,6 +297,10 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
     }
   };
 
+  const closeRankingShare = useCallback(() => setRankingShareDraft(null), []);
+
+  const kakaoScript = <Script src={KAKAO_SDK_SRC} strategy="afterInteractive" onReady={initKakaoSdk} />;
+
   const shareHeader = (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex min-w-0 items-center gap-3">
@@ -196,13 +320,7 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
         disabled={sharing}
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" className="h-4 w-4 text-zinc-500">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
-          />
-        </svg>
+        <ShareIcon />
         팀 홈페이지 공유하기
       </button>
     </div>
@@ -211,6 +329,7 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
   if (loading) {
     return (
       <section className="mx-auto w-full max-w-6xl px-4 py-10">
+        {kakaoScript}
         {shareHeader}
         <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">홈 정보를 불러오는 중...</div>
         {toastMessage ? <Toast message={toastMessage} /> : null}
@@ -221,6 +340,7 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
   if (!data) {
     return (
       <section className="mx-auto w-full max-w-6xl px-4 py-10">
+        {kakaoScript}
         {shareHeader}
         <div className="rounded-xl border border-zinc-200 bg-white p-8 text-zinc-500">
           홈 정보를 불러오지 못했습니다.
@@ -230,13 +350,50 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
     );
   }
 
+  const quarter = quarterFromLabel(data.quarterLabel);
+  const canShareRankings =
+    data.hasQuarterMatches &&
+    data.rankings.some((cat) => cat.items.length > 0 && SHARE_RANKINGS.some(({ key }) => key === cat.key));
+
+  const openRankingShare = () => {
+    const periodLabel = formatAwardPeriodKorean("QUARTERLY", quarter);
+    const today = new Date();
+    const asOfLabel = `${today.getMonth() + 1}월 ${today.getDate()}일 기준`;
+    const card = buildRankingShareCard(teamName, periodLabel, asOfLabel, accent, data.rankings);
+    setRankingShareDraft({
+      heading: "선수 순위 공유",
+      url: getQuarterStatsUrl(teamId, quarter),
+      imageKey: JSON.stringify(card),
+      renderImage: () => renderStatsShareCard(card),
+      title: `${periodLabel} 선수 스탯 순위`,
+      description: buildRankingShareSummary(data.rankings),
+      fallbackText: buildRankingShareMessage(periodLabel, asOfLabel, data.rankings),
+      fileName: `${teamName} ${periodLabel} 선수 스탯 순위.jpg`.replace(/[\\/:*?"<>|]/g, ""),
+    });
+  };
+
   return (
     <section className="mx-auto w-full max-w-6xl space-y-10 px-4 py-6">
+      {kakaoScript}
       {shareHeader}
 
       <div>
-        <h2 className="mb-1 text-lg font-semibold text-zinc-900">이번 분기 선수 스탯 순위</h2>
-        <p className="mb-4 text-sm text-zinc-500">{data.quarterLabel}</p>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="mb-1 text-lg font-semibold text-zinc-900">이번 분기 선수 스탯 순위</h2>
+            <p className="text-sm text-zinc-500">{data.quarterLabel}</p>
+          </div>
+          {canShareRankings ? (
+            <button
+              type="button"
+              onClick={openRankingShare}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+            >
+              <ShareIcon />
+              순위 공유하기
+            </button>
+          ) : null}
+        </div>
 
         {!data.hasQuarterMatches ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 py-10 text-center">
@@ -258,19 +415,35 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
             <p className="text-xs text-zinc-400">매치를 등록하면 여기에 선수 순위가 표시돼요</p>
           </div>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-2">
             {data.rankings.map((cat) => (
-              <div
+              <button
                 key={cat.key}
-                className="w-56 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+                type="button"
+                onClick={() => onRankingClick(cat.key, quarter)}
+                className="group flex w-56 shrink-0 flex-col rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-zinc-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
               >
-                <p className="mb-3 text-sm font-semibold text-zinc-900">{formatRankingTitle(cat.title)}</p>
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-zinc-900">{formatRankingTitle(cat.title)}</p>
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-zinc-500"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.17 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
                 {cat.items.length === 0 ? (
                   <p className="text-xs text-zinc-400">데이터 없음</p>
                 ) : (
                   <ul className="space-y-3">
                     {cat.items.map((item) => {
-                      const hideValue = cat.key === "attack" || cat.key === "defense";
+                      const hideValue = isScoreHidden(cat.key);
 
                       return (
                         <li key={item.id} className="flex items-center gap-2">
@@ -307,7 +480,7 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
                     })}
                   </ul>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -383,6 +556,9 @@ export function TeamHomeTab({ teamId, teamName, teamLogo, teamColor, onMatchClic
         )}
       </div>
 
+      {rankingShareDraft ? (
+        <KakaoShareDialog draft={rankingShareDraft} onClose={closeRankingShare} onToast={setToastMessage} />
+      ) : null}
       {toastMessage ? <Toast message={toastMessage} /> : null}
     </section>
   );

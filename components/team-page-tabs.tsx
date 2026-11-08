@@ -140,6 +140,20 @@ export function TeamPageTabs({
     [pathname, router],
   );
 
+  /** 홈의 순위 카드 → 그 분기 선수 스탯 (focus: 강조할 순위 부문) */
+  const openQuarterRanking = useCallback(
+    (focus: string, quarter: string) => {
+      const params = new URLSearchParams({
+        tab: TAB_URL_NAMES.STATS,
+        period: "QUARTERLY",
+        subPeriod: quarter,
+        focus,
+      });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
+  );
+
   const selectTab = useCallback(
     (tab: TeamTab, matchId?: string | null) => {
       replaceUrl(tab, matchId);
@@ -245,6 +259,7 @@ export function TeamPageTabs({
           teamLogo={teamLogo}
           teamColor={teamColor}
           onMatchClick={(matchId) => replaceUrl("MATCHES", matchId)}
+          onRankingClick={openQuarterRanking}
         />
       );
     if (activeTab === "PLAYERS") return <TeamPlayersTab teamId={teamId} teamColor={teamColor} />;

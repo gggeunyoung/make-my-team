@@ -4,8 +4,7 @@ import Script from "next/script";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AwardCategory, AwardPeriod } from "@/app/generated/prisma/enums";
-import type { AwardShareCardData } from "@/components/award-share-card";
-import { AwardShareDialog, type AwardShareDraft } from "@/components/award-share-dialog";
+import { renderAwardShareCard, type AwardShareCardData } from "@/components/award-share-card";
 import {
   CONFETTI_PIECES,
   MEDAL_COLORS,
@@ -14,6 +13,7 @@ import {
   TROPHY_HANDLE_PATHS,
 } from "@/components/award-theme";
 import { KAKAO_SDK_SRC, KAKAO_TEXT_MAX_LENGTH, initKakaoSdk } from "@/components/kakao-sdk";
+import { KakaoShareDialog, type KakaoShareDraft } from "@/components/kakao-share-dialog";
 import { getPeriodDateRange } from "@/lib/award-calculation";
 import { awardShareButtonLabel, formatAwardPeriodKorean } from "@/lib/award-period-label";
 import {
@@ -588,7 +588,7 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [loadingAwards, setLoadingAwards] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [shareDraft, setShareDraft] = useState<AwardShareDraft | null>(null);
+  const [shareDraft, setShareDraft] = useState<KakaoShareDraft | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -698,9 +698,12 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
   const openShareDialog = () => {
     if (!canShareAwards || !subPeriod || !awardsData) return;
     const periodLabel = formatAwardPeriodKorean(period, subPeriod);
+    const card = buildAwardShareCard(teamName, periodLabel, accentColor, period, awardsData.awards);
     setShareDraft({
+      heading: "시상식 공유",
       url: getAwardShareUrl(teamId, period, subPeriod),
-      card: buildAwardShareCard(teamName, periodLabel, accentColor, period, awardsData.awards),
+      imageKey: JSON.stringify(card),
+      renderImage: () => renderAwardShareCard(card),
       title: `${periodLabel} 시상식 결과 나왔습니다!!`,
       description: buildAwardShareSummary(awardsData.awards),
       fallbackText: buildAwardShareMessage(periodLabel, period, awardsData.awards),
@@ -782,7 +785,7 @@ export function TeamAwardTab({ teamId, teamName, teamColor }: TeamAwardTabProps)
       )}
 
       {shareDraft ? (
-        <AwardShareDialog draft={shareDraft} onClose={closeShareDialog} onToast={setToastMessage} />
+        <KakaoShareDialog draft={shareDraft} onClose={closeShareDialog} onToast={setToastMessage} />
       ) : null}
       {toastMessage ? <Toast message={toastMessage} /> : null}
     </section>
