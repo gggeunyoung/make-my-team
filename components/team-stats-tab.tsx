@@ -78,6 +78,8 @@ type TableRow = {
   assistsPerMatch: number;
   attackPointsPerMatch: number;
   attendanceRate: number;
+  /** 전체 기간 출석률(0~1). 동점일 때 순서를 정하는 기준 */
+  overallAttendanceRate: number;
   perfAttack: number;
   perfDefense: number;
   matchCount: number;
@@ -136,6 +138,15 @@ function parsePeriodParam(value: string | null): PeriodType | null {
 /** 홈에서 누른 순위 부문으로 표를 정렬한다 (공격수/수비수 랭킹은 표에 없는 부문) */
 function toTableSortKey(key: string | null): TableSortKey | null {
   return TABLE_COLUMNS.find((column) => column.key === key)?.key ?? null;
+}
+
+/** 매치당 기록은 반올림 전 값으로 비교해야 순위 카드와 순서가 같다 */
+function tableSortValue(row: TableRow, key: TableSortKey) {
+  const perMatch = (total: number) => (row.matchCount > 0 ? total / row.matchCount : 0);
+  if (key === "goalsPerMatch") return perMatch(row.goals);
+  if (key === "assistsPerMatch") return perMatch(row.assists);
+  if (key === "attackPointsPerMatch") return perMatch(row.attackPoints);
+  return row[key];
 }
 
 function DefaultPlayerPhoto({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
@@ -425,14 +436,16 @@ function PlayerStatsContent({
   }, [focusKey, loading, data, onFocusShown]);
 
   const rankedTable = useMemo(() => {
-    const rows = data?.table ?? [];
-    const sorted = [...rows].sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
-      if (typeof av === "number" && typeof bv === "number") return bv - av;
-      return 0;
-    });
-    return sorted.map((row, index) => ({ ...row, rank: index + 1 }));
+    // 순위 카드와 같은 규칙: 기록 → 동점이면 전체 기간 출석률 → 그래도 같으면 먼저 등록된 선수(서버가 등록순으로 보낸다)
+    const sorted = (data?.table ?? [])
+      .map((row, registeredOrder) => ({ row, registeredOrder }))
+      .sort(
+        (a, b) =>
+          tableSortValue(b.row, sortKey) - tableSortValue(a.row, sortKey) ||
+          b.row.overallAttendanceRate - a.row.overallAttendanceRate ||
+          a.registeredOrder - b.registeredOrder,
+      );
+    return sorted.map(({ row }, index) => ({ ...row, rank: index + 1 }));
   }, [data?.table, sortKey]);
 
   const filteredTable = useMemo(() => {

@@ -271,6 +271,9 @@ export async function GET(req: Request) {
       assistsPerMatch: roundToTwoDecimal(p.matchCount > 0 ? p.assists / divisor : 0),
       attackPointsPerMatch: roundToTwoDecimal(p.matchCount > 0 ? p.attackPoints / divisor : 0),
       attendanceRate: periodAttendanceByPlayer.get(p.id) ?? 0,
+      // 표에서도 순위 카드(buildTopRankings)와 같은 동점 규칙을 쓰도록 전체 기간 출석률(0~1)을 함께 보낸다.
+      // table은 선수 등록순(createdAt asc)이라, 출석률까지 같으면 이 순서가 마지막 기준이 된다.
+      overallAttendanceRate: overallRateByPlayer.get(p.id) ?? 0,
       perfAttack: roundToTwoDecimal(p.perfAttack),
       perfDefense: roundToTwoDecimal(p.perfDefense),
       matchCount: p.matchCount,
