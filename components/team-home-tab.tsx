@@ -390,7 +390,7 @@ export function TeamHomeTab({
               className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
             >
               <ShareIcon />
-              순위 공유하기
+              공유하기
             </button>
           ) : null}
         </div>
